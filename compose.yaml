@@ -1,4 +1,3 @@
-version: "3.9"
 
 services:
   postgres:
@@ -14,8 +13,8 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-#    networks:
-#      - my_network
+    networks:
+      - my_network
 
   redis:
     image: "redis:latest"
@@ -26,8 +25,8 @@ services:
 #    command: redis-server --requirepass redisPd
     environment:
       - REDIS_PASSWORD=redisPd
-#    networks:
-#      - my_network
+    networks:
+      - my_network
 
   zookeeper:
     image: confluentinc/cp-zookeeper:7.2.1
@@ -39,8 +38,8 @@ services:
       ZOOKEEPER_SYNC_LIMIT: 2
     ports:
       - "2181:2181"
-#    networks:
-#      - my_network
+    networks:
+      - my_network
 
   kafka:
     image: confluentinc/cp-kafka:7.2.1
@@ -53,43 +52,137 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092  # 使用宿主機的 IP
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092  # 使用宿主機的 IP
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092  # 讓 Kafka 監聽所有來自網路的連接
 #      KAFKA_BROKER_ID: 1
 #      KAFKA_ZOOKEEPER_CONNECT: localhost:2181
 #      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
 #      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-#    networks:
-#      - my_network
+    networks:
+      - my_network
 
-#  backend:
-#    build: .
-#    image: backendapi0212
-#    container_name: backend_api_all
-#    restart: always
-#    depends_on:
-#      - postgres
-#      - redis
-#      - kafka
-#      - zookeeper
-#    ports:
-#      - "8000:8000"
-#    environment:
-#      SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/postgres
-#      SPRING_DATASOURCE_USERNAME: postgres
-#      SPRING_DATASOURCE_PASSWORD: verYs3cret
-#      REDIS_HOST: redis
-#      REDIS_PORT: 6379
-#      REDIS_PASSWORD: redisPd
-#
-#
-#      KAFKA_BOOTSTRAP_SERVERS: localhost:9092
-#    networks:
-#      - my_network
+  backend:
+    build: .
+    image: backendapi0212
+    container_name: backend_api_all
+    restart: always
+    depends_on:
+      - postgres
+      - redis
+      - kafka
+      - zookeeper
+      - milvus
+    ports:
+      - "8000:8000"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/postgres
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: verYs3cret
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: redisPd
 
+
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    networks:
+      - my_network
+  etcd:
+    image: quay.io/coreos/etcd:v3.5.9
+    container_name: gary-backend-etcd
+    restart: always
+    command:
+      - /usr/local/bin/etcd
+      - --advertise-client-urls
+      - http://0.0.0.0:2379
+      - --listen-client-urls
+      - http://0.0.0.0:2379
+      - --data-dir
+      - /etcd-data
+    volumes:
+      - etcd_data:/etcd-data
+    networks:
+      - my_network
+
+  minio:
+    image: minio/minio:latest
+    container_name: gary-backend-minio
+    restart: always
+    environment:
+      MINIO_ROOT_USER: ${MINIO_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_PASSWORD}
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - my_network
+
+  milvus:
+    image: milvusdb/milvus:${MILVUS_VERSION}
+    container_name: gary-backend-milvus
+    restart: always
+    depends_on:
+      - postgres
+      - etcd
+      - minio
+    environment:
+      MILVUS_DEPLOY_MODE: standalone
+      ETCD_ENDPOINTS: etcd:2379
+      MINIO_ADDRESS: minio:9000
+      COMMON_META_BACKEND: postgresql
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB_NAME: ${POSTGRES_DB}
+
+      # ========= Milvus 身份驗證設定 =========
+      # 啟用帳號密碼登入
+      # MILVUS_ENABLE_AUTH: "true"
+      # 管理員帳號與密碼
+      # MILVUS_ROOT_USER: ${MILVUS_ROOT_USER}
+      # MILVUS_ROOT_PASSWORD: ${MILVUS_ROOT_PASSWORD}
+      # 啟用 Token 驗證（選擇性）
+      MILVUS_AUTH_TOKEN: ${MILVUS_TOKEN}
+      MILVUS_AUTH_TOKEN_ENABLED: "true"
+      MILVUS_AUTH_TOKEN_EXPIRATION: "3600" # Token 1 小時有效
+      # =====================================
+
+    ports:
+      - "19530:19530"
+      - "9091:9091"
+    volumes:
+      - milvus_data:/var/lib/milvus
+    networks:
+      - my_network
+    command: [ "milvus", "run", "standalone" ]
+
+  attu:
+    image: zilliz/attu:latest
+    container_name: gary-backend-attu
+    restart: always
+    depends_on:
+      - milvus
+    environment:
+      # 設定要連接的 Milvus 伺服器
+      MILVUS_URL: milvus:19530
+
+      # 如果 Milvus 啟用了帳號密碼，Attu 也要設定登入資訊
+      MILVUS_USER: ${MILVUS_ROOT_USER}
+      MILVUS_PASSWORD: ${MILVUS_ROOT_PASSWORD}
+    ports:
+      - "8001:3000"
+    networks:
+      - my_network
 volumes:
   postgres_data:
+  milvus_data:
+  etcd_data:
+  minio_data:
 
-#networks:
-#  my_network:
+networks:
+  my_network:
+    driver: bridge
