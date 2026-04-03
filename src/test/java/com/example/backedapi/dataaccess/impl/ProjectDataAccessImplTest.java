@@ -56,11 +56,11 @@ class ProjectDataAccessImplTest {
         Project saved = projectDataAccess.save(project);
         
         // Then
-        assertNotNull(saved.getKey(), "保存後應該生成 Key");
+        assertNotNull(saved.getId(), "保存後應該生成 Id");
         assertEquals("Integration Test Project", saved.getName());
         
         // 驗證數據庫中確實有此記錄
-        Optional<Project> found = projectRepository.findById(saved.getKey());
+        Optional<Project> found = projectRepository.findById(saved.getId());
         assertTrue(found.isPresent());
         assertEquals("Integration Test Project", found.get().getName());
     }
@@ -78,7 +78,7 @@ class ProjectDataAccessImplTest {
         Project updated = projectDataAccess.save(saved);
         
         // Then
-        assertEquals(saved.getKey(), updated.getKey(), "Key 應該相同");
+        assertEquals(saved.getId(), updated.getId(), "Id 應該相同");
         assertEquals("Updated Name", updated.getName());
         
         // 驗證數據庫中只有一筆記錄
@@ -136,12 +136,12 @@ class ProjectDataAccessImplTest {
         Project saved = projectDataAccess.save(project);
         
         // When
-        Optional<Project> found = projectDataAccess.findById(saved.getKey());
+        Optional<Project> found = projectDataAccess.findById(saved.getId());
         
         // Then
         assertTrue(found.isPresent());
         assertEquals("Test Project", found.get().getName());
-        assertEquals(saved.getKey(), found.get().getKey());
+        assertEquals(saved.getId(), found.get().getId());
     }
     
     @Test
@@ -217,7 +217,7 @@ class ProjectDataAccessImplTest {
         projectDataAccess.delete(saved);
         
         // Then
-        Optional<Project> found = projectDataAccess.findById(saved.getKey());
+        Optional<Project> found = projectDataAccess.findById(saved.getId());
         assertFalse(found.isPresent());
         
         // 驗證數據庫為空
@@ -230,7 +230,7 @@ class ProjectDataAccessImplTest {
     void delete_shouldNotThrowException_whenDeletingNonExistent() {
         // Given
         Project project = new Project();
-        project.setKey(UUID.randomUUID());
+        project.setId(UUID.randomUUID());
         project.setName("Non-existent");
         
         // When & Then - 不應該拋出異常
@@ -248,7 +248,7 @@ class ProjectDataAccessImplTest {
         Project saved = projectDataAccess.save(project);
         
         // When
-        boolean exists = projectDataAccess.existsById(saved.getKey());
+        boolean exists = projectDataAccess.existsById(saved.getId());
         
         // Then
         assertTrue(exists);
@@ -273,10 +273,10 @@ class ProjectDataAccessImplTest {
         Project project = new Project();
         project.setName("Flow Test Project");
         Project saved = projectDataAccess.save(project);
-        assertNotNull(saved.getKey());
+        assertNotNull(saved.getId());
         
         // 2. 查詢
-        Optional<Project> found = projectDataAccess.findById(saved.getKey());
+        Optional<Project> found = projectDataAccess.findById(saved.getId());
         assertTrue(found.isPresent());
         
         // 3. 更新
@@ -288,6 +288,6 @@ class ProjectDataAccessImplTest {
         
         // 4. 刪除
         projectDataAccess.delete(updated.get(0));
-        assertFalse(projectDataAccess.existsById(saved.getKey()));
+        assertFalse(projectDataAccess.existsById(saved.getId()));
     }
 }

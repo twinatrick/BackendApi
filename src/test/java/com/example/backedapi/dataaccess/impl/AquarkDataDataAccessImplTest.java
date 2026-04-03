@@ -54,7 +54,7 @@ class AquarkDataDataAccessImplTest {
 
         AquarkData saved = aquarkDataDataAccess.save(data);
 
-        assertNotNull(saved.getKey());
+        assertNotNull(saved.getId());
         assertEquals(1, aquarkDataRepository.count());
     }
 

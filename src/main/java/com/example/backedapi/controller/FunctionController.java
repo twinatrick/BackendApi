@@ -1,12 +1,12 @@
 package com.example.backedapi.controller;
 
-import com.example.backedapi.Service.FunctionService;
+import com.example.backedapi.Service.IFunctionService;
 import com.example.backedapi.annotation.openapi.ApiControllerTag;
 import com.example.backedapi.annotation.openapi.ApiOperationBadRequest;
 import com.example.backedapi.annotation.openapi.ApiOperationOk;
-import com.example.backedapi.model.db.Function;
-import com.example.backedapi.model.Vo.*;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.example.backedapi.model.Vo.FunctionTransVo;
+import com.example.backedapi.model.Vo.FunctionVo;
+import com.example.backedapi.model.Vo.ResponseType;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,50 +15,37 @@ import java.util.List;
 @RequestMapping("/backend/function")
 @ApiControllerTag(name = "Functions", description = "Backend API endpoints - Function management")
 public class FunctionController {
-    @Autowired
-    private FunctionService functionService;
+    private final IFunctionService functionService;
+
+    public FunctionController(IFunctionService functionService) {
+        this.functionService = functionService;
+    }
 
     @PostMapping("/add")
     @ApiOperationBadRequest(summary = "Add function", description = "Creates a new function entry.")
     public ResponseType<?> addFunction(@RequestBody FunctionVo function) {
-        try {
-            FunctionVo    f = functionService.addFunction(function.toFunction()).toVo();
-            return new ResponseType<>(0, f);
-        } catch (Exception e) {
-            return new ResponseType<>(-1, null, "Error adding function");
-        }
-
+        functionService.addFunction(function);
+        return ResponseType.Success("Function added successfully");
     }
 
     @PostMapping("/update")
     @ApiOperationBadRequest(summary = "Update function", description = "Updates an existing function.")
-
-    public ResponseType<String> updateFunction(@RequestBody Function function) {
-        try {
-            functionService.updateFunction(function);
-        } catch (Exception e) {
-            return new ResponseType<>(-1, "Error updating function");
-        }
-
-        return new ResponseType<>(0, "Function updated successfully");
+    public ResponseType<String> updateFunction(@RequestBody FunctionVo function) {
+        functionService.updateFunction(function);
+        return ResponseType.Success("Function updated successfully");
     }
 
     @PostMapping("/delete")
     @ApiOperationBadRequest(summary = "Delete function", description = "Deletes a function.")
-    public ResponseType<String> deleteFunction(@RequestBody Function function) {
-        try {
-            functionService.deleteFunction(function);
-        } catch (Exception e) {
-            return new ResponseType<>(-1, "Error deleting function");
-        }
-
-        return new ResponseType<>(0, "Function deleted successfully");
+    public ResponseType<String> deleteFunction(@RequestBody FunctionVo function) {
+        functionService.deleteFunction(function);
+        return ResponseType.Success("Function deleted successfully");
     }
 
     @GetMapping("/get")
     @ApiOperationOk(summary = "Get functions", description = "Returns all functions.")
     public ResponseType<List<FunctionVo>> getFunction() {
-        return new ResponseType<>(0, functionService.getFunction().stream().map(Function::toVo).toList());
+        return ResponseType.Success(functionService.getFunction(), "Functions fetched successfully");
     }
 
     @PostMapping("/saveAllFunction")
@@ -66,10 +53,7 @@ public class FunctionController {
     public ResponseType<?> saveAllFunction(@RequestBody FunctionTransVo function) {
         functionService.deleteFunction(function.getDeleteFunction());
         functionService.saveFunction(function.getSaveMainFunction());
-        List<FunctionVo> data= functionService.saveFunctionNewChild(function.getSaveFunctionNewChild()).stream().map(Function::toVo).toList();
-        ResponseType response = new ResponseType();
-        response.setCode(0);
-        response.setData(data);
-        return response;
+        functionService.saveFunctionNewChild(function.getSaveFunctionNewChild());
+        return ResponseType.Success("Functions saved successfully");
     }
 }

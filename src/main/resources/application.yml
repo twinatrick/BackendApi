@@ -1,5 +1,26 @@
 jwt:
   secret:
     use: secretsecretsecretsecretsecretll
+  issuer: backedApi
+  audience: backedApi
+  expiration-minutes: 60
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgres
+    username: postgres
+    password: verYs3cret
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
 server:
   port: 8000
+kafka:
+  consumer:
+    group-id: myGroup
+superuser:
+  key: change-me

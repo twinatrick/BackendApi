@@ -1,9 +1,12 @@
-package com.example.backedapi.Service;
+package com.example.backedapi.Service.impl;
 
+import com.example.backedapi.Service.IAlertCheckLimitService;
+import com.example.backedapi.Service.IFunctionService;
+import com.example.backedapi.Service.IInitAndCheckService;
+import com.example.backedapi.Service.IRoleService;
+import com.example.backedapi.model.Vo.FunctionVo;
+import com.example.backedapi.model.Vo.AlertCheckLimitVo;
 import com.example.backedapi.model.Vo.RoleOutVo;
-import com.example.backedapi.model.db.AlertCheckLimit;
-import com.example.backedapi.model.db.Function;
-import com.example.backedapi.model.db.Role;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -12,16 +15,17 @@ import java.util.Arrays;
 import java.util.List;
 
 @Service
-public class initAndCheckService {
+public class initAndCheckService implements IInitAndCheckService {
     @Autowired
-    private RoleService roleService;
+    private IRoleService roleService;
 
     @Autowired
-    private AlertCheckLimitService alertCheckLimitService;
+    private IAlertCheckLimitService alertCheckLimitService;
 
     @Autowired
-    private  FunctionService functionService;
+    private IFunctionService functionService;
 
+    @Override
     public void initAndCheck() {
         checkRole();
 
@@ -33,21 +37,23 @@ public class initAndCheckService {
         // 3. 啟動告警檢查任務
     }
 
+    @Override
     public void checkRole() {
         List<RoleOutVo> roleList = roleService.getRole();
         if (roleList.isEmpty()) {
             // 初始化角色
-            Role role = new Role();
+            RoleOutVo role = new RoleOutVo();
             role.setName("admin");
             roleService.addRole(role);
-            role = new Role();
+            role = new RoleOutVo();
             role.setName("user");
             roleService.addRole(role);
         }
     }
 
+    @Override
     public void checkLimit() {
-        List<AlertCheckLimit> alertCheckLimitList = alertCheckLimitService.getLimit();
+        List<AlertCheckLimitVo> alertCheckLimitList = alertCheckLimitService.getLimit();
         if (alertCheckLimitList.isEmpty()) {
             alertCheckLimitService.insertLimit("aquark_data", "rain_d", 10);
             alertCheckLimitService.insertLimit("aquark_data", "moisture", 10);
@@ -64,32 +70,34 @@ public class initAndCheckService {
         }else {
             String[] aquark_data_column = {"rain_d", "moisture", "temperature", "echo", "water_speed_aquark", "v1", "v2", "v3", "v4", "v5", "v6", "v7"};
             Arrays.stream(aquark_data_column).forEach(s -> {
-                AlertCheckLimit alertCheckLimit = alertCheckLimitService.getLimit("aquark_data", s);
+                AlertCheckLimitVo alertCheckLimit = alertCheckLimitService.getLimit("aquark_data", s);
                 if (alertCheckLimit == null) {
                     alertCheckLimitService.insertLimit("aquark_data", s, 10);
                 }
             });
         }
     }
+    @Override
     public boolean checkIsExist(String oneLayer, String twoLayer, String threeLayer) {
-        Function one= functionService.getFunctionByName(oneLayer);
+        FunctionVo one= functionService.getFunctionByName(oneLayer);
         if (one == null) {
             return false;
         }
-        Function two = functionService.getFunctionByNameAndParent(twoLayer, one.getId().toString());
+        FunctionVo two = functionService.getFunctionByNameAndParent(twoLayer, one.getId());
 
         if (two == null) {
             return false;
         }
-        Function three = functionService.getFunctionByNameAndParent(threeLayer, two.getId().toString());
+        FunctionVo three = functionService.getFunctionByNameAndParent(threeLayer, two.getId());
         if (three == null) {
             return false;
         }
         return true;
     }
 
+    @Override
     public void checkFunctionBindDefaultRole() {
-        List<Function> functionList = functionService.getFunction();
+        List<FunctionVo> functionList = functionService.getFunction();
         List<List<String>> allFunctionList = new ArrayList<>();
         allFunctionList.add(new ArrayList<>( List.of("System", "User", "View")));
         allFunctionList.add(new ArrayList<>( List.of("System", "RolePermission", "View")));
@@ -103,23 +111,27 @@ public class initAndCheckService {
                 insertFunctionByList(functionListStr,"");
             }
         }
-        functionList= functionService.getFunction();
-        Role role = roleService.getRoleByName("admin");
-        roleService.roleBindFunction(role,functionList);
+        functionList = functionService.getFunction();
+        RoleOutVo role = roleService.getRoleByName("admin");
+        if (role != null) {
+            List<String> functionIds = functionList.stream().map(FunctionVo::getId).toList();
+            roleService.roleBindFunction(role.getId().toString(), functionIds);
+        }
     }
+    @Override
     public void insertFunctionByList(List<String> functionList , String parent) {
         if (functionList.isEmpty()) {
             return;
         }
-        Function sameFunction = functionService.getFunctionByNameAndParent(functionList.getFirst(), parent);
+        FunctionVo sameFunction = functionService.getFunctionByNameAndParent(functionList.getFirst(), parent);
         if (sameFunction != null) {
-            insertFunctionByList(functionList.subList(1, functionList.size()), sameFunction.getId().toString());
+            insertFunctionByList(functionList.subList(1, functionList.size()), sameFunction.getId());
         }else {
-            Function f = new Function();
+            FunctionVo f = new FunctionVo();
             f.setName(functionList.getFirst());
             f.setParent(parent);
-            f=functionService.addFunction(f);
-            insertFunctionByList(functionList.subList(1, functionList.size()), f.getId().toString());
+            f = functionService.addFunction(f);
+            insertFunctionByList(functionList.subList(1, functionList.size()), f.getId());
         }
 
     }

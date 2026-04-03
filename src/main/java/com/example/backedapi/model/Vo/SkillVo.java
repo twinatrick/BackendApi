@@ -11,7 +11,7 @@ import java.util.UUID;
 @Setter
 @NoArgsConstructor
 public class SkillVo {
-    private UUID key ;
+    private UUID id;
     //skill Name
     private String name;
 

@@ -3,66 +3,53 @@ package com.example.backedapi.model.db;
 import com.example.backedapi.model.Vo.aquarkUse.AquarkDataRaw;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.io.Serializable;
 import java.util.Date;
-import java.util.UUID;
 
 @Getter
 @Setter
 @Entity
-public class AquarkData  implements Serializable {
-    @Id
-    @GeneratedValue
-    @Column(name = "`key`")
-    private UUID key;
-
+@Table(name = "aquark_data")
+public class AquarkData extends BaseEntity {
+    @Column(name = "station_id")
     private String station_id;//站點
+    @Column(name = "csq")
     private String CSQ;
+    @Column(name = "trans_time")
     private Date trans_time;
+    @Column(name = "rain_d")
     private float rain_d;//日累積雨量
 
+    @Column(name = "moisture")
     private float moisture;//濕度
+    @Column(name = "temperature")
     private float temperature;//溫度
 
+    @Column(name = "echo")
     private float echo; //水位空高
 
+    @Column(name = "water_speed_aquark")
     private float waterSpeedAquark;//水流速
 
+    @Column(name = "is_peak")
     private boolean isPeak;//是否為尖峰
 
+    @Column(name = "v1")
     private float v1;//鋰電池電壓
+    @Column(name = "v2")
     private float v2;
+    @Column(name = "v3")
     private float v3;
+    @Column(name = "v4")
     private float v4;
+    @Column(name = "v5")
     private float v5;//太陽能板 1
+    @Column(name = "v6")
     private float v6;//太陽能板 1
+    @Column(name = "v7")
     private float v7;
 
-    public AquarkDataRaw toVo() {
-        AquarkDataRaw aquarkDataRaw = new AquarkDataRaw();
-        aquarkDataRaw.setKey(this.key.toString());
-        aquarkDataRaw.setStation_id(this.station_id);
-        aquarkDataRaw.setCSQ(this.CSQ);
-        aquarkDataRaw.setTrans_time(this.trans_time);
-        aquarkDataRaw.setRain_d(this.rain_d);
-        aquarkDataRaw.setMoisture(this.moisture);
-        aquarkDataRaw.setTemperature(this.temperature);
-        aquarkDataRaw.setEcho(this.echo);
-        aquarkDataRaw.setWaterSpeedAquark(this.waterSpeedAquark);
-        aquarkDataRaw.setV1(this.v1);
-        aquarkDataRaw.setV2(this.v2);
-        aquarkDataRaw.setV3(this.v3);
-        aquarkDataRaw.setV4(this.v4);
-        aquarkDataRaw.setV5(this.v5);
-        aquarkDataRaw.setV6(this.v6);
-        aquarkDataRaw.setV7(this.v7);
-        aquarkDataRaw.setPeak(this.isPeak);
-
-        return aquarkDataRaw;
-    }
 }

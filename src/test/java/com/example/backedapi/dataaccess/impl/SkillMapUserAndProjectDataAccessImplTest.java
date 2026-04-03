@@ -79,7 +79,7 @@ class SkillMapUserAndProjectDataAccessImplTest {
 
         // Assert
         assertEquals(2, results.size());
-        assertTrue(results.stream().allMatch(m -> m.getProject().getKey().equals(project1.getKey())));
+        assertTrue(results.stream().allMatch(m -> m.getProject().getId().equals(project1.getId())));
     }
 
     @Test
@@ -160,8 +160,8 @@ class SkillMapUserAndProjectDataAccessImplTest {
 
         // Assert
         assertTrue(result.isPresent());
-        assertEquals(user.getKey(), result.get().getUser().getKey());
-        assertEquals(skill.getKey(), result.get().getSkill().getKey());
+        assertEquals(user.getId(), result.get().getUser().getId());
+        assertEquals(skill.getId(), result.get().getSkill().getId());
     }
 
     @Test
@@ -201,10 +201,10 @@ class SkillMapUserAndProjectDataAccessImplTest {
 
         // Assert
         assertNotNull(savedMapping);
-        assertNotNull(savedMapping.getKey());
-        assertEquals(project.getKey(), savedMapping.getProject().getKey());
-        assertEquals(user.getKey(), savedMapping.getUser().getKey());
-        assertEquals(skill.getKey(), savedMapping.getSkill().getKey());
+        assertNotNull(savedMapping.getId());
+        assertEquals(project.getId(), savedMapping.getProject().getId());
+        assertEquals(user.getId(), savedMapping.getUser().getId());
+        assertEquals(skill.getId(), savedMapping.getSkill().getId());
     }
 
     @Test
@@ -230,8 +230,8 @@ class SkillMapUserAndProjectDataAccessImplTest {
 
         // Assert
         assertNotNull(updatedMapping);
-        assertEquals(savedMapping.getKey(), updatedMapping.getKey());
-        assertEquals(project2.getKey(), updatedMapping.getProject().getKey());
+        assertEquals(savedMapping.getId(), updatedMapping.getId());
+        assertEquals(project2.getId(), updatedMapping.getProject().getId());
     }
 
     @Test
@@ -267,7 +267,7 @@ class SkillMapUserAndProjectDataAccessImplTest {
 
         // Assert
         assertEquals(2, results.size());
-        assertTrue(results.stream().allMatch(m -> m.getSkill().getKey().equals(skill.getKey())));
+        assertTrue(results.stream().allMatch(m -> m.getSkill().getId().equals(skill.getId())));
     }
 
     @Test

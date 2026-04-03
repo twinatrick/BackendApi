@@ -1,6 +1,8 @@
-package com.example.backedapi.Service;
+package com.example.backedapi.Service.impl;
 
+import com.example.backedapi.Service.IAquarkDataService;
 import com.example.backedapi.dataaccess.IAquarkDataDataAccess;
+import com.example.backedapi.mapper.AquarkDataMapper;
 import com.example.backedapi.model.Vo.aquarkUse.AquarkDataRaw;
 import com.example.backedapi.model.Vo.aquarkUse.CriteriaAPIFilter;
 import com.example.backedapi.model.Vo.aquarkUse.AverageAquark;
@@ -19,17 +21,24 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class AquarkDataService {
+public class AquarkDataService implements IAquarkDataService {
     private final IAquarkDataDataAccess aquarkDataDataAccess;
+    private final AquarkDataMapper aquarkDataMapper;
 
+    @Override
     public List<AquarkDataRaw> getAquarkData() {
-        return aquarkDataDataAccess.findAll().stream().map(AquarkData::toVo).collect(Collectors.toList());
+        return aquarkDataDataAccess.findAll().stream().map(aquarkDataMapper::toVo).collect(Collectors.toList());
     }
 
+    @Override
     public List<String> getColumnNameList() {
         Field[] declaredFields = AquarkData.class.getDeclaredFields();
         Field[] fields = AquarkData.class.getFields();
+        Field[] baseFields = AquarkData.class.getSuperclass().getDeclaredFields();
         List<String> columnNameList = new ArrayList<>();
+        for (Field field : baseFields) {
+            columnNameList.add(field.getName());
+        }
         for (Field field : declaredFields) {
             columnNameList.add(field.getName());
         }
@@ -41,6 +50,7 @@ public class AquarkDataService {
         return columnNameList;
     }
 
+    @Override
     public  List<AverageAquark> getAverageAquark(Date start, Date end) {
         CriteriaAPIFilter criteriaAPIFilterStart = new CriteriaAPIFilter();
         criteriaAPIFilterStart.setColumnName("trans_time");
@@ -83,27 +93,32 @@ public class AquarkDataService {
         return avangeList;
     }
 
+    @Override
     public List<AquarkDataRaw> getAquarkDataWithFilter(List<CriteriaAPIFilter> fillterList) {
         if (fillterList.isEmpty()) {
             return getAquarkData();
         }
-        return aquarkDataDataAccess.findByCriteria(fillterList).stream().map(AquarkData::toVo).collect(Collectors.toList());
+        return aquarkDataDataAccess.findByCriteria(fillterList).stream().map(aquarkDataMapper::toVo).collect(Collectors.toList());
     }
 
 
-    public boolean insertAquarkData(List<AquarkData> aquarkDataList) {
+    @Override
+    public boolean insertAquarkData(List<AquarkDataRaw> aquarkDataList) {
         // 更新數據庫
-        aquarkDataDataAccess.saveAll(aquarkDataList);
+        List<AquarkData> entities = aquarkDataList.stream().map(aquarkDataMapper::toEntity).toList();
+        aquarkDataDataAccess.saveAll(entities);
         return true;
     }
 
-    public AquarkData insertAquarkData(AquarkData aquarkData) {
+    @Override
+    public AquarkDataRaw insertAquarkData(AquarkDataRaw aquarkDataRaw) {
+        AquarkData aquarkData = aquarkDataMapper.toEntity(aquarkDataRaw);
 
         float abs = Math.abs(aquarkData.getWaterSpeedAquark());
         aquarkData.setWaterSpeedAquark(abs);
-        AquarkData aquarkDataGet=getAquarkData(aquarkData);
-        if (aquarkDataGet==null) {
-            return updateAquarkData(aquarkData);
+        AquarkData aquarkDataGet = getAquarkDataEntity(aquarkData);
+        if (aquarkDataGet == null) {
+            return updateAquarkData(aquarkDataMapper.toVo(aquarkData));
         }
 
         aquarkDataGet.setCSQ(aquarkData.getCSQ());
@@ -120,15 +135,30 @@ public class AquarkDataService {
         aquarkDataGet.setV6(aquarkData.getV6());
         aquarkDataGet.setV7(aquarkData.getV7());
         aquarkDataGet.setPeak(aquarkData.isPeak());
-        aquarkDataGet= updateAquarkData(aquarkDataGet);
+        AquarkData updated = updateAquarkDataEntity(aquarkDataGet);
 
-        return aquarkDataGet;
-
+        return aquarkDataMapper.toVo(updated);
 
     }
 
     @Cacheable(value = "aquarkData", key = "#aquarkData.station_id + '_' + #aquarkData.trans_time.toString()")
-    public AquarkData getAquarkData(AquarkData aquarkData) {
+    @Override
+    public AquarkDataRaw getAquarkData(AquarkDataRaw aquarkDataRaw) {
+        AquarkData aquarkData = aquarkDataMapper.toEntity(aquarkDataRaw);
+        AquarkData found = getAquarkDataEntity(aquarkData);
+        return found == null ? null : aquarkDataMapper.toVo(found);
+    }
+
+    // 更新數據庫
+    @CachePut(value = "aquarkData", key = "#aquarkData.station_id + '_' + #aquarkData.trans_time.toString()")
+    @Override
+    public AquarkDataRaw updateAquarkData(AquarkDataRaw aquarkDataRaw) {
+        AquarkData aquarkData = aquarkDataMapper.toEntity(aquarkDataRaw);
+        AquarkData saved = updateAquarkDataEntity(aquarkData);
+        return aquarkDataMapper.toVo(saved);
+    }
+
+    private AquarkData getAquarkDataEntity(AquarkData aquarkData) {
         if (aquarkData.getStation_id() == null || aquarkData.getTrans_time() == null) {
             return null;
         }
@@ -136,9 +166,7 @@ public class AquarkDataService {
         return aquarkDataList.isEmpty() ? null : aquarkDataList.getFirst();
     }
 
-    // 更新數據庫
-    @CachePut(value = "aquarkData", key = "#aquarkData.station_id + '_' + #aquarkData.trans_time.toString()")
-    public AquarkData updateAquarkData(AquarkData aquarkData) {
+    private AquarkData updateAquarkDataEntity(AquarkData aquarkData) {
         return aquarkDataDataAccess.save(aquarkData);
     }
 

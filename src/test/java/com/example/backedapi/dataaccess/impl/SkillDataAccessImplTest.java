@@ -52,7 +52,7 @@ class SkillDataAccessImplTest {
 
         // Assert
         assertNotNull(savedSkill);
-        assertNotNull(savedSkill.getKey());
+        assertNotNull(savedSkill.getId());
         assertEquals("Java Programming", savedSkill.getName());
         assertEquals("Java development skills", savedSkill.getDescription());
         assertEquals("admin", savedSkill.getCreatedBy());
@@ -77,7 +77,7 @@ class SkillDataAccessImplTest {
 
         // Assert
         assertNotNull(updatedSkill);
-        assertEquals(savedSkill.getKey(), updatedSkill.getKey());
+        assertEquals(savedSkill.getId(), updatedSkill.getId());
         assertEquals("Advanced Python programming", updatedSkill.getDescription());
         assertEquals("admin2", updatedSkill.getUpdatedBy());
     }
@@ -166,7 +166,7 @@ class SkillDataAccessImplTest {
         Skill savedSkill = skillRepository.save(skill);
 
         // Act
-        Optional<Skill> result = skillDataAccess.findById(savedSkill.getKey());
+        Optional<Skill> result = skillDataAccess.findById(savedSkill.getId());
 
         // Assert
         assertTrue(result.isPresent());
@@ -195,7 +195,7 @@ class SkillDataAccessImplTest {
         skill.setName("Kubernetes");
         skill.setDescription("Container orchestration");
         Skill savedSkill = skillRepository.save(skill);
-        UUID skillId = savedSkill.getKey();
+        UUID skillId = savedSkill.getId();
 
         // Act
         skillDataAccess.delete(savedSkill);
@@ -210,7 +210,7 @@ class SkillDataAccessImplTest {
     void testDelete_NonExistent() {
         // Arrange
         Skill skill = new Skill();
-        skill.setKey(UUID.randomUUID());
+        skill.setId(UUID.randomUUID());
         skill.setName("NonExistent");
 
         // Act & Assert - should not throw exception

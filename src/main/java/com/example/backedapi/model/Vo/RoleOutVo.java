@@ -12,7 +12,7 @@ import java.util.UUID;
 @Setter
 @NoArgsConstructor
 public class RoleOutVo {
-    private UUID key;
+    private UUID id;
     private String name;
     private String description;
     private String permissions;
@@ -20,5 +20,5 @@ public class RoleOutVo {
     private String updatedBy;
     private Date createdTime;
     private Date updatedTime;
-    private List<String> functionKeys;
+    private List<String> functionIds;
 }

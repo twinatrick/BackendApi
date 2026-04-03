@@ -16,7 +16,7 @@ public interface RoleFunctionRepository extends JpaRepository<RoleFunction, UUID
     @Query("delete from RoleFunction s where s.function.id = ?1")
     void deleteByFunction(UUID key);
     @Modifying
-    @Query("delete from RoleFunction s where s.role.key = ?1")
+    @Query("delete from RoleFunction s where s.role.id = ?1")
     void deleteByRoleKey(UUID key);
     @Modifying
     @Query("delete from RoleFunction s where s.function in ?1 and s.role in ?2")

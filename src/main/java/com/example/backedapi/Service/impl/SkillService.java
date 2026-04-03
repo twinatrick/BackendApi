@@ -1,9 +1,12 @@
-package com.example.backedapi.Service;
+package com.example.backedapi.Service.impl;
 
+import com.example.backedapi.Service.ISkillService;
 import com.example.backedapi.dataaccess.IProjectDataAccess;
 import com.example.backedapi.dataaccess.ISkillDataAccess;
 import com.example.backedapi.dataaccess.ISkillMapUserAndProjectDataAccess;
 import com.example.backedapi.dataaccess.IUserDataAccess;
+import com.example.backedapi.mapper.SkillMapper;
+import com.example.backedapi.model.Vo.SkillVo;
 import com.example.backedapi.model.db.Project;
 import com.example.backedapi.model.db.Skill;
 import com.example.backedapi.model.db.SkillMapUserAndProject;
@@ -18,31 +21,34 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class SkillService {
+public class SkillService implements ISkillService {
     private final ISkillDataAccess skillDataAccess;
     private final IUserDataAccess userDataAccess;
     private final IProjectDataAccess projectDataAccess;
     private final ISkillMapUserAndProjectDataAccess skillMapUserAndProjectDataAccess;
+    private final SkillMapper skillMapper;
 
-    public Skill addSkill(Skill skill) {
-        if (skill.getKey() != null) {
+    @Override
+    public SkillVo addSkill(SkillVo skillVo) {
+        Skill skill = skillMapper.toEntity(skillVo);
+        if (skill.getId() != null) {
             throw new IllegalArgumentException("Key must be null");
         } else if (skill.getName() == null) {
             throw new IllegalArgumentException("Name must not be null");
         }
-        Skill s=new Skill();
-        s.setName(skill.getName());
         Example<Skill> example = Example.of(skill);
-            if (skillDataAccess.exists(example)) {
+        if (skillDataAccess.exists(example)) {
             throw new IllegalArgumentException("Name already exists");
         }
 
-        return skillDataAccess.save(skill);
+        return skillMapper.toVo(skillDataAccess.save(skill));
 
     }
 
-    public void updateSkill(Skill skill) {
-        if (skill.getKey() == null) {
+    @Override
+    public void updateSkill(SkillVo skillVo) {
+        Skill skill = skillMapper.toEntity(skillVo);
+        if (skill.getId() == null) {
             throw new IllegalArgumentException("Key must not be null");
         } else if (skill.getName() == null) {
             throw new IllegalArgumentException("Name must not be null");
@@ -51,14 +57,15 @@ public class SkillService {
 
     }
 
-    public List<Skill> getSkill() {
-        return skillDataAccess.findAll();
+    @Override
+    public List<SkillVo> getSkill() {
+        return skillDataAccess.findAll().stream().map(skillMapper::toVo).toList();
     }
 
-    public void BindSkillToUser(String skillKey, String UserKey) {
+    private void bindSkillToUser(String skillKey, String userKey) {
         Skill skill = skillDataAccess.findById(UUID.fromString(skillKey))
                 .orElseThrow(() -> new IllegalArgumentException("Skill not found"));
-        User user = userDataAccess.findById(UUID.fromString(UserKey))
+        User user = userDataAccess.findById(UUID.fromString(userKey))
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
         SkillMapUserAndProject skillMapUserAndProject = new SkillMapUserAndProject();
         skillMapUserAndProject.setSkill(skill);
@@ -72,7 +79,7 @@ public class SkillService {
         skillMapUserAndProjectDataAccess.save(skillMapUserAndProject);
     }
 
-    public void BindSkillToProjectAndUser(String skillKey, String projectKey, String userKey) {
+    private void bindSkillToProjectAndUser(String skillKey, String projectKey, String userKey) {
         Skill skill = skillDataAccess.findById(UUID.fromString(skillKey))
                 .orElseThrow(() -> new IllegalArgumentException("Skill not found"));
         Project project = projectDataAccess.findById(UUID.fromString(projectKey))
@@ -93,11 +100,13 @@ public class SkillService {
     }
 
     @Transactional
-    public void deleteSkill(Skill skill) {
-        if (skill.getKey() == null) {
+    @Override
+    public void deleteSkill(SkillVo skillVo) {
+        Skill skill = skillMapper.toEntity(skillVo);
+        if (skill.getId() == null) {
             throw new IllegalArgumentException("Key must not be null");
         }
-        skill=skillDataAccess.findById(skill.getKey()).orElseThrow(()->new IllegalArgumentException("Skill not found"));
+        skill=skillDataAccess.findById(skill.getId()).orElseThrow(()->new IllegalArgumentException("Skill not found"));
         SkillMapUserAndProject skillMapUserAndProject = new SkillMapUserAndProject();
         skillMapUserAndProject.setSkill(skill);
         Example<SkillMapUserAndProject> example = Example.of(skillMapUserAndProject);
@@ -105,5 +114,14 @@ public class SkillService {
         skillMapUserAndProjectDataAccess.deleteAll(skillMapUserAndProjects);
         skillDataAccess.delete(skill);
 
+    }
+
+    @Override
+    public void bindSkillByType(String type, String skillId, String projectId, String userId) {
+        if ("skill".equals(type)) {
+            bindSkillToUser(skillId, userId);
+        } else if ("project".equals(type)) {
+            bindSkillToProjectAndUser(skillId, projectId, userId);
+        }
     }
 }

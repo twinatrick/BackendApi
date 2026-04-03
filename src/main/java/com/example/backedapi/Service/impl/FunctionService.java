@@ -1,9 +1,11 @@
-package com.example.backedapi.Service;
+package com.example.backedapi.Service.impl;
 
+import com.example.backedapi.Service.IFunctionService;
 import com.example.backedapi.dataaccess.IFunctionDataAccess;
 import com.example.backedapi.dataaccess.IRoleFunctionDataAccess;
-import com.example.backedapi.model.db.Function;
+import com.example.backedapi.mapper.FunctionMapper;
 import com.example.backedapi.model.Vo.FunctionVo;
+import com.example.backedapi.model.db.Function;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Sort;
@@ -18,12 +20,14 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class FunctionService {
+public class FunctionService implements IFunctionService {
     private final IFunctionDataAccess functionDataAccess;
     private final IRoleFunctionDataAccess roleFunctionDataAccess;
+    private final FunctionMapper functionMapper;
 
-    public Function addFunction(Function function) {
-
+    @Override
+    public FunctionVo addFunction(FunctionVo functionVo) {
+        Function function = functionMapper.toEntity(functionVo);
         if (function.getId() != null) {
             throw new IllegalArgumentException("Key must be null");
         } else if (function.getName() == null) {
@@ -37,15 +41,17 @@ public class FunctionService {
             }
         }
 
-        return functionDataAccess.save(function);
-
+        return functionMapper.toVo(functionDataAccess.save(function));
     }
 
-    public List<Function> getFunction() {
-        return functionDataAccess.findAll();
+    @Override
+    public List<FunctionVo> getFunction() {
+        return functionDataAccess.findAll().stream().map(functionMapper::toVo).toList();
     }
 
-    public void updateFunction(Function function) {
+    @Override
+    public void updateFunction(FunctionVo functionVo) {
+        Function function = functionMapper.toEntity(functionVo);
         if (function.getId() == null) {
             throw new IllegalArgumentException("Key must not be null");
         } else if (function.getName() == null) {
@@ -55,7 +61,9 @@ public class FunctionService {
 
     }
 
-    public void deleteFunction(Function function) {
+    @Override
+    public void deleteFunction(FunctionVo functionVo) {
+        Function function = functionMapper.toEntity(functionVo);
         if (function.getId() == null) {
             throw new IllegalArgumentException("Key must not be null");
         }
@@ -64,8 +72,8 @@ public class FunctionService {
 
     }
     @Transactional
+    @Override
     public void deleteFunction(List<FunctionVo> function) {
-        Date date = new Date();
         if (function.isEmpty()) {
             return;
         }
@@ -76,34 +84,25 @@ public class FunctionService {
         functionDataAccess.deleteAll(f);
     }
 
-@Transactional
+    @Transactional
+    @Override
     public void saveFunction(List<FunctionVo> function) {
-        Date date = new Date();
         if (function.isEmpty()) {
             return;
         }
-        List<Function> f = function.stream().map(
-                functionVo -> {
-                    Function temp = new Function();
-                    if (functionVo.getId() != null) {
-                        temp.setId(UUID.fromString(functionVo.getId()));
-                    }
-                    temp.setName(functionVo.getName());
-                    temp.setParent(functionVo.getParent());
-                    temp.setSort(functionVo.getSort());
-                    temp.setType(functionVo.getType());
-                    return temp;
-                }
-        ).collect(Collectors.toList());
+        List<Function> f = function.stream()
+                .map(functionMapper::toEntity)
+                .collect(Collectors.toList());
 
         functionDataAccess.saveAll(f);
     }
     @Transactional
-    public List<Function> saveFunctionNewChild(List<FunctionVo> function) {
+    @Override
+    public List<FunctionVo> saveFunctionNewChild(List<FunctionVo> function) {
         Date date= new Date();
         Sort sort = Sort.by(Sort.Direction.ASC, "sort");
         if (function.isEmpty()) {
-            return functionDataAccess.findAll(sort) ;
+            return functionDataAccess.findAll(sort).stream().map(functionMapper::toVo).toList();
         }
         List<String> GrandParentId = function.stream().map(
                 FunctionVo::getGrandParentId
@@ -117,10 +116,7 @@ public class FunctionService {
                     break;
                 }
             }
-            Function temp = new Function();
-            temp.setName(functionVo.getName());
-            temp.setParent(functionVo.getParent());
-            temp.setSort(functionVo.getSort());
+            Function temp = functionMapper.toEntity(functionVo);
             temp.setType(3);
             saveFunction.add(temp);
         }
@@ -130,17 +126,35 @@ public class FunctionService {
         }
         System.out.println("GrandParentId.size=" + GrandParentId.size() + "\n");
         System.out.println("saveFunctionNewChildTime=" + (( new Date().getTime() - date.getTime())/1000) + "\n");
-        return  functionDataAccess.findAll(sort) ;
+        return functionDataAccess.findAll(sort).stream().map(functionMapper::toVo).toList();
     }
-        public Function getFunctionByName(String name) {
-            return functionDataAccess.findFunctionByName(name);
+    @Override
+    public FunctionVo getFunctionById(String id) {
+        UUID uuid = mapUuid(id);
+        if (uuid == null) {
+            throw new IllegalArgumentException("Key must not be null");
+        }
+        Function function = functionDataAccess.findById(uuid).orElseThrow(
+                () -> new IllegalArgumentException("Function not found")
+        );
+        return functionMapper.toVo(function);
+    }
+        @Override
+        public FunctionVo getFunctionByName(String name) {
+            Function function = functionDataAccess.findFunctionByName(name);
+            return function == null ? null : functionMapper.toVo(function);
         }
 
-        public Function getFunctionByNameAndParent(String name, String parent) {
+        @Override
+        public FunctionVo getFunctionByNameAndParent(String name, String parent) {
             List<Function> functionList = functionDataAccess.findFunctionByNameAndParent(name, parent);
             if (functionList.isEmpty()) {
                 return null;
             }
-            return functionList.getFirst();
+            return functionMapper.toVo(functionList.getFirst());
+        }
+
+        private UUID mapUuid(String id) {
+            return id == null || id.isBlank() ? null : UUID.fromString(id);
         }
     }

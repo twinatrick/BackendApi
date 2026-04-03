@@ -22,8 +22,8 @@ public class RoleDataAccessImpl implements IRoleDataAccess {
     private final RoleRepository roleRepository;
 
     @Override
-    public List<Role> findRoleByKeyIn(List<UUID> keys) {
-        return roleRepository.findRoleByKeyIn(keys);
+    public List<Role> findRoleByIdIn(List<UUID> ids) {
+        return roleRepository.findRoleByIdIn(ids);
     }
 
     @Override

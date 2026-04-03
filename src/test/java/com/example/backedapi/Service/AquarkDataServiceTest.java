@@ -1,6 +1,8 @@
 package com.example.backedapi.Service;
 
+import com.example.backedapi.Service.impl.AquarkDataService;
 import com.example.backedapi.dataaccess.IAquarkDataDataAccess;
+import com.example.backedapi.mapper.AquarkDataMapper;
 import com.example.backedapi.model.Vo.aquarkUse.AverageAquark;
 import com.example.backedapi.model.Vo.aquarkUse.AquarkDataRaw;
 import com.example.backedapi.model.Vo.aquarkUse.CriteriaAPIFilter;
@@ -21,6 +23,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.*;
 
 /**
@@ -33,6 +36,9 @@ class AquarkDataServiceTest {
     @Mock
     private IAquarkDataDataAccess aquarkDataDataAccess;
 
+    @Mock
+    private AquarkDataMapper aquarkDataMapper;
+
     @InjectMocks
     private AquarkDataService aquarkDataService;
 
@@ -44,6 +50,51 @@ class AquarkDataServiceTest {
         cal.set(2024, Calendar.JANUARY, 10, 8, 0, 0);
         cal.set(Calendar.MILLISECOND, 0);
         baseDate = cal.getTime();
+
+        when(aquarkDataMapper.toVo(any(AquarkData.class))).thenAnswer(invocation -> {
+            AquarkData data = invocation.getArgument(0);
+            AquarkDataRaw raw = new AquarkDataRaw();
+            raw.setId(data.getId() == null ? null : data.getId().toString());
+            raw.setStation_id(data.getStation_id());
+            raw.setTrans_time(data.getTrans_time());
+            raw.setRain_d(data.getRain_d());
+            raw.setMoisture(data.getMoisture());
+            raw.setTemperature(data.getTemperature());
+            raw.setEcho(data.getEcho());
+            raw.setWaterSpeedAquark(data.getWaterSpeedAquark());
+            raw.setV1(data.getV1());
+            raw.setV2(data.getV2());
+            raw.setV3(data.getV3());
+            raw.setV4(data.getV4());
+            raw.setV5(data.getV5());
+            raw.setV6(data.getV6());
+            raw.setV7(data.getV7());
+            raw.setPeak(data.isPeak());
+            return raw;
+        });
+        when(aquarkDataMapper.toEntity(any(AquarkDataRaw.class))).thenAnswer(invocation -> {
+            AquarkDataRaw raw = invocation.getArgument(0);
+            AquarkData data = new AquarkData();
+            if (raw.getId() != null && !raw.getId().isBlank()) {
+                data.setId(UUID.fromString(raw.getId()));
+            }
+            data.setStation_id(raw.getStation_id());
+            data.setTrans_time(raw.getTrans_time());
+            data.setRain_d(raw.getRain_d());
+            data.setMoisture(raw.getMoisture());
+            data.setTemperature(raw.getTemperature());
+            data.setEcho(raw.getEcho());
+            data.setWaterSpeedAquark(raw.getWaterSpeedAquark());
+            data.setV1(raw.getV1());
+            data.setV2(raw.getV2());
+            data.setV3(raw.getV3());
+            data.setV4(raw.getV4());
+            data.setV5(raw.getV5());
+            data.setV6(raw.getV6());
+            data.setV7(raw.getV7());
+            data.setPeak(raw.isPeak());
+            return data;
+        });
     }
 
     @Test
@@ -55,7 +106,7 @@ class AquarkDataServiceTest {
 
         assertEquals(1, result.size());
         assertEquals("S1", result.get(0).getStation_id());
-        assertEquals(data.getKey().toString(), result.get(0).getKey());
+        assertEquals(data.getId().toString(), result.get(0).getId());
         verify(aquarkDataDataAccess, times(1)).findAll();
     }
 
@@ -93,14 +144,14 @@ class AquarkDataServiceTest {
     void testGetColumnNameList_IncludesKeyFields() {
         List<String> columns = aquarkDataService.getColumnNameList();
 
-        assertTrue(columns.contains("key"));
+        assertTrue(columns.contains("id"));
         assertTrue(columns.contains("station_id"));
         assertTrue(columns.contains("CSQ"));
     }
 
     @Test
     void testGetAquarkData_NullStationOrTime() {
-        AquarkData data = new AquarkData();
+        AquarkDataRaw data = new AquarkDataRaw();
 
         assertNull(aquarkDataService.getAquarkData(data));
         verify(aquarkDataDataAccess, never()).findByStationIdAndTransTime(any(), any());
@@ -111,7 +162,8 @@ class AquarkDataServiceTest {
         AquarkData data = buildAquarkData(UUID.randomUUID(), "S1", baseDate, 10f, 20f, 30f, 1f, 2f, false);
         when(aquarkDataDataAccess.findByStationIdAndTransTime("S1", baseDate)).thenReturn(List.of(data));
 
-        AquarkData result = aquarkDataService.getAquarkData(data);
+        AquarkDataRaw input = aquarkDataMapper.toVo(data);
+        AquarkDataRaw result = aquarkDataService.getAquarkData(input);
 
         assertNotNull(result);
         assertEquals("S1", result.getStation_id());
@@ -119,35 +171,35 @@ class AquarkDataServiceTest {
 
     @Test
     void testGetAquarkData_NotFound() {
-        AquarkData data = new AquarkData();
+        AquarkDataRaw data = new AquarkDataRaw();
         data.setStation_id("S1");
         data.setTrans_time(baseDate);
         when(aquarkDataDataAccess.findByStationIdAndTransTime("S1", baseDate)).thenReturn(List.of());
 
-        AquarkData result = aquarkDataService.getAquarkData(data);
+        AquarkDataRaw result = aquarkDataService.getAquarkData(data);
 
         assertNull(result);
     }
 
     @Test
     void testInsertAquarkDataList() {
-        List<AquarkData> list = List.of(buildAquarkData(UUID.randomUUID(), "S1", baseDate, 10f, 20f, 30f, 1f, 2f, false));
+        List<AquarkDataRaw> list = List.of(aquarkDataMapper.toVo(buildAquarkData(UUID.randomUUID(), "S1", baseDate, 10f, 20f, 30f, 1f, 2f, false)));
 
         boolean result = aquarkDataService.insertAquarkData(list);
 
         assertTrue(result);
-        verify(aquarkDataDataAccess, times(1)).saveAll(list);
+        verify(aquarkDataDataAccess, times(1)).saveAll(anyList());
     }
 
     @Test
     void testUpdateAquarkData() {
         AquarkData data = buildAquarkData(UUID.randomUUID(), "S1", baseDate, 10f, 20f, 30f, 1f, 2f, false);
-        when(aquarkDataDataAccess.save(data)).thenReturn(data);
+        when(aquarkDataDataAccess.save(any(AquarkData.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        AquarkData result = aquarkDataService.updateAquarkData(data);
+        AquarkDataRaw result = aquarkDataService.updateAquarkData(aquarkDataMapper.toVo(data));
 
-        assertEquals(data, result);
-        verify(aquarkDataDataAccess, times(1)).save(data);
+        assertEquals(data.getStation_id(), result.getStation_id());
+        verify(aquarkDataDataAccess, times(1)).save(any(AquarkData.class));
     }
 
     @Test
@@ -156,7 +208,7 @@ class AquarkDataServiceTest {
         when(aquarkDataDataAccess.findByStationIdAndTransTime("S1", baseDate)).thenReturn(List.of());
         when(aquarkDataDataAccess.save(any(AquarkData.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        AquarkData result = aquarkDataService.insertAquarkData(data);
+        AquarkDataRaw result = aquarkDataService.insertAquarkData(aquarkDataMapper.toVo(data));
 
         assertNotNull(result);
         assertEquals(2.5f, result.getWaterSpeedAquark());
@@ -171,13 +223,13 @@ class AquarkDataServiceTest {
         when(aquarkDataDataAccess.findByStationIdAndTransTime("S1", baseDate)).thenReturn(List.of(existing));
         when(aquarkDataDataAccess.save(any(AquarkData.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        AquarkData result = aquarkDataService.insertAquarkData(incoming);
+        AquarkDataRaw result = aquarkDataService.insertAquarkData(aquarkDataMapper.toVo(incoming));
 
         ArgumentCaptor<AquarkData> captor = ArgumentCaptor.forClass(AquarkData.class);
         verify(aquarkDataDataAccess).save(captor.capture());
         AquarkData saved = captor.getValue();
 
-        assertEquals(existing.getKey(), saved.getKey());
+        assertEquals(existing.getId(), saved.getId());
         assertEquals("CSQ-NEW", saved.getCSQ());
         assertEquals(20f, saved.getRain_d());
         assertEquals(30f, saved.getMoisture());
@@ -185,7 +237,7 @@ class AquarkDataServiceTest {
         assertEquals(2f, saved.getEcho());
         assertEquals(3f, saved.getWaterSpeedAquark());
         assertTrue(saved.isPeak());
-        assertEquals(saved, result);
+        assertEquals(saved.getStation_id(), result.getStation_id());
     }
 
     @Test
@@ -225,7 +277,7 @@ class AquarkDataServiceTest {
     private AquarkData buildAquarkData(UUID key, String stationId, Date transTime, float rain, float moisture,
                                        float temperature, float echo, float waterSpeed, boolean peak) {
         AquarkData data = new AquarkData();
-        data.setKey(key);
+        data.setId(key);
         data.setStation_id(stationId);
         data.setTrans_time(transTime);
         data.setRain_d(rain);

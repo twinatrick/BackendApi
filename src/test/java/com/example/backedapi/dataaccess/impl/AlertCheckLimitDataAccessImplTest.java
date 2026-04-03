@@ -40,7 +40,7 @@ class AlertCheckLimitDataAccessImplTest {
 
         AlertCheckLimit saved = alertCheckLimitDataAccess.save(limit);
 
-        assertNotNull(saved.getKey());
+        assertNotNull(saved.getId());
         assertEquals(1, alertCheckLimitRepository.count());
     }
 

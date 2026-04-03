@@ -1,33 +1,22 @@
 package com.example.backedapi.model.db;
 
 import com.example.backedapi.model.Vo.AlertCheckLimitVo;
-import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.io.Serializable;
-import java.util.UUID;
-
 @Entity
+@jakarta.persistence.Table(name = "alert_check_limit")
 @Getter
 @Setter
-public class AlertCheckLimit  implements Serializable {
-    @Id
-    @GeneratedValue
-    @Column(name = "`key`")
-    private UUID key;
+public class AlertCheckLimit extends BaseEntity {
+    @Column(name = "table_name")
     private String tableName;
+    @Column(name = "column_name")
     private String columnName;
 
+    @Column(name = "limit_value")
     private double limitValue;
-
-    public AlertCheckLimitVo toVo() {
-        return new AlertCheckLimitVo(this.key, this.tableName, this.columnName, this.limitValue);
-    }
-
 
 }

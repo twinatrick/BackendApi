@@ -1,6 +1,6 @@
 package com.example.backedapi.Aop;
 
-import com.example.backedapi.Service.UserService;
+import com.example.backedapi.dataaccess.IUserDataAccess;
 import com.example.backedapi.fillter.JwtAuthenticationToken;
 import com.example.backedapi.model.db.User;
 import com.example.backedapi.model.Vo.ResponseType;
@@ -19,7 +19,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicReference;
 @Aspect
 @Order(1)
 @Component
@@ -33,7 +32,7 @@ public class TokenCheck {
     @Autowired
     private JwtAuthenticationToken jwtAuthenticationToken;
     @Autowired
-    private  UserService userService;
+    private IUserDataAccess userDataAccess;
     @Pointcut("execution(* com.example.backedapi.controller.*.*(..))")
     void pointcut(){
     }
@@ -45,45 +44,44 @@ public class TokenCheck {
     void requestMappingPointcut(){}
     @Around("pointcut() && !ignoreAuthorize()")
     public Object around(ProceedingJoinPoint pjp) throws Throwable {
-        ResponseType<?> responseType = new ResponseType<>();
         try {
 
-            AtomicReference<String> token = new AtomicReference<>("");
-            Cookie[] cookies=request.getCookies();
-            for (Cookie cookie : cookies) {
-                if (cookie!=null){
-                    String name=  cookie.getName();
-                    String value =cookie.getValue();
-                    if (Objects.equals(name, "v3-admin-vite-token-key"))
-                        token.set(value);
-                }
-
-
-
-
+            String token = resolveToken();
+            if (token == null || token.isBlank()) {
+                response.setStatus(HttpStatus.UNAUTHORIZED.value());
+                return ResponseType.Fail("AUTH_ERROR", "Unauthorized", 401);
             }
-            if(token.get() ==null|| token.get().isEmpty()) throw new NullPointerException("Token is null");
-            token.set(token.get().replace("Bearer", "").trim());
-            JwtClaims claims = jwtAuthenticationToken.verifyJWT(token.get());
+            token = token.replaceFirst("^Bearer\\s+", "").trim();
+            JwtClaims claims = jwtAuthenticationToken.verifyJWT(token);
             String email = (String) claims.getClaimValue("email");
-            User user = userService.getOnlyUserByEmail(email);
+            User user = userDataAccess.findByEmail(email).stream().findFirst().orElse(null);
             request.setAttribute("user", user);
 
-        }catch (NullPointerException e){
-            e.printStackTrace(System.err);
+        } catch (InvalidJwtException e) {
             response.setStatus(HttpStatus.UNAUTHORIZED.value());
-            responseType.setMessage(e.getMessage());
-            return responseType;
-        }catch (InvalidJwtException e){
-            e.printStackTrace(System.err);
-            response.setStatus(HttpStatus.UNAUTHORIZED.value());
-            responseType.setMessage("Token illegal");
-            return responseType;
-        }catch (Throwable e){
-            e.printStackTrace(System.err);
+            return ResponseType.Fail("AUTH_ERROR", "Unauthorized", 401);
+        } catch (Throwable e) {
             response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
+            return ResponseType.Fail("INTERNAL_ERROR", "Internal server error", 500);
         }
         return pjp.proceed();
+    }
+
+    private String resolveToken() {
+        String header = request.getHeader("Authorization");
+        if (header != null && !header.isBlank()) {
+            return header;
+        }
+        Cookie[] cookies = request.getCookies();
+        if (cookies == null) {
+            return null;
+        }
+        for (Cookie cookie : cookies) {
+            if (cookie != null && Objects.equals(cookie.getName(), "v3-admin-vite-token-key")) {
+                return cookie.getValue();
+            }
+        }
+        return null;
     }
 
 

@@ -1,4 +1,4 @@
-package com.example.backedapi.Util;
+package com.example.backedapi.model.dto;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;

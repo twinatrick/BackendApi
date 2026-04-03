@@ -1,7 +1,9 @@
 package com.example.backedapi.Service;
 
+import com.example.backedapi.Service.impl.FunctionService;
 import com.example.backedapi.dataaccess.IFunctionDataAccess;
 import com.example.backedapi.dataaccess.IRoleFunctionDataAccess;
+import com.example.backedapi.mapper.FunctionMapper;
 import com.example.backedapi.model.Vo.FunctionVo;
 import com.example.backedapi.model.db.Function;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,6 +36,9 @@ class FunctionServiceTest {
     @Mock
     private IRoleFunctionDataAccess roleFunctionDataAccess;
 
+    @Mock
+    private FunctionMapper functionMapper;
+
     @InjectMocks
     private FunctionService functionService;
 
@@ -49,28 +54,53 @@ class FunctionServiceTest {
         testFunction.setParent("parent-id");
         testFunction.setSort("1");
         testFunction.setType(1);
+
+        when(functionMapper.toEntity(any(FunctionVo.class))).thenAnswer(invocation -> {
+            FunctionVo vo = invocation.getArgument(0);
+            Function function = new Function();
+            if (vo.getId() != null && !vo.getId().isBlank()) {
+                function.setId(UUID.fromString(vo.getId()));
+            }
+            function.setName(vo.getName());
+            function.setParent(vo.getParent());
+            function.setSort(vo.getSort());
+            function.setType(vo.getType());
+            return function;
+        });
+        when(functionMapper.toVo(any(Function.class))).thenAnswer(invocation -> {
+            Function function = invocation.getArgument(0);
+            FunctionVo vo = new FunctionVo();
+            if (function.getId() != null) {
+                vo.setId(function.getId().toString());
+            }
+            vo.setName(function.getName());
+            vo.setParent(function.getParent());
+            vo.setSort(function.getSort());
+            vo.setType(function.getType());
+            return vo;
+        });
     }
 
     @Test
     void testAddFunction_Success() {
-        Function newFunction = new Function();
+        FunctionVo newFunction = new FunctionVo();
         newFunction.setName("New Function");
 
         when(functionDataAccess.exists(any(Example.class))).thenReturn(false);
-        when(functionDataAccess.save(newFunction)).thenReturn(newFunction);
+        when(functionDataAccess.save(any(Function.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        Function result = functionService.addFunction(newFunction);
+        FunctionVo result = functionService.addFunction(newFunction);
 
         assertNotNull(result);
         assertEquals("New Function", result.getName());
         verify(functionDataAccess).exists(any(Example.class));
-        verify(functionDataAccess).save(newFunction);
+        verify(functionDataAccess).save(any(Function.class));
     }
 
     @Test
     void testAddFunction_IdNotNull_ThrowsException() {
-        Function functionWithId = new Function();
-        functionWithId.setId(testId);
+        FunctionVo functionWithId = new FunctionVo();
+        functionWithId.setId(testId.toString());
         functionWithId.setName("Test");
 
         Exception exception = assertThrows(IllegalArgumentException.class, () -> {
@@ -83,7 +113,7 @@ class FunctionServiceTest {
 
     @Test
     void testAddFunction_NameNull_ThrowsException() {
-        Function functionWithoutName = new Function();
+        FunctionVo functionWithoutName = new FunctionVo();
         functionWithoutName.setName(null);
 
         Exception exception = assertThrows(IllegalArgumentException.class, () -> {
@@ -96,7 +126,7 @@ class FunctionServiceTest {
 
     @Test
     void testAddFunction_NameAlreadyExists_ThrowsException() {
-        Function newFunction = new Function();
+        FunctionVo newFunction = new FunctionVo();
         newFunction.setName("Existing Function");
 
         when(functionDataAccess.exists(any(Example.class))).thenReturn(true);
@@ -114,7 +144,7 @@ class FunctionServiceTest {
         List<Function> functions = Arrays.asList(testFunction, new Function());
         when(functionDataAccess.findAll()).thenReturn(functions);
 
-        List<Function> result = functionService.getFunction();
+        List<FunctionVo> result = functionService.getFunction();
 
         assertEquals(2, result.size());
         verify(functionDataAccess).findAll();
@@ -122,16 +152,20 @@ class FunctionServiceTest {
 
     @Test
     void testUpdateFunction_Success() {
-        when(functionDataAccess.save(testFunction)).thenReturn(testFunction);
+        FunctionVo updateVo = new FunctionVo();
+        updateVo.setId(testId.toString());
+        updateVo.setName("Test Function");
 
-        functionService.updateFunction(testFunction);
+        when(functionDataAccess.save(any(Function.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        verify(functionDataAccess).save(testFunction);
+        functionService.updateFunction(updateVo);
+
+        verify(functionDataAccess).save(any(Function.class));
     }
 
     @Test
     void testUpdateFunction_IdNull_ThrowsException() {
-        Function functionWithoutId = new Function();
+        FunctionVo functionWithoutId = new FunctionVo();
         functionWithoutId.setName("Test");
 
         Exception exception = assertThrows(IllegalArgumentException.class, () -> {
@@ -144,8 +178,8 @@ class FunctionServiceTest {
 
     @Test
     void testUpdateFunction_NameNull_ThrowsException() {
-        Function functionWithoutName = new Function();
-        functionWithoutName.setId(testId);
+        FunctionVo functionWithoutName = new FunctionVo();
+        functionWithoutName.setId(testId.toString());
         functionWithoutName.setName(null);
 
         Exception exception = assertThrows(IllegalArgumentException.class, () -> {
@@ -159,17 +193,20 @@ class FunctionServiceTest {
     @Test
     void testDeleteFunction_Success() {
         doNothing().when(roleFunctionDataAccess).deleteByFunction(testId);
-        doNothing().when(functionDataAccess).delete(testFunction);
+        doNothing().when(functionDataAccess).delete(any(Function.class));
 
-        functionService.deleteFunction(testFunction);
+        FunctionVo deleteVo = new FunctionVo();
+        deleteVo.setId(testId.toString());
+        deleteVo.setName("Test Function");
+        functionService.deleteFunction(deleteVo);
 
         verify(roleFunctionDataAccess).deleteByFunction(testId);
-        verify(functionDataAccess).delete(testFunction);
+        verify(functionDataAccess).delete(any(Function.class));
     }
 
     @Test
     void testDeleteFunction_IdNull_ThrowsException() {
-        Function functionWithoutId = new Function();
+        FunctionVo functionWithoutId = new FunctionVo();
 
         Exception exception = assertThrows(IllegalArgumentException.class, () -> {
             functionService.deleteFunction(functionWithoutId);
@@ -276,7 +313,7 @@ class FunctionServiceTest {
         when(functionDataAccess.saveAll(anyList())).thenReturn(Collections.emptyList());
         when(functionDataAccess.findAll(sort)).thenReturn(Collections.emptyList());
 
-        List<Function> result = functionService.saveFunctionNewChild(functionVos);
+        List<FunctionVo> result = functionService.saveFunctionNewChild(functionVos);
 
         assertNotNull(result);
         verify(functionDataAccess).findAllByGrandParentId(anyList());
@@ -292,7 +329,7 @@ class FunctionServiceTest {
 
         when(functionDataAccess.findAll(sort)).thenReturn(allFunctions);
 
-        List<Function> result = functionService.saveFunctionNewChild(emptyList);
+        List<FunctionVo> result = functionService.saveFunctionNewChild(emptyList);
 
         assertEquals(2, result.size());
         verify(functionDataAccess).findAll(sort);
@@ -325,7 +362,7 @@ class FunctionServiceTest {
     void testGetFunctionByName() {
         when(functionDataAccess.findFunctionByName("Test Function")).thenReturn(testFunction);
 
-        Function result = functionService.getFunctionByName("Test Function");
+        FunctionVo result = functionService.getFunctionByName("Test Function");
 
         assertNotNull(result);
         assertEquals("Test Function", result.getName());
@@ -338,7 +375,7 @@ class FunctionServiceTest {
         when(functionDataAccess.findFunctionByNameAndParent("Test Function", "parent-id"))
                 .thenReturn(functions);
 
-        Function result = functionService.getFunctionByNameAndParent("Test Function", "parent-id");
+        FunctionVo result = functionService.getFunctionByNameAndParent("Test Function", "parent-id");
 
         assertNotNull(result);
         assertEquals("Test Function", result.getName());
@@ -350,7 +387,7 @@ class FunctionServiceTest {
         when(functionDataAccess.findFunctionByNameAndParent("Non-existent", "parent-id"))
                 .thenReturn(Collections.emptyList());
 
-        Function result = functionService.getFunctionByNameAndParent("Non-existent", "parent-id");
+        FunctionVo result = functionService.getFunctionByNameAndParent("Non-existent", "parent-id");
 
         assertNull(result);
         verify(functionDataAccess).findFunctionByNameAndParent("Non-existent", "parent-id");

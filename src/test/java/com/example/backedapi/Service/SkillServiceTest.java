@@ -1,9 +1,12 @@
 package com.example.backedapi.Service;
 
+import com.example.backedapi.Service.impl.SkillService;
 import com.example.backedapi.dataaccess.IProjectDataAccess;
 import com.example.backedapi.dataaccess.ISkillDataAccess;
 import com.example.backedapi.dataaccess.ISkillMapUserAndProjectDataAccess;
 import com.example.backedapi.dataaccess.IUserDataAccess;
+import com.example.backedapi.mapper.SkillMapper;
+import com.example.backedapi.model.Vo.SkillVo;
 import com.example.backedapi.model.db.Project;
 import com.example.backedapi.model.db.Skill;
 import com.example.backedapi.model.db.SkillMapUserAndProject;
@@ -44,6 +47,9 @@ class SkillServiceTest {
     @Mock
     private ISkillMapUserAndProjectDataAccess skillMapUserAndProjectDataAccess;
 
+    @Mock
+    private SkillMapper skillMapper;
+
     @InjectMocks
     private SkillService skillService;
 
@@ -61,38 +67,57 @@ class SkillServiceTest {
         testProjectId = UUID.randomUUID();
 
         testSkill = new Skill();
-        testSkill.setKey(testSkillId);
+        testSkill.setId(testSkillId);
         testSkill.setName("Java");
 
         testUser = new User();
-        testUser.setKey(testUserId);
+        testUser.setId(testUserId);
         testUser.setName("Test User");
 
         testProject = new Project();
-        testProject.setKey(testProjectId);
+        testProject.setId(testProjectId);
         testProject.setName("Test Project");
+
+        when(skillMapper.toEntity(any(SkillVo.class))).thenAnswer(invocation -> {
+            SkillVo vo = invocation.getArgument(0);
+            Skill skill = new Skill();
+            if (vo.getId() != null && !vo.getId().isBlank()) {
+                skill.setId(UUID.fromString(vo.getId()));
+            }
+            skill.setName(vo.getName());
+            return skill;
+        });
+        when(skillMapper.toVo(any(Skill.class))).thenAnswer(invocation -> {
+            Skill skill = invocation.getArgument(0);
+            SkillVo vo = new SkillVo();
+            if (skill.getId() != null) {
+                vo.setId(skill.getId().toString());
+            }
+            vo.setName(skill.getName());
+            return vo;
+        });
     }
 
     @Test
     void testAddSkill_Success() {
-        Skill newSkill = new Skill();
+        SkillVo newSkill = new SkillVo();
         newSkill.setName("Python");
 
         when(skillDataAccess.exists(any(Example.class))).thenReturn(false);
-        when(skillDataAccess.save(newSkill)).thenReturn(newSkill);
+        when(skillDataAccess.save(any(Skill.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        Skill result = skillService.addSkill(newSkill);
+        SkillVo result = skillService.addSkill(newSkill);
 
         assertNotNull(result);
         assertEquals("Python", result.getName());
         verify(skillDataAccess).exists(any(Example.class));
-        verify(skillDataAccess).save(newSkill);
+        verify(skillDataAccess).save(any(Skill.class));
     }
 
     @Test
     void testAddSkill_KeyNotNull_ThrowsException() {
-        Skill skillWithKey = new Skill();
-        skillWithKey.setKey(testSkillId);
+        SkillVo skillWithKey = new SkillVo();
+        skillWithKey.setId(testSkillId.toString());
         skillWithKey.setName("Java");
 
         Exception exception = assertThrows(IllegalArgumentException.class, () -> {
@@ -105,7 +130,7 @@ class SkillServiceTest {
 
     @Test
     void testAddSkill_NameNull_ThrowsException() {
-        Skill skillWithoutName = new Skill();
+        SkillVo skillWithoutName = new SkillVo();
         skillWithoutName.setName(null);
 
         Exception exception = assertThrows(IllegalArgumentException.class, () -> {
@@ -118,7 +143,7 @@ class SkillServiceTest {
 
     @Test
     void testAddSkill_NameAlreadyExists_ThrowsException() {
-        Skill newSkill = new Skill();
+        SkillVo newSkill = new SkillVo();
         newSkill.setName("Existing Skill");
 
         when(skillDataAccess.exists(any(Example.class))).thenReturn(true);
@@ -133,16 +158,20 @@ class SkillServiceTest {
 
     @Test
     void testUpdateSkill_Success() {
-        when(skillDataAccess.save(testSkill)).thenReturn(testSkill);
+        SkillVo updateSkill = new SkillVo();
+        updateSkill.setId(testSkillId.toString());
+        updateSkill.setName("Java");
 
-        skillService.updateSkill(testSkill);
+        when(skillDataAccess.save(any(Skill.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        verify(skillDataAccess).save(testSkill);
+        skillService.updateSkill(updateSkill);
+
+        verify(skillDataAccess).save(any(Skill.class));
     }
 
     @Test
     void testUpdateSkill_KeyNull_ThrowsException() {
-        Skill skillWithoutKey = new Skill();
+        SkillVo skillWithoutKey = new SkillVo();
         skillWithoutKey.setName("Java");
 
         Exception exception = assertThrows(IllegalArgumentException.class, () -> {
@@ -155,8 +184,8 @@ class SkillServiceTest {
 
     @Test
     void testUpdateSkill_NameNull_ThrowsException() {
-        Skill skillWithoutName = new Skill();
-        skillWithoutName.setKey(testSkillId);
+        SkillVo skillWithoutName = new SkillVo();
+        skillWithoutName.setId(testSkillId.toString());
         skillWithoutName.setName(null);
 
         Exception exception = assertThrows(IllegalArgumentException.class, () -> {
@@ -172,7 +201,7 @@ class SkillServiceTest {
         List<Skill> skills = List.of(testSkill, new Skill());
         when(skillDataAccess.findAll()).thenReturn(skills);
 
-        List<Skill> result = skillService.getSkill();
+        List<SkillVo> result = skillService.getSkill();
 
         assertEquals(2, result.size());
         verify(skillDataAccess).findAll();
@@ -336,7 +365,9 @@ class SkillServiceTest {
         doNothing().when(skillMapUserAndProjectDataAccess).deleteAll(mappings);
         doNothing().when(skillDataAccess).delete(testSkill);
 
-        skillService.deleteSkill(testSkill);
+        SkillVo skillToDelete = new SkillVo();
+        skillToDelete.setId(testSkillId.toString());
+        skillService.deleteSkill(skillToDelete);
 
         verify(skillDataAccess).findById(testSkillId);
         verify(skillMapUserAndProjectDataAccess).findAll(any(Example.class));
@@ -346,7 +377,7 @@ class SkillServiceTest {
 
     @Test
     void testDeleteSkill_KeyNull_ThrowsException() {
-        Skill skillWithoutKey = new Skill();
+        SkillVo skillWithoutKey = new SkillVo();
 
         Exception exception = assertThrows(IllegalArgumentException.class, () -> {
             skillService.deleteSkill(skillWithoutKey);
@@ -361,7 +392,9 @@ class SkillServiceTest {
         when(skillDataAccess.findById(testSkillId)).thenReturn(Optional.empty());
 
         Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            skillService.deleteSkill(testSkill);
+            SkillVo skillToDelete = new SkillVo();
+            skillToDelete.setId(testSkillId.toString());
+            skillService.deleteSkill(skillToDelete);
         });
 
         assertEquals("Skill not found", exception.getMessage());
@@ -375,7 +408,9 @@ class SkillServiceTest {
         doNothing().when(skillMapUserAndProjectDataAccess).deleteAll(Collections.emptyList());
         doNothing().when(skillDataAccess).delete(testSkill);
 
-        skillService.deleteSkill(testSkill);
+        SkillVo skillToDelete = new SkillVo();
+        skillToDelete.setId(testSkillId.toString());
+        skillService.deleteSkill(skillToDelete);
 
         verify(skillMapUserAndProjectDataAccess).deleteAll(Collections.emptyList());
         verify(skillDataAccess).delete(testSkill);

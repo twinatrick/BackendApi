@@ -1,6 +1,6 @@
 package com.example.backedapi.controller;
 
-import com.example.backedapi.Service.AquarkDataService;
+import com.example.backedapi.Service.IAquarkDataService;
 import com.example.backedapi.annotation.Ingnore;
 import com.example.backedapi.annotation.openapi.ApiControllerTag;
 import com.example.backedapi.annotation.openapi.ApiOperationBadRequest;
@@ -20,7 +20,7 @@ import java.util.List;
 @RequestMapping("/backend/aquarkData")
 @ApiControllerTag(name = "AquarkData", description = "Backend API endpoints - Aquark data queries")
 public class AquarkDataController {
-    private final AquarkDataService aquarkDataService;
+    private final IAquarkDataService aquarkDataService;
 
     @PostMapping("/getData")
     @ApiOperationBadRequest(summary = "Get aquark data", description = "Returns aquark data filtered by criteria.")

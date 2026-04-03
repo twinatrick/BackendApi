@@ -37,8 +37,8 @@ class RoleDataAccessImplTest {
     }
 
     @Test
-    @DisplayName("Should find roles by keys")
-    void testFindRoleByKeyIn() {
+    @DisplayName("Should find roles by ids")
+    void testFindRoleByIdIn() {
         // Arrange
         Role role1 = new Role();
         role1.setName("ROLE_ADMIN");
@@ -48,10 +48,10 @@ class RoleDataAccessImplTest {
         role2.setName("ROLE_USER");
         roleRepository.save(role2);
 
-        List<UUID> keys = List.of(role1.getKey(), role2.getKey());
+        List<UUID> ids = List.of(role1.getId(), role2.getId());
 
         // Act
-        List<Role> result = roleDataAccess.findRoleByKeyIn(keys);
+        List<Role> result = roleDataAccess.findRoleByIdIn(ids);
 
         // Assert
         assertEquals(2, result.size());
@@ -60,30 +60,30 @@ class RoleDataAccessImplTest {
     }
 
     @Test
-    @DisplayName("Should return empty list when no roles match keys")
-    void testFindRoleByKeyIn_NotFound() {
+    @DisplayName("Should return empty list when no roles match ids")
+    void testFindRoleByIdIn_NotFound() {
         // Arrange
-        List<UUID> keys = List.of(UUID.randomUUID(), UUID.randomUUID());
+        List<UUID> ids = List.of(UUID.randomUUID(), UUID.randomUUID());
 
         // Act
-        List<Role> result = roleDataAccess.findRoleByKeyIn(keys);
+        List<Role> result = roleDataAccess.findRoleByIdIn(ids);
 
         // Assert
         assertTrue(result.isEmpty());
     }
 
     @Test
-    @DisplayName("Should find subset of roles when only some keys match")
-    void testFindRoleByKeyIn_PartialMatch() {
+    @DisplayName("Should find subset of roles when only some ids match")
+    void testFindRoleByIdIn_PartialMatch() {
         // Arrange
         Role role1 = new Role();
         role1.setName("ROLE_ADMIN");
         roleRepository.save(role1);
 
-        List<UUID> keys = List.of(role1.getKey(), UUID.randomUUID());
+        List<UUID> ids = List.of(role1.getId(), UUID.randomUUID());
 
         // Act
-        List<Role> result = roleDataAccess.findRoleByKeyIn(keys);
+        List<Role> result = roleDataAccess.findRoleByIdIn(ids);
 
         // Assert
         assertEquals(1, result.size());
@@ -91,10 +91,10 @@ class RoleDataAccessImplTest {
     }
 
     @Test
-    @DisplayName("Should handle empty key list")
-    void testFindRoleByKeyIn_EmptyList() {
+    @DisplayName("Should handle empty id list")
+    void testFindRoleByIdIn_EmptyList() {
         // Act
-        List<Role> result = roleDataAccess.findRoleByKeyIn(List.of());
+        List<Role> result = roleDataAccess.findRoleByIdIn(List.of());
 
         // Assert
         assertTrue(result.isEmpty());
@@ -146,7 +146,7 @@ class RoleDataAccessImplTest {
         Role saved = roleDataAccess.save(role);
 
         // Assert
-        assertNotNull(saved.getKey());
+        assertNotNull(saved.getId());
         assertEquals("ROLE_ADMIN", saved.getName());
         assertEquals("Administrator role", saved.getDescription());
     }
@@ -179,7 +179,7 @@ class RoleDataAccessImplTest {
         Role saved = roleRepository.save(role);
 
         // Act
-        Optional<Role> result = roleDataAccess.findById(saved.getKey());
+        Optional<Role> result = roleDataAccess.findById(saved.getId());
 
         // Assert
         assertTrue(result.isPresent());
@@ -203,7 +203,7 @@ class RoleDataAccessImplTest {
         Role role = new Role();
         role.setName("ROLE_ADMIN");
         Role saved = roleRepository.save(role);
-        UUID roleKey = saved.getKey();
+        UUID roleKey = saved.getId();
 
         // Act
         roleDataAccess.delete(saved);
@@ -224,10 +224,10 @@ class RoleDataAccessImplTest {
         role2.setName("ROLE_USER");
         roleRepository.save(role2);
 
-        List<UUID> keys = List.of(role1.getKey(), role2.getKey());
+        List<UUID> ids = List.of(role1.getId(), role2.getId());
 
         // Act
-        List<Role> result = roleDataAccess.findAllById(keys);
+        List<Role> result = roleDataAccess.findAllById(ids);
 
         // Assert
         assertEquals(2, result.size());

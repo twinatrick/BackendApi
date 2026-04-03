@@ -1,11 +1,14 @@
-package com.example.backedapi.Service;
+package com.example.backedapi.Service.impl;
 
-import com.example.backedapi.Util.AlarmMessage;
-import com.example.backedapi.Util.CallApi;
+import com.example.backedapi.Service.IAlertCheckLimitService;
+import com.example.backedapi.Service.IApiFetcher;
+import com.example.backedapi.Service.IAquarkDataService;
+import com.example.backedapi.Service.ICheckApiService;
+import com.example.backedapi.Service.IAlarmService;
+import com.example.backedapi.model.dto.AlarmMessage;
 import com.example.backedapi.model.Vo.aquarkUse.RowData;
 import com.example.backedapi.model.Vo.aquarkUse.aquarkApiReturnVo;
 import com.example.backedapi.model.Vo.aquarkUse.AquarkDataRaw;
-import com.example.backedapi.model.db.AquarkData;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,16 +19,19 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class CheckApiService {
-    private final CallApi callApi;
-    private  final ObjectMapper  objectMapper ;
-    private  final AlarmService alarmService;
-    private final AquarkDataService aquarkDataService;
-    private final AlertCheckLimitService alertCheckLimitService;
-    private final ProducerService producerService;
+public class CheckApiService implements ICheckApiService {
+    private final IApiFetcher apiFetcher;
+    private final ObjectMapper objectMapper;
+    private final IAlarmService alarmService;
+    private final IAquarkDataService aquarkDataService;
+    private final IAlertCheckLimitService alertCheckLimitService;
+
+    @Override
     public String getApiOnlyUrl(String url) throws IOException {
-        return callApi.callGetApi(url);
+        return apiFetcher.get(url);
     }
+
+    @Override
     public void getAquarkApiData() throws IOException {
         List<String> urlList = List.of(
                 "https://app.aquark.com.tw/api/raw/Angle2024/240627",
@@ -44,14 +50,14 @@ public class CheckApiService {
         }
         List<AlarmMessage> alarmMessages = new ArrayList<>();
         for (AquarkDataRaw data : aquarkDataRawList) {
-            AquarkData aquarkData= aquarkDataService.insertAquarkData(data.toDataBase());
+            AquarkDataRaw aquarkData = aquarkDataService.insertAquarkData(data);
             alarmMessages.addAll(checkValue(aquarkData)) ;
         }
         if (!alarmMessages.isEmpty()){
             alarmService.processAlarm(alarmMessages);
         }
     }
-    List<AlarmMessage> checkValue(AquarkData data) {
+    List<AlarmMessage> checkValue(AquarkDataRaw data) {
 
         AlarmMessage alarmMessage = new AlarmMessage();
         alarmMessage.setLevel("ERROR");

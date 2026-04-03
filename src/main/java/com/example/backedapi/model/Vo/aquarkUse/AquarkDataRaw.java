@@ -1,7 +1,6 @@
 package com.example.backedapi.model.Vo.aquarkUse;
 
 import com.example.backedapi.model.db.AquarkData;
-import jakarta.persistence.Id;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -12,8 +11,7 @@ import java.util.UUID;
 @Getter
 @Setter
 public class AquarkDataRaw {
-    @Id
-    private String key;
+    private String id;
 
     private String station_id;//站點
     private String CSQ;
@@ -38,29 +36,6 @@ public class AquarkDataRaw {
     private float v7;
     private boolean isPeak;//是否為尖峰
 
-    public AquarkData toDataBase() {
-        AquarkData aquarkData = new AquarkData();
-        if(this.key != null) {
-            aquarkData.setKey(UUID.fromString(this.key));
-        }
-        aquarkData.setStation_id(this.station_id);
-        aquarkData.setCSQ(this.CSQ);
-        aquarkData.setTrans_time(this.trans_time);
-        aquarkData.setRain_d(this.rain_d);
-        aquarkData.setMoisture(this.moisture);
-        aquarkData.setTemperature(this.temperature);
-        aquarkData.setEcho(this.echo);
-        aquarkData.setWaterSpeedAquark(this.waterSpeedAquark);
-        aquarkData.setV1(this.v1);
-        aquarkData.setV2(this.v2);
-        aquarkData.setV3(this.v3);
-        aquarkData.setV4(this.v4);
-        aquarkData.setV5(this.v5);
-        aquarkData.setV6(this.v6);
-        aquarkData.setV7(this.v7);
-        aquarkData.setPeak(this.isPeakCheck());
-        return aquarkData;
-    }
 
     private boolean isPeakCheck(){
         Calendar cal=Calendar.getInstance();
@@ -121,5 +96,13 @@ public class AquarkDataRaw {
         averageAquark.setV6(this.v6);
         averageAquark.setV7(this.v7);
         return averageAquark;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 }

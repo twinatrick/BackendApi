@@ -1,5 +1,6 @@
 package com.example.backedapi.Service;
 
+import com.example.backedapi.Service.impl.ProjectService;
 import com.example.backedapi.dataaccess.IProjectDataAccess;
 import com.example.backedapi.dataaccess.ISkillMapUserAndProjectDataAccess;
 import com.example.backedapi.model.db.Project;
@@ -75,7 +76,7 @@ class ProjectServiceTest {
     @DisplayName("addProject - Key 不為 null 時拋出例外")
     void addProject_shouldThrowException_whenKeyNotNull() {
         // Given
-        testProject.setKey(UUID.randomUUID());
+        testProject.setId(UUID.randomUUID());
         
         // When & Then
         IllegalArgumentException exception = assertThrows(
@@ -132,7 +133,7 @@ class ProjectServiceTest {
     void updateProject_shouldUpdateProject_whenValid() {
         // Given
         UUID projectId = UUID.randomUUID();
-        testProject.setKey(projectId);
+        testProject.setId(projectId);
         
         // When
         projectService.updateProject(testProject);
@@ -158,7 +159,7 @@ class ProjectServiceTest {
     @DisplayName("updateProject - Name 為 null 時拋出例外")
     void updateProject_shouldThrowException_whenNameIsNull() {
         // Given
-        testProject.setKey(UUID.randomUUID());
+        testProject.setId(UUID.randomUUID());
         testProject.setName(null);
         
         // When & Then
@@ -212,7 +213,7 @@ class ProjectServiceTest {
     void deleteProject_shouldDeleteProjectAndMappings() {
         // Given
         UUID projectId = UUID.randomUUID();
-        testProject.setKey(projectId);
+        testProject.setId(projectId);
         
         when(projectDataAccess.findById(projectId))
             .thenReturn(Optional.of(testProject));
@@ -236,7 +237,7 @@ class ProjectServiceTest {
     void deleteProject_shouldDeleteProject_whenNoMappings() {
         // Given
         UUID projectId = UUID.randomUUID();
-        testProject.setKey(projectId);
+        testProject.setId(projectId);
         
         when(projectDataAccess.findById(projectId))
             .thenReturn(Optional.of(testProject));
@@ -256,7 +257,7 @@ class ProjectServiceTest {
     void deleteProject_shouldThrowException_whenProjectNotFound() {
         // Given
         UUID projectId = UUID.randomUUID();
-        testProject.setKey(projectId);
+        testProject.setId(projectId);
         
         when(projectDataAccess.findById(projectId))
             .thenReturn(Optional.empty());

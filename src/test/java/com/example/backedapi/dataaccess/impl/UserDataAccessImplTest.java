@@ -117,7 +117,7 @@ class UserDataAccessImplTest {
         // Get saved user
         List<User> savedUsers = userRepository.findByEmail("update@example.com");
         User savedUser = savedUsers.get(0);
-        UUID userKey = savedUser.getKey();
+        UUID userId = savedUser.getId();
 
         // Modify user
         savedUser.setPassword("newPassword");
@@ -129,6 +129,6 @@ class UserDataAccessImplTest {
         List<User> updatedUsers = userRepository.findByEmail("update@example.com");
         assertEquals(1, updatedUsers.size());
         assertEquals("newPassword", updatedUsers.get(0).getPassword());
-        assertEquals(userKey, updatedUsers.get(0).getKey()); // Same key
+        assertEquals(userId, updatedUsers.get(0).getId()); // Same id
     }
 }

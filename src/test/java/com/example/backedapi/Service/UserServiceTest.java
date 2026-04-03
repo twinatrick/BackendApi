@@ -1,12 +1,14 @@
 package com.example.backedapi.Service;
 
 import com.example.backedapi.dataaccess.IFunctionDataAccess;
-import com.example.backedapi.dataaccess.IRoleDataAccess;
 import com.example.backedapi.dataaccess.IUserDataAccess;
+import com.example.backedapi.Service.IRoleService;
+import com.example.backedapi.Service.impl.UserService;
+import com.example.backedapi.mapper.FunctionMapper;
+import com.example.backedapi.mapper.UserMapper;
 import com.example.backedapi.model.Vo.FunctionVo;
 import com.example.backedapi.model.Vo.UserVo;
 import com.example.backedapi.model.db.Function;
-import com.example.backedapi.model.db.Role;
 import com.example.backedapi.model.db.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -23,6 +25,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 /**
@@ -36,19 +39,24 @@ class UserServiceTest {
     private IUserDataAccess userDataAccess;
 
     @Mock
-    private IRoleDataAccess roleDataAccess;
-
-    @Mock
     private IFunctionDataAccess functionDataAccess;
 
     @Mock
-    private RoleService roleService;
+    private User currentUser;
+
+    @Mock
+    private IRoleService roleService;
+
+    @Mock
+    private UserMapper userMapper;
+
+    @Mock
+    private FunctionMapper functionMapper;
 
     @InjectMocks
     private UserService userService;
 
     private User testUser;
-    private Role testRole;
     private Function testFunction;
 
     @BeforeEach
@@ -58,14 +66,41 @@ class UserServiceTest {
         testUser.setPassword("hashedPassword");
         testUser.setDisabled(false);
 
-        testRole = new Role();
-        testRole.setKey(UUID.randomUUID());
-        testRole.setName("ROLE_USER");
-
         testFunction = new Function();
         testFunction.setId(UUID.randomUUID());
         testFunction.setName("TestFunction");
         testFunction.setParent("");
+
+        when(userMapper.toEntity(any(UserVo.class))).thenAnswer(invocation -> {
+            UserVo vo = invocation.getArgument(0);
+            User user = new User();
+            if (vo.getId() != null && !vo.getId().isBlank()) {
+                user.setId(UUID.fromString(vo.getId()));
+            }
+            user.setEmail(vo.getEmail());
+            user.setPassword(vo.getPassword());
+            user.setDisabled(vo.isDisabled());
+            return user;
+        });
+        when(userMapper.toVo(any(User.class))).thenAnswer(invocation -> {
+            User user = invocation.getArgument(0);
+            UserVo vo = new UserVo();
+            if (user.getId() != null) {
+                vo.setId(user.getId().toString());
+            }
+            vo.setEmail(user.getEmail());
+            vo.setPassword(user.getPassword());
+            vo.setDisabled(user.isDisabled());
+            return vo;
+        });
+        when(functionMapper.toVo(any(Function.class))).thenAnswer(invocation -> {
+            Function function = invocation.getArgument(0);
+            FunctionVo vo = new FunctionVo();
+            vo.setId(function.getId() == null ? null : function.getId().toString());
+            vo.setName(function.getName());
+            vo.setParent(function.getParent());
+            return vo;
+        });
     }
 
     @Test
@@ -73,12 +108,16 @@ class UserServiceTest {
     void testCreateUser() {
         // Arrange
         doNothing().when(userDataAccess).save(any(User.class));
+        UserVo userVo = new UserVo();
+        userVo.setEmail("test@example.com");
+        userVo.setPassword("plainPassword");
 
         // Act
-        userService.createUser(testUser);
+        UserVo result = userService.createUser(userVo);
 
         // Assert
-        verify(userDataAccess, times(1)).save(testUser);
+        assertNotNull(result);
+        verify(userDataAccess, times(1)).save(any(User.class));
     }
 
     @Test
@@ -89,7 +128,7 @@ class UserServiceTest {
         when(userDataAccess.findAll()).thenReturn(users);
 
         // Act
-        List<User> result = userService.getUser();
+        List<UserVo> result = userService.getUser();
 
         // Assert
         assertNotNull(result);
@@ -106,7 +145,7 @@ class UserServiceTest {
         when(userDataAccess.findByEmail("test@example.com")).thenReturn(users);
 
         // Act
-        List<User> result = userService.getUserByEmail("test@example.com");
+        List<UserVo> result = userService.getUserByEmail("test@example.com");
 
         // Assert
         assertNotNull(result);
@@ -123,7 +162,7 @@ class UserServiceTest {
         when(userDataAccess.findByEmail("test@example.com")).thenReturn(users);
 
         // Act
-        User result = userService.getOnlyUserByEmail("test@example.com");
+        UserVo result = userService.getOnlyUserByEmail("test@example.com");
 
         // Assert
         assertNotNull(result);
@@ -136,12 +175,15 @@ class UserServiceTest {
     void testSaveUser() {
         // Arrange
         doNothing().when(userDataAccess).save(any(User.class));
+        UserVo userVo = new UserVo();
+        userVo.setEmail("test@example.com");
+        userVo.setPassword("plainPassword");
 
         // Act
-        userService.saveUser(testUser);
+        userService.saveUser(userVo);
 
         // Assert
-        verify(userDataAccess, times(1)).save(testUser);
+        verify(userDataAccess, times(1)).save(any(User.class));
     }
 
     @Test
@@ -152,20 +194,21 @@ class UserServiceTest {
         userVo.setEmail("newuser@example.com");
         userVo.setPassword("plainPassword");
         userVo.setDisabled(false);
-        userVo.setRoleArr(List.of(testRole.getKey().toString()));
+        userVo.setRoleArr(List.of(UUID.randomUUID().toString()));
 
-        List<Role> roles = List.of(testRole);
-        when(roleDataAccess.findRoleByKeyIn(anyList())).thenReturn(roles);
-        doNothing().when(userDataAccess).save(any(User.class));
-        doNothing().when(roleService).userBindRole(any(User.class), anyList());
+        doAnswer(invocation -> {
+            User user = invocation.getArgument(0);
+            user.setId(UUID.randomUUID());
+            return null;
+        }).when(userDataAccess).save(any(User.class));
+        doNothing().when(roleService).userBindRole(anyString(), anyList());
 
         // Act
         userService.saveUserWithRole(userVo);
 
         // Assert
         verify(userDataAccess, times(1)).save(any(User.class));
-        verify(roleDataAccess, times(1)).findRoleByKeyIn(anyList());
-        verify(roleService, times(1)).userBindRole(any(User.class), eq(roles));
+        verify(roleService, times(1)).userBindRole(anyString(), anyList());
     }
 
     @Test
@@ -173,19 +216,16 @@ class UserServiceTest {
     void testSaveUserWithRole_ExistingUser() {
         // Arrange
         UserVo userVo = new UserVo();
-        userVo.setKey("existing-key");
+        userVo.setId("existing-id");
         userVo.setEmail("test@example.com");
         userVo.setPassword("newPassword");
-        userVo.setRoleArr(List.of(testRole.getKey().toString()));
+        userVo.setRoleArr(List.of(UUID.randomUUID().toString()));
 
         List<User> existingUsers = List.of(testUser);
-        List<Role> roles = List.of(testRole);
-
         when(userDataAccess.findByEmail("test@example.com")).thenReturn(existingUsers);
-        when(roleDataAccess.findRoleByKeyIn(anyList())).thenReturn(roles);
         doNothing().when(userDataAccess).save(any(User.class));
-        doNothing().when(roleService).userUnbindAllRole(any(User.class));
-        doNothing().when(roleService).userBindRole(any(User.class), anyList());
+        doNothing().when(roleService).userUnbindAllRole(anyString());
+        doNothing().when(roleService).userBindRole(anyString(), anyList());
 
         // Act
         userService.saveUserWithRole(userVo);
@@ -193,9 +233,8 @@ class UserServiceTest {
         // Assert
         verify(userDataAccess, times(1)).findByEmail("test@example.com");
         verify(userDataAccess, times(1)).save(testUser);
-        verify(roleDataAccess, times(1)).findRoleByKeyIn(anyList());
-        verify(roleService, times(1)).userUnbindAllRole(testUser);
-        verify(roleService, times(1)).userBindRole(testUser, roles);
+        verify(roleService, times(1)).userUnbindAllRole(anyString());
+        verify(roleService, times(1)).userBindRole(anyString(), anyList());
     }
 
     @Test

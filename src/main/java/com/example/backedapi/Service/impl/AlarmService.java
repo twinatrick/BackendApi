@@ -1,23 +1,25 @@
-package com.example.backedapi.Service;
+package com.example.backedapi.Service.impl;
 
-import com.example.backedapi.Util.AlarmMessage;
-import com.example.backedapi.WebSocket.AlarmWebSocket;
+import com.example.backedapi.Service.IAlarmPublisher;
+import com.example.backedapi.Service.IAlarmService;
+import com.example.backedapi.model.dto.AlarmMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
-public class AlarmService {
+public class AlarmService implements IAlarmService {
 
     @Autowired
-    private ProducerService producerService;
+    private IAlarmPublisher alarmPublisher;
 
     // 可以使用消息隊列、異步執行器等來處理
 
+    @Override
     public void processAlarm(List<AlarmMessage> alarmMessage) {
         try {
-            producerService.sendMessage(alarmMessage);
+            alarmPublisher.publish(alarmMessage);
         } catch (Exception e) {
             alarmMessage.get(0).setMessage("告警消息發送失敗：" + e.getMessage());
         }

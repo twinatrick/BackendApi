@@ -19,7 +19,7 @@ public interface IRoleDataAccess {
      * @param keys list of role UUIDs
      * @return list of roles matching the keys
      */
-    List<Role> findRoleByKeyIn(List<UUID> keys);
+    List<Role> findRoleByIdIn(List<UUID> ids);
 
     /**
      * Check if a role exists matching the given example.
