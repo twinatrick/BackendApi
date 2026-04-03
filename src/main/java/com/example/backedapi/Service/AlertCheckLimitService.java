@@ -1,10 +1,8 @@
 package com.example.backedapi.Service;
 
-import com.example.backedapi.Repository.AlertCheckLimitRepository;
-import com.example.backedapi.Util.AlarmMessage;
-import com.example.backedapi.WebSocket.AlarmWebSocket;
+import com.example.backedapi.dataaccess.IAlertCheckLimitDataAccess;
 import com.example.backedapi.model.db.AlertCheckLimit;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
@@ -13,17 +11,17 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class AlertCheckLimitService {
-
-    @Autowired
-    private AlertCheckLimitRepository alertCheckLimitRepository;
+    private final IAlertCheckLimitDataAccess alertCheckLimitDataAccess;
 
     @Cacheable(value = "alertCheckLimit",key = "#tableName + '.' + #column" )
     public AlertCheckLimit getLimit(String tableName, String column) {
-        if (alertCheckLimitRepository.findAlertCheckLimitByTableNameAndColumnName(tableName,column).isEmpty()) {
+        List<AlertCheckLimit> limits = alertCheckLimitDataAccess.findByTableNameAndColumnName(tableName, column);
+        if (limits.isEmpty()) {
             return null;
         }
-        return alertCheckLimitRepository.findAlertCheckLimitByTableNameAndColumnName(tableName,column).getFirst();
+        return limits.getFirst();
     }
 
     @CachePut(value = "alertCheckLimit", key = "#tableName + '.' + #column")
@@ -32,28 +30,31 @@ public class AlertCheckLimitService {
         alertCheckLimit.setTableName(tableName);
         alertCheckLimit.setColumnName(column);
         alertCheckLimit.setLimitValue(limitValue);
-        List<AlertCheckLimit> limitList= alertCheckLimitRepository.findAlertCheckLimitByTableNameAndColumnName(alertCheckLimit.getTableName(),alertCheckLimit.getColumnName());
+        List<AlertCheckLimit> limitList = alertCheckLimitDataAccess.findByTableNameAndColumnName(
+                alertCheckLimit.getTableName(),
+                alertCheckLimit.getColumnName()
+        );
         if (limitList.isEmpty()) {
-            AlertCheckLimit limit= alertCheckLimitRepository.save(alertCheckLimit);
+            AlertCheckLimit limit = alertCheckLimitDataAccess.save(alertCheckLimit);
             return limit;
         }
-        AlertCheckLimit limit= limitList.getFirst();
+        AlertCheckLimit limit = limitList.getFirst();
         limit.setLimitValue(limitValue);
-        alertCheckLimitRepository.save(limit);
+        alertCheckLimitDataAccess.save(limit);
         return limit;
     }
     @CachePut(value = "alertCheckLimit", key = "#alertCheckLimit.tableName + '.' + #alertCheckLimit.columnName")
     public AlertCheckLimit update(AlertCheckLimit alertCheckLimit) {
-        return alertCheckLimitRepository.save(alertCheckLimit);
+        return alertCheckLimitDataAccess.save(alertCheckLimit);
     }
 
     public List<AlertCheckLimit> getLimit() {
-        return alertCheckLimitRepository.findAll();
+        return alertCheckLimitDataAccess.findAll();
     }
 
     @CacheEvict(value = "alertCheckLimit", key = "#alertCheckLimit.tableName + '.' + #alertCheckLimit.columnName")
     public void deleteLimit(AlertCheckLimit alertCheckLimit) {
-        alertCheckLimitRepository.delete(alertCheckLimit);
+        alertCheckLimitDataAccess.delete(alertCheckLimit);
     }
 
 

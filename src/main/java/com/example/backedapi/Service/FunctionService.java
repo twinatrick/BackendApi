@@ -1,7 +1,7 @@
 package com.example.backedapi.Service;
 
-import com.example.backedapi.Repository.FunctionRepository;
-import com.example.backedapi.Repository.RoleFunctionRepository;
+import com.example.backedapi.dataaccess.IFunctionDataAccess;
+import com.example.backedapi.dataaccess.IRoleFunctionDataAccess;
 import com.example.backedapi.model.db.Function;
 import com.example.backedapi.model.Vo.FunctionVo;
 import lombok.RequiredArgsConstructor;
@@ -19,8 +19,8 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class FunctionService {
-    private final FunctionRepository functionRepository;
-    private final RoleFunctionRepository roleFunctionRepository;
+    private final IFunctionDataAccess functionDataAccess;
+    private final IRoleFunctionDataAccess roleFunctionDataAccess;
 
     public Function addFunction(Function function) {
 
@@ -32,17 +32,17 @@ public class FunctionService {
             Function f = new Function();
             f.setName(function.getName());
             Example<Function> example = Example.of(f);
-            if (functionRepository.exists(example)) {
+            if (functionDataAccess.exists(example)) {
                 throw new IllegalArgumentException("Name already exists");
             }
         }
 
-        return functionRepository.save(function);
+        return functionDataAccess.save(function);
 
     }
 
     public List<Function> getFunction() {
-        return functionRepository.findAll();
+        return functionDataAccess.findAll();
     }
 
     public void updateFunction(Function function) {
@@ -51,7 +51,7 @@ public class FunctionService {
         } else if (function.getName() == null) {
             throw new IllegalArgumentException("Name must not be null");
         }
-        functionRepository.save(function);
+        functionDataAccess.save(function);
 
     }
 
@@ -59,8 +59,8 @@ public class FunctionService {
         if (function.getId() == null) {
             throw new IllegalArgumentException("Key must not be null");
         }
-        roleFunctionRepository.deleteByFunction(function.getId());
-        functionRepository.delete(function);
+        roleFunctionDataAccess.deleteByFunction(function.getId());
+        functionDataAccess.delete(function);
 
     }
     @Transactional
@@ -69,11 +69,11 @@ public class FunctionService {
         if (function.isEmpty()) {
             return;
         }
-        List<Function> f= functionRepository.findAllById(function.stream().map(
+        List<Function> f= functionDataAccess.findAllById(function.stream().map(
                 FunctionVo::getId
         ).map(UUID::fromString).collect(Collectors.toList()));
-        roleFunctionRepository.deleteAllByFunctionIn(f)  ;
-        functionRepository.deleteAll(f);
+        roleFunctionDataAccess.deleteAllByFunctionIn(f)  ;
+        functionDataAccess.deleteAll(f);
     }
 
 @Transactional
@@ -96,19 +96,19 @@ public class FunctionService {
                 }
         ).collect(Collectors.toList());
 
-        functionRepository.saveAll(f);
+        functionDataAccess.saveAll(f);
     }
     @Transactional
     public List<Function> saveFunctionNewChild(List<FunctionVo> function) {
         Date date= new Date();
         Sort sort = Sort.by(Sort.Direction.ASC, "sort");
         if (function.isEmpty()) {
-            return functionRepository.findAll(sort) ;
+            return functionDataAccess.findAll(sort) ;
         }
         List<String> GrandParentId = function.stream().map(
                 FunctionVo::getGrandParentId
         ).collect(Collectors.toList());
-        List<Function> saveNext = (GrandParentId.isEmpty()) ? new ArrayList<>() : functionRepository.findAllByGrandParentId(GrandParentId);
+        List<Function> saveNext = (GrandParentId.isEmpty()) ? new ArrayList<>() : functionDataAccess.findAllByGrandParentId(GrandParentId);
         List<Function> saveFunction = new ArrayList<>();
         for (FunctionVo functionVo : function) {
             for (Function f : saveNext) {
@@ -126,18 +126,18 @@ public class FunctionService {
         }
 
         if (!saveFunction.isEmpty()) {
-            functionRepository.saveAll(saveFunction);
+            functionDataAccess.saveAll(saveFunction);
         }
         System.out.println("GrandParentId.size=" + GrandParentId.size() + "\n");
         System.out.println("saveFunctionNewChildTime=" + (( new Date().getTime() - date.getTime())/1000) + "\n");
-        return  functionRepository.findAll(sort) ;
+        return  functionDataAccess.findAll(sort) ;
     }
         public Function getFunctionByName(String name) {
-            return functionRepository.findFunctionByName(name);
+            return functionDataAccess.findFunctionByName(name);
         }
 
         public Function getFunctionByNameAndParent(String name, String parent) {
-            List<Function> functionList = functionRepository.findFunctionByNameAndParent(name, parent);
+            List<Function> functionList = functionDataAccess.findFunctionByNameAndParent(name, parent);
             if (functionList.isEmpty()) {
                 return null;
             }

@@ -26,6 +26,7 @@ import java.util.UUID;
 public class Role implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(name = "`key`")
     private UUID key;
     private String name;
     private String description;

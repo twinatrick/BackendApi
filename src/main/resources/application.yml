@@ -1,0 +1,5 @@
+jwt:
+  secret:
+    use: secretsecretsecretsecretsecretll
+server:
+  port: 8000

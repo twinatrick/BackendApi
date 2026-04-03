@@ -25,6 +25,7 @@ import java.util.UUID;
 public class User implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(name = "`key`")
     private UUID key ;
     private String name;
     private String email;

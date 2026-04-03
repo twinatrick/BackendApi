@@ -1,8 +1,9 @@
 package com.example.backedapi.Service;
 
-import com.example.backedapi.Repository.*;
+import com.example.backedapi.dataaccess.*;
 import com.example.backedapi.model.Vo.RoleOutVo;
 import com.example.backedapi.model.db.*;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
 import org.springframework.stereotype.Service;
@@ -13,17 +14,14 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class RoleService {
-    @Autowired
-    private RoleRepository roleRepository;
-    @Autowired
-    private RoleFunctionRepository roleFunctionRepository;
-    @Autowired
-    private FunctionRepository functionRepository;
-    @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    private UserRoleRepository userRoleRepository;
+    private final IRoleDataAccess roleDataAccess;
+    private final IRoleFunctionDataAccess roleFunctionDataAccess;
+    private final IFunctionDataAccess functionDataAccess;
+    private final IUserDataAccess userDataAccess;
+    private final IUserRoleDataAccess userRoleDataAccess;
+    
     @Autowired
     private User currentUser;
 
@@ -35,22 +33,22 @@ public class RoleService {
             throw new IllegalArgumentException("Key must be null");
         } else if (role.getName() == null) {
             throw new IllegalArgumentException("Name must not be null");
-        } else if (roleRepository.exists(example)) {
+        } else if (roleDataAccess.exists(example)) {
             throw new IllegalArgumentException("Name already exists");
         }
         role.setCreatedTime(new Date());
 //        role.setCreatedBy(currentUser.getEmail());
 
-        return roleRepository.save(role);
+        return roleDataAccess.save(role);
 
     }
 
     public List<RoleOutVo> getRole() {
-        return roleRepository.findAll().stream().map(Role::transToVo).toList();
+        return roleDataAccess.findAll().stream().map(Role::transToVo).toList();
 //        return roleRepository.findAll();
     }
     public List<Role> getRoleRestIn() {
-        return roleRepository.findAll();
+        return roleDataAccess.findAll();
     }
 
     public void updateRole(Role role) {
@@ -59,13 +57,13 @@ public class RoleService {
         } else if (role.getName() == null) {
             throw new IllegalArgumentException("Name must not be null");
         }
-        Role r = roleRepository.findById(role.getKey()).orElseThrow(
+        Role r = roleDataAccess.findById(role.getKey()).orElseThrow(
                 () -> new IllegalArgumentException("Role not found")
         );
         r.setDescription(role.getDescription());
         r.setUpdatedBy(currentUser.getEmail());
         r.setUpdatedTime(new Date());
-        roleRepository.save(r);
+        roleDataAccess.save(r);
 
     }
 
@@ -73,15 +71,15 @@ public class RoleService {
         if (role.getKey() == null) {
             throw new IllegalArgumentException("Key must not be null");
         }
-        role = roleRepository.findById(role.getKey()).orElseThrow(
+        role = roleDataAccess.findById(role.getKey()).orElseThrow(
                 () -> new IllegalArgumentException("Role not found")
         );
         RoleFunction roleFunction = new RoleFunction();
         roleFunction.setRole(role);
         Example<RoleFunction> example = Example.of(roleFunction);
-        List<RoleFunction> roleFunctions = roleFunctionRepository.findAll(example);
-        roleFunctionRepository.deleteAll(roleFunctions);
-        roleRepository.delete(role);
+        List<RoleFunction> roleFunctions = roleFunctionDataAccess.findAll(example);
+        roleFunctionDataAccess.deleteAll(roleFunctions);
+        roleDataAccess.delete(role);
 
     }
     @Transactional
@@ -89,12 +87,12 @@ public class RoleService {
         if (role.getKey() == null) {
             throw new IllegalArgumentException("Key must not be null");
         }
-        role = roleRepository.findById(role.getKey()).orElseThrow(
+        role = roleDataAccess.findById(role.getKey()).orElseThrow(
                 () -> new IllegalArgumentException("Role not found")
         );
-        roleFunctionRepository.deleteByFunctionAndRole( functions ,List.of(role));
+        roleFunctionDataAccess.deleteByFunctionAndRole( functions ,List.of(role));
         List<UUID> functionIds = functions.stream().map(Function::getId).toList();
-        functions = functionRepository.findAllById(functionIds);
+        functions = functionDataAccess.findAllById(functionIds);
         Role finalRole = role;
         List<RoleFunction> roleFunctions = functions.stream().map(function -> {
             RoleFunction roleFunction = new RoleFunction();
@@ -102,7 +100,7 @@ public class RoleService {
             roleFunction.setFunction(function);
             return roleFunction;
         }).toList();
-        roleFunctionRepository.saveAll(roleFunctions);
+        roleFunctionDataAccess.saveAll(roleFunctions);
     }
 
     @Transactional
@@ -111,7 +109,7 @@ public class RoleService {
             throw new IllegalArgumentException("Key must not be null");
         }
         List<UUID> roleIds = roles.stream().map(Role::getKey).toList();
-        roleFunctionRepository.deleteByFunctionAndRole(List.of(function),roles);
+        roleFunctionDataAccess.deleteByFunctionAndRole(List.of(function),roles);
 
         List<RoleFunction> roleFunctions = roles.stream().map(role -> {
             RoleFunction roleFunction = new RoleFunction();
@@ -119,7 +117,7 @@ public class RoleService {
             roleFunction.setFunction(function);
             return roleFunction;
         }).toList();
-        roleFunctionRepository.saveAll(roleFunctions);
+        roleFunctionDataAccess.saveAll(roleFunctions);
     }
 
     @Transactional
@@ -127,14 +125,14 @@ public class RoleService {
         if (role.getKey() == null) {
             throw new IllegalArgumentException("Key must not be null");
         }
-        userRoleRepository.deleteAllByUserInAndRoleIn(users, List.of(role));
+        userRoleDataAccess.deleteAllByUserInAndRoleIn(users, List.of(role));
         List<UserRole> userRoles = users.stream().map(user -> {
             UserRole userRole = new UserRole();
             userRole.setRole(role);
             userRole.setUser(user);
             return userRole;
         }).toList();
-        userRoleRepository.saveAll(userRoles);
+        userRoleDataAccess.saveAll(userRoles);
     }
 
     public void userBindRole(User user, List<Role> roles) {
@@ -142,14 +140,14 @@ public class RoleService {
             throw new IllegalArgumentException("Key must not be null");
         }
         List<UUID> roleIds = roles.stream().map(Role::getKey).toList();
-        userRoleRepository.deleteAllByUserInAndRoleIn(List.of(user), roles);
+        userRoleDataAccess.deleteAllByUserInAndRoleIn(List.of(user), roles);
         List<UserRole> userRoles = roles.stream().map(role -> {
             UserRole userRole = new UserRole();
             userRole.setRole(role);
             userRole.setUser(user);
             return userRole;
         }).toList();
-        userRoleRepository.saveAll(userRoles);
+        userRoleDataAccess.saveAll(userRoles);
     }
     @Transactional
     public void roleUnbindUser(Role role, List<User> users) {
@@ -161,7 +159,7 @@ public class RoleService {
         List<UUID> userKeyList = users.stream().map(User::getKey).toList();
         List<UUID> roleKeyList = List.of(role.getKey());
 
-        userRoleRepository.deleteAllByUserInAndRoleIn(users, List.of(role));
+        userRoleDataAccess.deleteAllByUserInAndRoleIn(users, List.of(role));
 
     }
     @Transactional
@@ -173,7 +171,7 @@ public class RoleService {
         }
         List<UUID> roleKeyList = roles.stream().map(Role::getKey).toList();
         List<UUID> userKeyList = List.of(user.getKey());
-        userRoleRepository.deleteAllByUserInAndRoleIn(List.of(user), roles);
+        userRoleDataAccess.deleteAllByUserInAndRoleIn(List.of(user), roles);
 
     }
     @Transactional
@@ -181,8 +179,8 @@ public class RoleService {
         if (user.getKey() == null) {
             throw new IllegalArgumentException("Key must not be null");
         }
-        List<Role> roles=roleRepository.findAll();
-        userRoleRepository.deleteAllByUserInAndRoleIn(List.of(user), roles);
+        List<Role> roles=roleDataAccess.findAll();
+        userRoleDataAccess.deleteAllByUserInAndRoleIn(List.of(user), roles);
 
     }
     @Transactional
@@ -194,7 +192,7 @@ public class RoleService {
         }
         List<UUID> functionKeyList = functions.stream().map(Function::getId).toList();
         List<UUID> roleKeyList = List.of(role.getKey());
-        roleFunctionRepository.deleteByFunctionAndRole(functions, List.of(role));
+        roleFunctionDataAccess.deleteByFunctionAndRole(functions, List.of(role));
 
     }
 
@@ -207,7 +205,7 @@ public class RoleService {
         }
         List<UUID> roleKeyList = roles.stream().map(Role::getKey).toList();
         List<UUID> functionKeyList = List.of(function.getId());
-        roleFunctionRepository.deleteByFunctionAndRole(List.of(function), roles);
+        roleFunctionDataAccess.deleteByFunctionAndRole(List.of(function), roles);
 
     }
 
@@ -216,7 +214,7 @@ public class RoleService {
         if (role.getKey() == null) {
             throw new IllegalArgumentException("Key must not be null");
         }
-        role = roleRepository.findById(role.getKey()).orElseThrow(
+        role = roleDataAccess.findById(role.getKey()).orElseThrow(
                 () -> new IllegalArgumentException("Role not found")
         );
         return role.getRoleFunctions().stream().map(RoleFunction::getFunction).toList();
@@ -226,7 +224,7 @@ public class RoleService {
         if (function.getId() == null) {
             throw new IllegalArgumentException("Key must not be null");
         }
-        function = functionRepository.findById(function.getId()).orElseThrow(
+        function = functionDataAccess.findById(function.getId()).orElseThrow(
                 () -> new IllegalArgumentException("Function not found")
         );
         return function.getRoleFunctions().stream().map(RoleFunction::getRole).toList();
@@ -236,7 +234,7 @@ public class RoleService {
         if (role.getKey() == null) {
             throw new IllegalArgumentException("Key must not be null");
         }
-        role = roleRepository.findById(role.getKey()).orElseThrow(
+        role = roleDataAccess.findById(role.getKey()).orElseThrow(
                 () -> new IllegalArgumentException("Role not found")
         );
         return role.getUserRoles().stream().map(UserRole::getUser).toList();
@@ -246,24 +244,24 @@ public class RoleService {
         if (user.getKey() == null) {
             throw new IllegalArgumentException("Key must not be null");
         }
-        user = userRepository.findById(user.getKey()).orElseThrow(
+        user = userDataAccess.findById(user.getKey()).orElseThrow(
                 () -> new IllegalArgumentException("User not found")
         );
         return user.getRoles().stream().map(UserRole::getRole).toList();
     }
     public  List<Role>  getRoleByIdList(List<String> keyList){
         List<UUID> keyList1 = keyList.stream().map(UUID::fromString).toList();
-        return roleRepository.findAllById(keyList1);
+        return roleDataAccess.findAllById(keyList1);
     }
     public List<Function> getFunctionByIdList(List<String> keyList){
         List<UUID> keyList1 = keyList.stream().map(UUID::fromString).toList();
-        return functionRepository.findAllById(keyList1);
+        return functionDataAccess.findAllById(keyList1);
     }
     public List<User> getUserByIdList(List<String> keyList){
         List<UUID> keyList1 = keyList.stream().map(UUID::fromString).toList();
-        return userRepository.findAllById(keyList1);
+        return userDataAccess.findAllById(keyList1);
     }
     public Role getRoleByName(String name){
-        return roleRepository.findRoleByName(name);
+        return roleDataAccess.findRoleByName(name);
     }
 }

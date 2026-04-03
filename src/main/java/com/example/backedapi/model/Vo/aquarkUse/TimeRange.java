@@ -7,7 +7,7 @@ import java.util.Date;
 
 @Getter
 @Setter
-public class twoTime {
+public class TimeRange {
     private Date start;
     private Date end;
 }

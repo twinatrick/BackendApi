@@ -1,6 +1,9 @@
 package com.example.backedapi.controller;
 
 import com.example.backedapi.Service.RoleService;
+import com.example.backedapi.annotation.openapi.ApiControllerTag;
+import com.example.backedapi.annotation.openapi.ApiOperationBadRequest;
+import com.example.backedapi.annotation.openapi.ApiOperationOk;
 import com.example.backedapi.model.db.Function;
 import com.example.backedapi.model.db.Role;
 import com.example.backedapi.model.db.User;
@@ -16,11 +19,13 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/backend/role")
+@ApiControllerTag(name = "Roles", description = "Backend API endpoints - Role and permission management")
 public class RoleController {
     @Autowired
     private RoleService roleService;
 
     @PostMapping("/add")
+    @ApiOperationBadRequest(summary = "Add role", description = "Creates a new role.")
     public ResponseType<RoleOutVo> addRole(@RequestBody Role role) {
         ResponseType<RoleOutVo> response = new ResponseType<>();
         try {
@@ -36,6 +41,7 @@ public class RoleController {
     }
 
     @PostMapping("/get")
+    @ApiOperationOk(summary = "Get roles", description = "Returns all roles.")
     public ResponseType<List<RoleOutVo>> getRole() {
         ResponseType<List<RoleOutVo>> response = new ResponseType<>();
         try {
@@ -51,6 +57,7 @@ public class RoleController {
     }
 
     @PostMapping("/update")
+    @ApiOperationBadRequest(summary = "Update role", description = "Updates role details.")
     public ResponseType<RoleOutVo> updateRole(@RequestBody Role role) {
         ResponseType<RoleOutVo> response = new ResponseType<>();
         try {
@@ -66,6 +73,7 @@ public class RoleController {
     }
 
     @PostMapping("/delete")
+    @ApiOperationBadRequest(summary = "Delete role", description = "Deletes a role.")
     public ResponseType<Role> deleteRole(@RequestBody Role role) {
         ResponseType<Role> response = new ResponseType<>();
         try {
@@ -80,6 +88,7 @@ public class RoleController {
         return response;
     }
     @PostMapping("/roleBindFunction")
+    @ApiOperationBadRequest(summary = "Bind role to functions", description = "Assigns functions to a role.")
     public ResponseType<RoleOutVo> roleBindFunction(@RequestBody PermissionVo permissionVo) {
         ResponseType<RoleOutVo> response = new ResponseType<>();
         try {
@@ -96,6 +105,7 @@ public class RoleController {
         return response;
     }
     @PostMapping("/functionBindRole")
+    @ApiOperationBadRequest(summary = "Bind function to roles", description = "Assigns roles to a function.")
     public ResponseType<Function> functionBindRole(@RequestBody PermissionVo permissionVo) {
         ResponseType<Function> response = new ResponseType<>();
         try {
@@ -113,6 +123,7 @@ public class RoleController {
     }
 
     @PostMapping("/roleBindUser")
+    @ApiOperationBadRequest(summary = "Bind role to users", description = "Assigns users to a role.")
     public ResponseType<Role> roleBindUser(@RequestBody PermissionVo permissionVo) {
         ResponseType<Role> response = new ResponseType<>();
         try {
@@ -130,6 +141,7 @@ public class RoleController {
     }
 
     @PostMapping("/userBindRole")
+    @ApiOperationBadRequest(summary = "Bind user to roles", description = "Assigns roles to a user.")
     public ResponseType<User> userBindRole(@RequestBody PermissionVo permissionVo) {
         ResponseType<User> response = new ResponseType<>();
         try {
@@ -147,6 +159,7 @@ public class RoleController {
     }
 
     @PostMapping("/roleUnbindUser")
+    @ApiOperationBadRequest(summary = "Unbind role from users", description = "Removes users from a role.")
     public ResponseType<Role> roleUnbindUser(@RequestBody PermissionVo permissionVo) {
         ResponseType<Role> response = new ResponseType<>();
         try {
@@ -164,6 +177,7 @@ public class RoleController {
     }
 
     @PostMapping("/userUnbindRole")
+    @ApiOperationBadRequest(summary = "Unbind user from roles", description = "Removes roles from a user.")
     public ResponseType<User> userUnbindRole(@RequestBody PermissionVo permissionVo) {
         ResponseType<User> response = new ResponseType<>();
         try {
@@ -181,6 +195,7 @@ public class RoleController {
     }
 
     @PostMapping("/roleUnbindFunction")
+    @ApiOperationBadRequest(summary = "Unbind role from functions", description = "Removes functions from a role.")
     public ResponseType<RoleOutVo> roleUnbindFunction(@RequestBody PermissionVo permissionVo) {
         ResponseType<RoleOutVo> response = new ResponseType<>();
         try {
@@ -198,6 +213,7 @@ public class RoleController {
     }
 
     @PostMapping("/functionUnbindRole")
+    @ApiOperationBadRequest(summary = "Unbind function from roles", description = "Removes roles from a function.")
     public ResponseType<Function> functionUnbindRole(@RequestBody PermissionVo permissionVo) {
         ResponseType<Function> response = new ResponseType<>();
         try {
@@ -215,6 +231,7 @@ public class RoleController {
     }
 
     @PostMapping("/getFunctionByRole")
+    @ApiOperationBadRequest(summary = "Get functions by role", description = "Returns functions assigned to a role.")
     public ResponseType<List<Function>> getFunctionByRole(@RequestBody Role role) {
         ResponseType<List<Function>> response = new ResponseType<>();
         try {
@@ -230,6 +247,7 @@ public class RoleController {
     }
 
     @PostMapping("/getRoleByFunction")
+    @ApiOperationBadRequest(summary = "Get roles by function", description = "Returns roles assigned to a function.")
     public ResponseType<List<Role>> getRoleByFunction(@RequestBody Function function) {
         ResponseType<List<Role>> response = new ResponseType<>();
         try {
@@ -245,6 +263,7 @@ public class RoleController {
     }
 
     @PostMapping("/getRoleByUser")
+    @ApiOperationBadRequest(summary = "Get roles by user", description = "Returns roles assigned to a user.")
     public ResponseType<List<Role>> getRoleByUser(@RequestBody User user) {
         ResponseType<List<Role>> response = new ResponseType<>();
         try {
@@ -260,6 +279,7 @@ public class RoleController {
     }
 
     @PostMapping("/getUserByRole")
+    @ApiOperationBadRequest(summary = "Get users by role", description = "Returns users assigned to a role.")
     public ResponseType<List<User>> getUserByRole(@RequestBody Role role) {
         ResponseType<List<User>> response = new ResponseType<>();
         try {

@@ -17,6 +17,7 @@ import java.util.UUID;
 public class SkillMapUserAndProject  implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(name = "`key`")
     private UUID key ;
     @JsonIgnore
     @ManyToOne(cascade = CascadeType.ALL)

@@ -2,6 +2,9 @@ package com.example.backedapi.controller;
 
 import com.example.backedapi.Service.RoleService;
 import com.example.backedapi.Service.UserService;
+import com.example.backedapi.annotation.openapi.ApiControllerTag;
+import com.example.backedapi.annotation.openapi.ApiOperationAuth;
+import com.example.backedapi.annotation.openapi.ApiOperationBadRequest;
 import com.example.backedapi.annotation.Ingnore;
 import com.example.backedapi.fillter.JwtAuthenticationToken;
 import com.example.backedapi.model.db.Role;
@@ -21,6 +24,7 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/backend/auth")
+@ApiControllerTag(name = "Auth", description = "Backend API endpoints - Authentication and registration")
 public class AuthController {
 //    @Autowired
 //    private   UserRepository userRepository;
@@ -46,6 +50,7 @@ public class AuthController {
     // 註冊
     @Ingnore
     @PostMapping("/signup")
+    @ApiOperationBadRequest(summary = "Register a new user", description = "Creates a user account and returns a JWT access token.")
     public ResponseType<?> signup(@RequestBody SignupRequest request) throws JoseException {
         if (!userService.getUserByEmail(request.getEmail()).isEmpty()) {
             return new ResponseType<>(-1, "User already exists");
@@ -73,6 +78,7 @@ public class AuthController {
 
     @Ingnore
     @PostMapping("/login")
+    @ApiOperationAuth(summary = "User login", description = "Authenticates user credentials and returns a JWT access token.")
     public ResponseType<?> login(@RequestBody LoginRequest request) throws JoseException {
         List<User> user = userService.getUserByEmail(request.getEmail());
         if (user.isEmpty() || !BCrypt.checkpw(request.getPassword(), user.getFirst().getPassword())) {

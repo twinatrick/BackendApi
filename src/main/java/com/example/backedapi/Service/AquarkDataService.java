@@ -1,16 +1,11 @@
 package com.example.backedapi.Service;
 
-import com.example.backedapi.Repository.AquarkDataRepository;
+import com.example.backedapi.dataaccess.IAquarkDataDataAccess;
 import com.example.backedapi.model.Vo.aquarkUse.AquarkDataRaw;
 import com.example.backedapi.model.Vo.aquarkUse.CriteriaAPIFilter;
 import com.example.backedapi.model.Vo.aquarkUse.AverageAquark;
 import com.example.backedapi.model.db.AquarkData;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.persistence.criteria.Predicate;
-import jakarta.persistence.criteria.Root;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -23,15 +18,12 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class AquarkDataService {
-    @Autowired
-    private AquarkDataRepository aquarkDataRepository;
-
-    @Autowired
-    private EntityManager entityManager;
+    private final IAquarkDataDataAccess aquarkDataDataAccess;
 
     public List<AquarkDataRaw> getAquarkData() {
-        return aquarkDataRepository.findAll().stream().map(AquarkData::toVo).collect(Collectors.toList());
+        return aquarkDataDataAccess.findAll().stream().map(AquarkData::toVo).collect(Collectors.toList());
     }
 
     public List<String> getColumnNameList() {
@@ -95,66 +87,13 @@ public class AquarkDataService {
         if (fillterList.isEmpty()) {
             return getAquarkData();
         }
-        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-        CriteriaQuery<AquarkData> query = cb.createQuery(AquarkData.class);
-        Root<AquarkData> root = query.from(AquarkData.class);
-        List<Predicate> predicates = new ArrayList<>();
-        fillterList.forEach(f ->
-        {
-            String colName = f.getColumnName();
-            if (f.getType() == 0) {
-                if (f.isLike())
-                    predicates.add(cb.like(root.get(colName), "%" + f.getString() + "%"));
-                else if (f.isEqual()) {
-                    predicates.add(cb.equal(root.get(colName), f.getString()));
-
-                }
-            } else if (f.getType() == 1) {
-                if (f.isLarge() && f.isEqual()) {
-                    predicates.add(  cb.greaterThanOrEqualTo(root.get(colName), f.getDoubleValue()));
-                } else if (f.isLarge()) {
-                    predicates.add(cb.greaterThan(root.get(colName), f.getDoubleValue()));
-                } else if (f.isSmall() && f.isEqual()) {
-                    predicates.add(cb.lessThanOrEqualTo(root.get(colName), f.getDoubleValue()));
-                } else if (f.isSmall()) {
-                    predicates.add(cb.lessThan(root.get(colName), f.getDoubleValue()));
-                } else if (f.isEqual()) {
-                    predicates.add( cb.equal(root.get(colName), f.getDoubleValue()));
-                } else {
-                    predicates.add( cb.notEqual(root.get(colName), f.getDoubleValue()));
-                }
-
-            } else if (f.getType() == 2) {
-                if (f.isLarge() && f.isEqual()) {
-                    predicates.add(cb.greaterThanOrEqualTo(root.get(colName), f.getDate()));
-                } else if (f.isLarge()) {
-                    predicates.add(cb.greaterThan(root.get(colName), f.getDate()));
-                } else if (f.isSmall() && f.isEqual()) {
-                    predicates.add(cb.lessThanOrEqualTo(root.get(colName), f.getDate()));
-                } else if (f.isSmall()) {
-                    predicates.add(cb.lessThan(root.get(colName), f.getDate()));
-                } else if (f.isEqual()) {
-                    predicates.add( cb.equal(root.get(colName), f.getDate()));
-                } else {
-                    predicates.add(cb.notEqual(root.get(colName), f.getDate()));
-                }
-            } else if (f.getType() == 3) {
-                if (f.isEqual()) {
-                    predicates.add(cb.equal(root.get(colName), f.isBooleanValue()));
-                } else {
-                    predicates.add( cb.notEqual(root.get(colName), f.isBooleanValue()));
-                }
-            }
-        });
-        query.where(cb.and(predicates.toArray(new Predicate[0])));
-
-        return entityManager.createQuery(query).getResultList().stream().map(AquarkData::toVo).collect(Collectors.toList());
+        return aquarkDataDataAccess.findByCriteria(fillterList).stream().map(AquarkData::toVo).collect(Collectors.toList());
     }
 
 
     public boolean insertAquarkData(List<AquarkData> aquarkDataList) {
         // 更新數據庫
-        aquarkDataRepository.saveAll(aquarkDataList);
+        aquarkDataDataAccess.saveAll(aquarkDataList);
         return true;
     }
 
@@ -193,14 +132,14 @@ public class AquarkDataService {
         if (aquarkData.getStation_id() == null || aquarkData.getTrans_time() == null) {
             return null;
         }
-        List<AquarkData> aquarkDataList = aquarkDataRepository.findAquarkDataByStation_idAndTrans_time(aquarkData.getStation_id(), aquarkData.getTrans_time());
+        List<AquarkData> aquarkDataList = aquarkDataDataAccess.findByStationIdAndTransTime(aquarkData.getStation_id(), aquarkData.getTrans_time());
         return aquarkDataList.isEmpty() ? null : aquarkDataList.getFirst();
     }
 
     // 更新數據庫
     @CachePut(value = "aquarkData", key = "#aquarkData.station_id + '_' + #aquarkData.trans_time.toString()")
     public AquarkData updateAquarkData(AquarkData aquarkData) {
-        return aquarkDataRepository.save(aquarkData);
+        return aquarkDataDataAccess.save(aquarkData);
     }
 
 

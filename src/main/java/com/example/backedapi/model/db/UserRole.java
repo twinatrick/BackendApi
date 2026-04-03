@@ -16,6 +16,7 @@ import java.util.UUID;
 public class UserRole  implements Serializable {
     @Id
     @GeneratedValue
+    @Column(name = "`key`")
     private UUID key;
     @ManyToOne(cascade = CascadeType.ALL)
     @JsonIgnore

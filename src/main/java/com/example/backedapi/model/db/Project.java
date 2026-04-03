@@ -26,6 +26,7 @@ import java.util.UUID;
 public class Project implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(name = "`key`")
     private UUID key ;
     //skill Name
     private String name;

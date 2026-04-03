@@ -1,6 +1,7 @@
 package com.example.backedapi.model.db;
 
 import com.example.backedapi.model.Vo.aquarkUse.AquarkDataRaw;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
@@ -17,6 +18,7 @@ import java.util.UUID;
 public class AquarkData  implements Serializable {
     @Id
     @GeneratedValue
+    @Column(name = "`key`")
     private UUID key;
 
     private String station_id;//站點

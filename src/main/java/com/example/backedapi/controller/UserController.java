@@ -3,6 +3,10 @@ package com.example.backedapi.controller;
 
 import com.example.backedapi.Service.SkillService;
 import com.example.backedapi.Service.UserService;
+import com.example.backedapi.annotation.openapi.ApiControllerTag;
+import com.example.backedapi.annotation.openapi.ApiOperationAuth;
+import com.example.backedapi.annotation.openapi.ApiOperationBadRequest;
+import com.example.backedapi.annotation.openapi.ApiOperationOk;
 import com.example.backedapi.fillter.JwtAuthenticationToken;
 import com.example.backedapi.model.db.User;
 import com.example.backedapi.model.Vo.BindUserSkillOrProject;
@@ -21,6 +25,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/backend/users")
+@ApiControllerTag(name = "Users", description = "Backend API endpoints - User management")
 public class UserController {
     // This is a simple controller class that
     // will be used to handle the user requests
@@ -49,6 +54,7 @@ public class UserController {
     private SkillService skillService;
 
     @PostMapping(value = "/create")
+    @ApiOperationBadRequest(summary = "Create user", description = "Creates a new user account.")
     public boolean createUser(@RequestBody User user) {
         UUID key = user.getKey();
         if (key != null) {
@@ -60,6 +66,7 @@ public class UserController {
     }
 
     @GetMapping("/infoVo")
+    @ApiOperationAuth(summary = "Get current user info", description = "Returns current user profile and permissions.")
     public ResponseType<UserVo> getUserInfo(
     ) {
         User user= (User) request.getAttribute("user");
@@ -75,6 +82,7 @@ public class UserController {
     }
 
     @PostMapping("/BindUserSkillOrProject")
+    @ApiOperationBadRequest(summary = "Bind user skill or project", description = "Binds a skill to a user or to a project and user.")
     public ResponseType<String> BindUserSkillOrProject(@RequestBody BindUserSkillOrProject body) {
         if(body.getType().equals("skill")){
             skillService.BindSkillToUser(body.getSkill(),body.getUserId());
@@ -85,12 +93,14 @@ public class UserController {
         return new ResponseType<>(0, "Bind updated successfully");
     }
     @GetMapping("/getAllUser")
+    @ApiOperationOk(summary = "Get all users", description = "Returns all users with their roles and permissions.")
     public ResponseType<List<UserVo>> getAllUser() {
         return new ResponseType<>( 0,userService.getUser().stream().map(User::toUserVo).toList());
         // This method will be used to get all the users
         // from the database
         }
     @PostMapping("/saveUser")
+    @ApiOperationBadRequest(summary = "Save user with roles", description = "Updates a user and their role assignments.")
     public ResponseType<String> saveUser(@RequestBody UserVo user) {
         userService.saveUserWithRole(user);
         return new ResponseType<>(0, "User updated successfully");
