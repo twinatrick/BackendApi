@@ -2,7 +2,7 @@ package com.example.backedapi.dataaccess.impl;
 
 import com.example.backedapi.Repository.FunctionRepository;
 import com.example.backedapi.dataaccess.IFunctionDataAccess;
-import com.example.backedapi.model.db.Function;
+import com.example.backedapi.Enity.Function;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Sort;

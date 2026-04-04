@@ -1,6 +1,6 @@
 package com.example.backedapi.exception;
 
-import com.example.backedapi.model.Vo.ResponseType;
+import com.example.backedapi.Dto.Vo.ResponseType;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

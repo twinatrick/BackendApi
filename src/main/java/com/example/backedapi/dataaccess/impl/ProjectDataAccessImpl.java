@@ -2,7 +2,7 @@ package com.example.backedapi.dataaccess.impl;
 
 import com.example.backedapi.Repository.ProjectRepository;
 import com.example.backedapi.dataaccess.IProjectDataAccess;
-import com.example.backedapi.model.db.Project;
+import com.example.backedapi.Enity.Project;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

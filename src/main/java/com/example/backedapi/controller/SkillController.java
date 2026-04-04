@@ -4,8 +4,8 @@ import com.example.backedapi.Service.ISkillService;
 import com.example.backedapi.annotation.openapi.ApiControllerTag;
 import com.example.backedapi.annotation.openapi.ApiOperationBadRequest;
 import com.example.backedapi.annotation.openapi.ApiOperationOk;
-import com.example.backedapi.model.Vo.ResponseType;
-import com.example.backedapi.model.Vo.SkillVo;
+import com.example.backedapi.Dto.Vo.ResponseType;
+import com.example.backedapi.Dto.Vo.SkillVo;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;

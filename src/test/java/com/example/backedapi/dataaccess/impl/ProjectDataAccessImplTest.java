@@ -2,7 +2,7 @@ package com.example.backedapi.dataaccess.impl;
 
 import com.example.backedapi.Repository.ProjectRepository;
 import com.example.backedapi.dataaccess.IProjectDataAccess;
-import com.example.backedapi.model.db.Project;
+import com.example.backedapi.Enity.Project;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

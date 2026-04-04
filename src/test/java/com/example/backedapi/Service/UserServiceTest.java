@@ -2,14 +2,13 @@ package com.example.backedapi.Service;
 
 import com.example.backedapi.dataaccess.IFunctionDataAccess;
 import com.example.backedapi.dataaccess.IUserDataAccess;
-import com.example.backedapi.Service.IRoleService;
 import com.example.backedapi.Service.impl.UserService;
 import com.example.backedapi.mapper.FunctionMapper;
 import com.example.backedapi.mapper.UserMapper;
-import com.example.backedapi.model.Vo.FunctionVo;
-import com.example.backedapi.model.Vo.UserVo;
-import com.example.backedapi.model.db.Function;
-import com.example.backedapi.model.db.User;
+import com.example.backedapi.Dto.Vo.FunctionVo;
+import com.example.backedapi.Dto.Vo.UserVo;
+import com.example.backedapi.Enity.Function;
+import com.example.backedapi.Enity.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

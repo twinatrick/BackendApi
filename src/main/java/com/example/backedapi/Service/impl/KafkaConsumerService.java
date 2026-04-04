@@ -1,7 +1,7 @@
 package com.example.backedapi.Service.impl;
 
 import com.example.backedapi.Service.IKafkaConsumerService;
-import com.example.backedapi.model.dto.AlarmMessage;
+import com.example.backedapi.Dto.dto.AlarmMessage;
 import com.example.backedapi.WebSocket.AlarmWebSocket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

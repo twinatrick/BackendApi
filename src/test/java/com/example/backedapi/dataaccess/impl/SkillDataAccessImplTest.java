@@ -2,7 +2,7 @@ package com.example.backedapi.dataaccess.impl;
 
 import com.example.backedapi.Repository.SkillRepository;
 import com.example.backedapi.dataaccess.ISkillDataAccess;
-import com.example.backedapi.model.db.Skill;
+import com.example.backedapi.Enity.Skill;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

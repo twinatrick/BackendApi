@@ -1,11 +1,9 @@
 package com.example.backedapi.Repository;
 
-import com.example.backedapi.model.db.AlertCheckLimit;
-import com.example.backedapi.model.db.AquarkData;
+import com.example.backedapi.Enity.AlertCheckLimit;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 

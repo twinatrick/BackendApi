@@ -1,8 +1,8 @@
 package com.example.backedapi.Repository;
 
-import com.example.backedapi.model.db.Function;
-import com.example.backedapi.model.db.Role;
-import com.example.backedapi.model.db.RoleFunction;
+import com.example.backedapi.Enity.Function;
+import com.example.backedapi.Enity.Role;
+import com.example.backedapi.Enity.RoleFunction;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;

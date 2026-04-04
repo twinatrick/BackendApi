@@ -1,6 +1,6 @@
 package com.example.backedapi.config;
 
-import com.example.backedapi.model.db.User;
+import com.example.backedapi.Enity.User;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

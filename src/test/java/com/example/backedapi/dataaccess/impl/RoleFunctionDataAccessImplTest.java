@@ -2,9 +2,9 @@ package com.example.backedapi.dataaccess.impl;
 
 import com.example.backedapi.Repository.RoleFunctionRepository;
 import com.example.backedapi.dataaccess.IRoleFunctionDataAccess;
-import com.example.backedapi.model.db.Function;
-import com.example.backedapi.model.db.Role;
-import com.example.backedapi.model.db.RoleFunction;
+import com.example.backedapi.Enity.Function;
+import com.example.backedapi.Enity.Role;
+import com.example.backedapi.Enity.RoleFunction;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

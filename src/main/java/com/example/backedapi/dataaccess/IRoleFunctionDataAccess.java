@@ -1,8 +1,8 @@
 package com.example.backedapi.dataaccess;
 
-import com.example.backedapi.model.db.Function;
-import com.example.backedapi.model.db.Role;
-import com.example.backedapi.model.db.RoleFunction;
+import com.example.backedapi.Enity.Function;
+import com.example.backedapi.Enity.Role;
+import com.example.backedapi.Enity.RoleFunction;
 import org.springframework.data.domain.Example;
 
 import java.util.Collection;

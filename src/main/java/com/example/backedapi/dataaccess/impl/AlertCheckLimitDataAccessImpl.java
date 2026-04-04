@@ -2,7 +2,7 @@ package com.example.backedapi.dataaccess.impl;
 
 import com.example.backedapi.Repository.AlertCheckLimitRepository;
 import com.example.backedapi.dataaccess.IAlertCheckLimitDataAccess;
-import com.example.backedapi.model.db.AlertCheckLimit;
+import com.example.backedapi.Enity.AlertCheckLimit;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

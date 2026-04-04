@@ -1,7 +1,7 @@
 package com.example.backedapi.Service;
 
-import com.example.backedapi.model.Vo.FunctionVo;
-import com.example.backedapi.model.Vo.UserVo;
+import com.example.backedapi.Dto.Vo.FunctionVo;
+import com.example.backedapi.Dto.Vo.UserVo;
 
 import java.util.List;
 

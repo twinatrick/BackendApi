@@ -1,8 +1,8 @@
 package com.example.backedapi.Service;
 
-import com.example.backedapi.model.Vo.aquarkUse.AquarkDataRaw;
-import com.example.backedapi.model.Vo.aquarkUse.AverageAquark;
-import com.example.backedapi.model.Vo.aquarkUse.CriteriaAPIFilter;
+import com.example.backedapi.Dto.Vo.aquarkUse.AquarkDataRaw;
+import com.example.backedapi.Dto.Vo.aquarkUse.AverageAquark;
+import com.example.backedapi.Dto.Vo.aquarkUse.CriteriaAPIFilter;
 
 import java.util.Date;
 import java.util.List;

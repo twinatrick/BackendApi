@@ -1,7 +1,7 @@
 package com.example.backedapi.mapper;
 
-import com.example.backedapi.model.Vo.aquarkUse.AquarkDataRaw;
-import com.example.backedapi.model.db.AquarkData;
+import com.example.backedapi.Dto.Vo.aquarkUse.AquarkDataRaw;
+import com.example.backedapi.Enity.AquarkData;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 

@@ -1,7 +1,7 @@
 package com.example.backedapi.mapper;
 
-import com.example.backedapi.model.Vo.SkillVo;
-import com.example.backedapi.model.db.Skill;
+import com.example.backedapi.Dto.Vo.SkillVo;
+import com.example.backedapi.Enity.Skill;
 import org.mapstruct.Mapper;
 
 @Mapper(componentModel = "spring")

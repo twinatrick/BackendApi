@@ -4,8 +4,8 @@ import com.example.backedapi.Service.IProjectService;
 import com.example.backedapi.annotation.openapi.ApiControllerTag;
 import com.example.backedapi.annotation.openapi.ApiOperationBadRequest;
 import com.example.backedapi.annotation.openapi.ApiOperationOk;
-import com.example.backedapi.model.Vo.ProjectVo;
-import com.example.backedapi.model.Vo.ResponseType;
+import com.example.backedapi.Dto.Vo.ProjectVo;
+import com.example.backedapi.Dto.Vo.ResponseType;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;

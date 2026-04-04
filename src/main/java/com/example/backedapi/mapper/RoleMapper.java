@@ -1,8 +1,8 @@
 package com.example.backedapi.mapper;
 
-import com.example.backedapi.model.Vo.RoleOutVo;
-import com.example.backedapi.model.db.Role;
-import com.example.backedapi.model.db.RoleFunction;
+import com.example.backedapi.Dto.Vo.RoleOutVo;
+import com.example.backedapi.Enity.Role;
+import com.example.backedapi.Enity.RoleFunction;
 import org.mapstruct.AfterMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingTarget;

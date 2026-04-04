@@ -1,6 +1,6 @@
 package com.example.backedapi.Service;
 
-import com.example.backedapi.model.Vo.SkillVo;
+import com.example.backedapi.Dto.Vo.SkillVo;
 
 import java.util.List;
 

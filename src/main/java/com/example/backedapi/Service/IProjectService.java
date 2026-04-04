@@ -1,6 +1,6 @@
 package com.example.backedapi.Service;
 
-import com.example.backedapi.model.Vo.ProjectVo;
+import com.example.backedapi.Dto.Vo.ProjectVo;
 
 import java.util.List;
 

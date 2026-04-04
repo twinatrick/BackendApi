@@ -1,6 +1,6 @@
 package com.example.backedapi.dataaccess;
 
-import com.example.backedapi.model.db.User;
+import com.example.backedapi.Enity.User;
 
 import java.util.List;
 import java.util.Optional;

@@ -1,6 +1,6 @@
 package com.example.backedapi.dataaccess;
 
-import com.example.backedapi.model.db.Function;
+import com.example.backedapi.Enity.Function;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Sort;
 

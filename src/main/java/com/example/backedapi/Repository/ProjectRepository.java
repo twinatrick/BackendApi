@@ -1,6 +1,6 @@
 package com.example.backedapi.Repository;
 
-import com.example.backedapi.model.db.Project;
+import com.example.backedapi.Enity.Project;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
