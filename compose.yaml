@@ -2,7 +2,7 @@
 services:
   postgres:
     image: 'postgres:latest'
-    container_name: postgres_db
+    container_name: postgres_db_backend
     restart: always
     environment:
       POSTGRES_USER: postgres
@@ -62,31 +62,31 @@ services:
     networks:
       - my_network
 
-  backend:
-    build: .
-    image: backendapi0212
-    container_name: backend_api_all
-    restart: always
-    depends_on:
-      - postgres
-      - redis
-      - kafka
-      - zookeeper
-      - milvus
-    ports:
-      - "8000:8000"
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/postgres
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: verYs3cret
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      REDIS_PASSWORD: redisPd
-
-
-      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-    networks:
-      - my_network
+##  backend:
+##    build: .
+##    image: backendapi0212
+##    container_name: backend_api_all
+##    restart: always
+##    depends_on:
+##      - postgres
+##      - redis
+##      - kafka
+##      - zookeeper
+##      - milvus
+##    ports:
+##      - "8000:8000"
+##    environment:
+##      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/postgres
+##      SPRING_DATASOURCE_USERNAME: postgres
+##      SPRING_DATASOURCE_PASSWORD: verYs3cret
+##      REDIS_HOST: redis
+##      REDIS_PORT: 6379
+##      REDIS_PASSWORD: redisPd
+#
+#
+#      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+#    networks:
+#      - my_network
   etcd:
     image: quay.io/coreos/etcd:v3.5.9
     container_name: gary-backend-etcd
