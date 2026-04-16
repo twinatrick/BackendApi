@@ -9,7 +9,7 @@ import java.util.List;
 @Getter
 @Setter
 public class UserVo {
-    private String key;
+    private String id;
     private String name;
     private String email;
     private String password;

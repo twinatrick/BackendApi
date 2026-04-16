@@ -9,12 +9,12 @@ import java.util.UUID;
 
 public interface SkillMapUserAndProjectRepository extends JpaRepository<SkillMapUserAndProject, UUID> {
     @Modifying
-    @Query("delete from SkillMapUserAndProject s where s.project = ?1")
-    void deleteByProjectKey(UUID key);
+    @Query("delete from SkillMapUserAndProject s where s.project.id = ?1")
+    void deleteByProjectId(UUID id);
     @Modifying
-    @Query("delete from SkillMapUserAndProject s where s.user = ?1")
-    void deleteByUserKey(UUID key);
+    @Query("delete from SkillMapUserAndProject s where s.user.id = ?1")
+    void deleteByUserId(UUID id);
     @Modifying
-    @Query("delete from SkillMapUserAndProject s where s.skill = ?1")
-    void deleteBySkillKey(UUID key);
+    @Query("delete from SkillMapUserAndProject s where s.skill.id = ?1")
+    void deleteBySkillId(UUID id);
 }

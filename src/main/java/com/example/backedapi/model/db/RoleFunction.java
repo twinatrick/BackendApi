@@ -6,27 +6,22 @@ import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.io.Serializable;
-import java.util.UUID;
-
 @Getter
 @Setter
 @Entity
-@Table
+@Table(name = "role_function")
 @NoArgsConstructor
 @JsonIdentityInfo(
         generator = ObjectIdGenerators.PropertyGenerator.class,
-        property = "key")
+        property = "id")
 
-public class RoleFunction implements Serializable {
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private UUID key;
+public class RoleFunction extends BaseEntity {
     @JsonIgnore
     @ManyToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "role_id")
     private Role role;
     @JsonIgnore
-
     @ManyToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "function_id")
     private Function function;
 }

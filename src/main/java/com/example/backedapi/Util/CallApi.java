@@ -1,5 +1,6 @@
 package com.example.backedapi.Util;
 
+import com.example.backedapi.Service.IApiFetcher;
 import org.springframework.stereotype.Component;
 
 import java.io.BufferedReader;
@@ -10,8 +11,9 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 @Component
-public class CallApi {
-    public String callGetApi(String urlStr) throws IOException {
+public class CallApi implements IApiFetcher {
+    @Override
+    public String get(String urlStr) throws IOException {
         System.out.println("CallApi.callApi");
         URL url = new URL(urlStr);
         HttpURLConnection con = (HttpURLConnection) url.openConnection();

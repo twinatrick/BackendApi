@@ -9,50 +9,28 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.UUID;
 
 @Getter
 @Setter
 @Entity
-@Table
+@Table(name = "function")
 @NoArgsConstructor
 @JsonIdentityInfo(
         generator = ObjectIdGenerators.PropertyGenerator.class,
         property = "id")
 
-public class Function implements Serializable {
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private UUID id ;
+public class Function extends BaseEntity {
+    @Column(name = "name")
     private String name="";
+    @Column(name = "parent")
     private String parent="";
+    @Column(name = "sort")
     private String sort="";
+    @Column(name = "type")
     private Integer type;
     @JsonIgnore
     @OneToMany(mappedBy = "function", fetch = FetchType.EAGER,cascade = CascadeType.ALL)
     private List<RoleFunction> roleFunctions =new ArrayList<>();
-    private String createdBy;
-    private String updatedBy;
-    private Date createdTime;
-    private Date updatedTime;
-    public FunctionVo toVo(){
-        FunctionVo vo = new FunctionVo();
-        vo.setId(this.id.toString());
-        vo.setName(this.name);
-        vo.setParent(this.parent);
-        vo.setSort(this.sort);
-        vo.setType(this.type);
-        vo.setParentName(this.parent);
-        vo.setGrandParentId("");
-        vo.setDisabled(false);
-        vo.setEdit(false);
-        vo.setNewAdd(false);
-        vo.setNewName(this.name);
-        vo.setDelete(false);
-        return vo;
-    }
 }

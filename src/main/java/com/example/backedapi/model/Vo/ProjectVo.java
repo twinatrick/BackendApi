@@ -11,7 +11,7 @@ import java.util.UUID;
 @Getter
 @Setter@NoArgsConstructor
 public class ProjectVo {
-    private UUID key ;
+    private UUID id;
     //skill Name
     private String name;
     //專案描述

@@ -8,8 +8,8 @@ import java.util.List;
 import java.util.UUID;
 
 public interface RoleRepository extends JpaRepository<Role, UUID> {
-    @Query("select r from Role r where r.key in ?1")
-    List<Role> findRoleByKeyIn(List<UUID> keys);
+    @Query("select r from Role r where r.id in ?1")
+    List<Role> findRoleByIdIn(List<UUID> ids);
 
     Role findRoleByName(String name);
 }

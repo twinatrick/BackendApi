@@ -9,45 +9,26 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.UUID;
 @Getter
 @Setter
 @NoArgsConstructor
 @Entity
-@Table
+@Table(name = "project")
 @JsonIdentityInfo(
         generator = ObjectIdGenerators.PropertyGenerator.class,
-        property = "key")
+        property = "id")
 
-public class Project implements Serializable {
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private UUID key ;
+public class Project extends BaseEntity {
     //skill Name
+    @Column(name = "name")
     private String name;
     //專案描述
+    @Column(name = "description")
     private String description;
-    private String createdBy;
-    private String updatedBy;
-    private Date createdTime;
-    private Date updatedTime;
     @JsonIgnore
     @OneToMany(mappedBy = "project",fetch = FetchType.EAGER,cascade = CascadeType.ALL)
     private List<SkillMapUserAndProject> skillMapUserAndProjects =new ArrayList<>();
 
-    public ProjectVo toVo(){
-        ProjectVo vo = new ProjectVo();
-        vo.setKey(this.key);
-        vo.setName(this.name);
-        vo.setDescription(this.description);
-        vo.setCreatedBy(this.createdBy);
-        vo.setUpdatedBy(this.updatedBy);
-        vo.setCreatedTime(this.createdTime);
-        vo.setUpdatedTime(this.updatedTime);
-        return vo;
-    }
 }
