@@ -2,7 +2,7 @@ package com.example.backedapi.dataaccess.impl;
 
 import com.example.backedapi.Repository.SkillRepository;
 import com.example.backedapi.dataaccess.ISkillDataAccess;
-import com.example.backedapi.model.db.Skill;
+import com.example.backedapi.Enity.Skill;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Example;
 import org.springframework.stereotype.Component;

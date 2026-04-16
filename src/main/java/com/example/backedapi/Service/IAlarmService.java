@@ -1,6 +1,6 @@
 package com.example.backedapi.Service;
 
-import com.example.backedapi.model.dto.AlarmMessage;
+import com.example.backedapi.Dto.dto.AlarmMessage;
 
 import java.util.List;
 

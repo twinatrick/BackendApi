@@ -1,7 +1,7 @@
 package com.example.backedapi.mapper;
 
-import com.example.backedapi.model.Vo.FunctionVo;
-import com.example.backedapi.model.db.Function;
+import com.example.backedapi.Dto.Vo.FunctionVo;
+import com.example.backedapi.Enity.Function;
 import org.mapstruct.AfterMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

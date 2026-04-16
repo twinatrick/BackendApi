@@ -2,7 +2,7 @@ package com.example.backedapi.dataaccess.impl;
 
 import com.example.backedapi.Repository.RoleRepository;
 import com.example.backedapi.dataaccess.IRoleDataAccess;
-import com.example.backedapi.model.db.Role;
+import com.example.backedapi.Enity.Role;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

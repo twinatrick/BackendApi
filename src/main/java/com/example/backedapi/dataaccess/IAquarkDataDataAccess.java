@@ -1,7 +1,7 @@
 package com.example.backedapi.dataaccess;
 
-import com.example.backedapi.model.Vo.aquarkUse.CriteriaAPIFilter;
-import com.example.backedapi.model.db.AquarkData;
+import com.example.backedapi.Dto.Vo.aquarkUse.CriteriaAPIFilter;
+import com.example.backedapi.Enity.AquarkData;
 
 import java.util.Date;
 import java.util.List;

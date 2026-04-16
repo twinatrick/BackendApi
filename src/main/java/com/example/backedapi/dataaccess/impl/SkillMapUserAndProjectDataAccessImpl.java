@@ -2,8 +2,8 @@ package com.example.backedapi.dataaccess.impl;
 
 import com.example.backedapi.Repository.SkillMapUserAndProjectRepository;
 import com.example.backedapi.dataaccess.ISkillMapUserAndProjectDataAccess;
-import com.example.backedapi.model.db.Project;
-import com.example.backedapi.model.db.SkillMapUserAndProject;
+import com.example.backedapi.Enity.Project;
+import com.example.backedapi.Enity.SkillMapUserAndProject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
 import org.springframework.stereotype.Component;

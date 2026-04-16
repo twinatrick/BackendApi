@@ -1,7 +1,7 @@
 package com.example.backedapi.dataaccess;
 
-import com.example.backedapi.model.db.Project;
-import com.example.backedapi.model.db.SkillMapUserAndProject;
+import com.example.backedapi.Enity.Project;
+import com.example.backedapi.Enity.SkillMapUserAndProject;
 import org.springframework.data.domain.Example;
 
 import java.util.List;

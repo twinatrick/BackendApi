@@ -1,6 +1,6 @@
 package com.example.backedapi.dataaccess;
 
-import com.example.backedapi.model.db.AlertCheckLimit;
+import com.example.backedapi.Enity.AlertCheckLimit;
 
 import java.util.List;
 

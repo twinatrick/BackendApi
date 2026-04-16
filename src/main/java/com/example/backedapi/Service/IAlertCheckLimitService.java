@@ -1,6 +1,6 @@
 package com.example.backedapi.Service;
 
-import com.example.backedapi.model.Vo.AlertCheckLimitVo;
+import com.example.backedapi.Dto.Vo.AlertCheckLimitVo;
 
 import java.util.List;
 

@@ -1,8 +1,8 @@
 package com.example.backedapi.dataaccess;
 
-import com.example.backedapi.model.db.Role;
-import com.example.backedapi.model.db.User;
-import com.example.backedapi.model.db.UserRole;
+import com.example.backedapi.Enity.Role;
+import com.example.backedapi.Enity.User;
+import com.example.backedapi.Enity.UserRole;
 
 import java.util.List;
 

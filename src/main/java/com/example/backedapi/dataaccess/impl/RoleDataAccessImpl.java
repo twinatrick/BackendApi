@@ -2,7 +2,7 @@ package com.example.backedapi.dataaccess.impl;
 
 import com.example.backedapi.Repository.RoleRepository;
 import com.example.backedapi.dataaccess.IRoleDataAccess;
-import com.example.backedapi.model.db.Role;
+import com.example.backedapi.Enity.Role;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Example;
 import org.springframework.stereotype.Component;

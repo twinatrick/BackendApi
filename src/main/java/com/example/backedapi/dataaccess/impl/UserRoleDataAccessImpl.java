@@ -2,9 +2,9 @@ package com.example.backedapi.dataaccess.impl;
 
 import com.example.backedapi.Repository.UserRoleRepository;
 import com.example.backedapi.dataaccess.IUserRoleDataAccess;
-import com.example.backedapi.model.db.Role;
-import com.example.backedapi.model.db.User;
-import com.example.backedapi.model.db.UserRole;
+import com.example.backedapi.Enity.Role;
+import com.example.backedapi.Enity.User;
+import com.example.backedapi.Enity.UserRole;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

@@ -1,7 +1,7 @@
 package com.example.backedapi.mapper;
 
-import com.example.backedapi.model.Vo.ProjectVo;
-import com.example.backedapi.model.db.Project;
+import com.example.backedapi.Dto.Vo.ProjectVo;
+import com.example.backedapi.Enity.Project;
 import org.mapstruct.Mapper;
 
 @Mapper(componentModel = "spring")

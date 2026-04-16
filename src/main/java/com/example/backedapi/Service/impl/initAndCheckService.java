@@ -4,9 +4,9 @@ import com.example.backedapi.Service.IAlertCheckLimitService;
 import com.example.backedapi.Service.IFunctionService;
 import com.example.backedapi.Service.IInitAndCheckService;
 import com.example.backedapi.Service.IRoleService;
-import com.example.backedapi.model.Vo.FunctionVo;
-import com.example.backedapi.model.Vo.AlertCheckLimitVo;
-import com.example.backedapi.model.Vo.RoleOutVo;
+import com.example.backedapi.Dto.Vo.FunctionVo;
+import com.example.backedapi.Dto.Vo.AlertCheckLimitVo;
+import com.example.backedapi.Dto.Vo.RoleOutVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

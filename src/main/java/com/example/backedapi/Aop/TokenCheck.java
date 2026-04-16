@@ -2,8 +2,8 @@ package com.example.backedapi.Aop;
 
 import com.example.backedapi.dataaccess.IUserDataAccess;
 import com.example.backedapi.fillter.JwtAuthenticationToken;
-import com.example.backedapi.model.db.User;
-import com.example.backedapi.model.Vo.ResponseType;
+import com.example.backedapi.Enity.User;
+import com.example.backedapi.Dto.Vo.ResponseType;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

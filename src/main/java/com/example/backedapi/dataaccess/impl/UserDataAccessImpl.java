@@ -2,7 +2,7 @@ package com.example.backedapi.dataaccess.impl;
 
 import com.example.backedapi.Repository.UserRepository;
 import com.example.backedapi.dataaccess.IUserDataAccess;
-import com.example.backedapi.model.db.User;
+import com.example.backedapi.Enity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
