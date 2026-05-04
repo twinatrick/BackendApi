@@ -1,11 +1,16 @@
 package com.example.backedapi.controller;
 
+import com.example.backedapi.Dto.dto.common.PageResult;
+import com.example.backedapi.Dto.dto.search.ProjectSearchQuery;
 import com.example.backedapi.Service.IProjectService;
+import com.example.backedapi.Service.ISkillService;
 import com.example.backedapi.annotation.openapi.ApiControllerTag;
 import com.example.backedapi.annotation.openapi.ApiOperationBadRequest;
 import com.example.backedapi.annotation.openapi.ApiOperationOk;
+import com.example.backedapi.Dto.Vo.ProjectSkillBindRequest;
 import com.example.backedapi.Dto.Vo.ProjectVo;
 import com.example.backedapi.Dto.Vo.ResponseType;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,9 +20,11 @@ import java.util.List;
 @ApiControllerTag(name = "Projects", description = "Backend API endpoints - Project management")
 public class ProjectController {
     private final IProjectService projectService;
+    private final ISkillService skillService;
 
-    public ProjectController(IProjectService projectService) {
+    public ProjectController(IProjectService projectService, ISkillService skillService) {
         this.projectService = projectService;
+        this.skillService = skillService;
     }
 
     @PostMapping("/add")
@@ -44,5 +51,33 @@ public class ProjectController {
     public ResponseType<String> deleteProject(@RequestBody ProjectVo project) {
         projectService.deleteProject(project);
         return ResponseType.Success("Project deleted successfully");
+    }
+
+    @PostMapping("/bindSkill")
+    @ApiOperationBadRequest(summary = "Bind project skill", description = "Binds a skill level to a project.")
+    public ResponseType<String> bindProjectSkill(@RequestBody ProjectSkillBindRequest body) {
+        skillService.bindProjectSkill(body.getProjectId(), body.getSkillId(), body.getSkillLevelId());
+        return ResponseType.Success("Project skill bound successfully");
+    }
+    
+    @PostMapping("/search")
+    @ApiOperationOk(summary = "Search projects with pagination", description = "搜尋專案並回傳分頁結果，支援多種查詢條件與排序")
+    public ResponseType<PageResult<ProjectVo>> searchProjects(@Valid @RequestBody ProjectSearchQuery query) {
+        PageResult<ProjectVo> result = projectService.searchProjects(query);
+        return ResponseType.Success(result, "Projects fetched successfully");
+    }
+    
+    @GetMapping("/current")
+    @ApiOperationOk(summary = "Get current user projects", description = "回傳當前使用者所屬的所有專案")
+    public ResponseType<List<ProjectVo>> getCurrentUserProjects() {
+        List<ProjectVo> projects = projectService.getCurrentUserProjects();
+        return ResponseType.Success(projects, "Current user projects fetched successfully");
+    }
+    
+    @PostMapping("/current/search")
+    @ApiOperationOk(summary = "Search current user projects with pagination", description = "搜尋當前使用者的專案並回傳分頁結果，支援多種查詢條件與排序")
+    public ResponseType<PageResult<ProjectVo>> searchCurrentUserProjects(@Valid @RequestBody ProjectSearchQuery query) {
+        PageResult<ProjectVo> result = projectService.searchCurrentUserProjects(query);
+        return ResponseType.Success(result, "Current user projects fetched successfully");
     }
 }

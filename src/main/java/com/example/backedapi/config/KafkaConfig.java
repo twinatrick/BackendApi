@@ -5,6 +5,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,14 +23,21 @@ import java.util.Map;
 @Configuration
 public class KafkaConfig {
 
-    @Value("${spring.kafka.bootstrap-servers:localhost:9092}")
-    private String bootstrapServers;
+    private static final Logger LOGGER = LoggerFactory.getLogger(KafkaConfig.class);
+
+    @Value("${spring.kafka.bootstrap-servers:}")
+    private String configuredBootstrapServers;
+
+    @Value("${app.in-docker:false}")
+    private boolean inDocker;
 
     @Value("${kafka.consumer.group-id:myGroup}")
     private String groupId;
 
     @Bean
     public ConsumerFactory<String, List<AlarmMessage>> alarmMessageConsumerFactory(ObjectMapper objectMapper) {
+        String bootstrapServers = resolveBootstrapServers();
+
         Map<String, Object> props = new HashMap<>();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
@@ -52,5 +61,16 @@ public class KafkaConfig {
         factory.setConsumerFactory(alarmMessageConsumerFactory);
         factory.setCommonErrorHandler(new DefaultErrorHandler());
         return factory;
+    }
+
+    private String resolveBootstrapServers() {
+        if (configuredBootstrapServers != null && !configuredBootstrapServers.isBlank()) {
+            LOGGER.info("Kafka bootstrap servers from config: {}", configuredBootstrapServers);
+            return configuredBootstrapServers;
+        }
+
+        String resolved = inDocker ? "kafka:9092" : "localhost:9092";
+        LOGGER.info("Kafka bootstrap servers resolved by APP_IN_DOCKER({}): {}", inDocker, resolved);
+        return resolved;
     }
 }

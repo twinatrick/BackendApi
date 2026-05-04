@@ -1,5 +1,6 @@
 package com.example.backedapi.dataaccess.impl;
 
+import com.example.backedapi.Dto.dto.search.SkillSearchQuery;
 import com.example.backedapi.Repository.SkillRepository;
 import com.example.backedapi.dataaccess.ISkillDataAccess;
 import com.example.backedapi.Enity.Skill;
@@ -9,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.data.domain.Example;
+import org.springframework.data.domain.Page;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.Date;
@@ -215,5 +217,122 @@ class SkillDataAccessImplTest {
 
         // Act & Assert - should not throw exception
         assertDoesNotThrow(() -> skillDataAccess.delete(skill));
+    }
+    
+    @Test
+    @DisplayName("Should search skills with query")
+    void testSearchSkills() {
+        // Arrange
+        Skill skill1 = new Skill();
+        skill1.setName("Java");
+        skill1.setDescription("Java programming language");
+        skillRepository.save(skill1);
+        
+        Skill skill2 = new Skill();
+        skill2.setName("JavaScript");
+        skill2.setDescription("JavaScript programming");
+        skillRepository.save(skill2);
+        
+        Skill skill3 = new Skill();
+        skill3.setName("Python");
+        skill3.setDescription("Python language");
+        skillRepository.save(skill3);
+        
+        SkillSearchQuery query = new SkillSearchQuery();
+        query.setPage(0);
+        query.setSize(10);
+        query.setSortBy("name");
+        query.setSortDir("asc");
+        query.setName("Java");
+        
+        // Act
+        Page<Skill> result = skillDataAccess.searchSkills(query);
+        
+        // Assert
+        assertEquals(2, result.getTotalElements());
+        assertTrue(result.getContent().stream().anyMatch(s -> s.getName().equals("Java")));
+        assertTrue(result.getContent().stream().anyMatch(s -> s.getName().equals("JavaScript")));
+    }
+    
+    @Test
+    @DisplayName("Should search skills with pagination")
+    void testSearchSkills_Pagination() {
+        // Arrange
+        for (int i = 0; i < 5; i++) {
+            Skill skill = new Skill();
+            skill.setName("Skill " + i);
+            skill.setDescription("Description " + i);
+            skillRepository.save(skill);
+        }
+        
+        SkillSearchQuery query = new SkillSearchQuery();
+        query.setPage(0);
+        query.setSize(2);
+        query.setSortBy("name");
+        query.setSortDir("asc");
+        
+        // Act
+        Page<Skill> result = skillDataAccess.searchSkills(query);
+        
+        // Assert
+        assertEquals(5, result.getTotalElements());
+        assertEquals(3, result.getTotalPages());
+        assertEquals(2, result.getContent().size());
+    }
+    
+    @Test
+    @DisplayName("Should search skills in descending order")
+    void testSearchSkills_DescendingOrder() {
+        // Arrange
+        Skill skill1 = new Skill();
+        skill1.setName("AAA Skill");
+        skillRepository.save(skill1);
+        
+        Skill skill2 = new Skill();
+        skill2.setName("ZZZ Skill");
+        skillRepository.save(skill2);
+        
+        SkillSearchQuery query = new SkillSearchQuery();
+        query.setPage(0);
+        query.setSize(10);
+        query.setSortBy("name");
+        query.setSortDir("desc");
+        
+        // Act
+        Page<Skill> result = skillDataAccess.searchSkills(query);
+        
+        // Assert
+        assertEquals(2, result.getTotalElements());
+        assertEquals("ZZZ Skill", result.getContent().get(0).getName());
+        assertEquals("AAA Skill", result.getContent().get(1).getName());
+    }
+    
+    @Test
+    @DisplayName("Should search skills with description filter")
+    void testSearchSkills_DescriptionFilter() {
+        // Arrange
+        Skill skill1 = new Skill();
+        skill1.setName("Skill 1");
+        skill1.setDescription("Backend development");
+        skillRepository.save(skill1);
+        
+        Skill skill2 = new Skill();
+        skill2.setName("Skill 2");
+        skill2.setDescription("Frontend design");
+        skillRepository.save(skill2);
+        
+        SkillSearchQuery query = new SkillSearchQuery();
+        query.setPage(0);
+        query.setSize(10);
+        query.setSortBy("name");
+        query.setSortDir("asc");
+        query.setDescription("Backend");
+        
+        // Act
+        Page<Skill> result = skillDataAccess.searchSkills(query);
+        
+        // Assert
+        assertEquals(1, result.getTotalElements());
+        assertEquals("Skill 1", result.getContent().get(0).getName());
     }
 }

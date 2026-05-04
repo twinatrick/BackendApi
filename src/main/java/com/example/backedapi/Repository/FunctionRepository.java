@@ -2,12 +2,13 @@ package com.example.backedapi.Repository;
 
 import com.example.backedapi.Enity.Function;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 import java.util.UUID;
 
-public interface FunctionRepository extends JpaRepository<Function, UUID> {
+public interface FunctionRepository extends JpaRepository<Function, UUID>, JpaSpecificationExecutor<Function> {
 
 
     @Query("select f from Function f where f.parent IN ?1")

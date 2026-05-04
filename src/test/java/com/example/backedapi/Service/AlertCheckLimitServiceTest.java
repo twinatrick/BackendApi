@@ -1,7 +1,10 @@
 package com.example.backedapi.Service;
 
+import com.example.backedapi.Dto.dto.common.PageResult;
+import com.example.backedapi.Dto.dto.search.AlertCheckLimitSearchQuery;
 import com.example.backedapi.Service.impl.AlertCheckLimitService;
 import com.example.backedapi.dataaccess.IAlertCheckLimitDataAccess;
+import com.example.backedapi.exception.AppException;
 import com.example.backedapi.mapper.AlertCheckLimitMapper;
 import com.example.backedapi.Dto.Vo.AlertCheckLimitVo;
 import com.example.backedapi.Enity.AlertCheckLimit;
@@ -12,7 +15,13 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -25,6 +34,7 @@ import static org.mockito.Mockito.*;
  * Uses Mockito to mock DataAccess dependencies.
  */
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class AlertCheckLimitServiceTest {
 
     @Mock
@@ -150,5 +160,121 @@ class AlertCheckLimitServiceTest {
         alertCheckLimitService.deleteLimit(vo);
 
         verify(alertCheckLimitDataAccess, times(1)).delete(any(AlertCheckLimit.class));
+    }
+
+    @Test
+    void testSearchAlertCheckLimits_Success() {
+        // Arrange
+        AlertCheckLimitSearchQuery query = new AlertCheckLimitSearchQuery();
+        query.setPage(0);
+        query.setSize(20);
+        query.setSortBy("createdTime");
+        query.setSortDir("desc");
+        query.setTableName("aquark_data");
+
+        List<AlertCheckLimit> limits = List.of(existingLimit);
+        Page<AlertCheckLimit> limitPage = new PageImpl<>(limits, PageRequest.of(0, 20), 1);
+
+        when(alertCheckLimitDataAccess.searchAlertCheckLimits(any(AlertCheckLimitSearchQuery.class)))
+                .thenReturn(limitPage);
+
+        // Act
+        PageResult<AlertCheckLimitVo> result = alertCheckLimitService.searchAlertCheckLimits(query);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(1, result.getContent().size());
+        assertEquals(1L, result.getTotalElements());
+        assertEquals("aquark_data", result.getContent().get(0).getTableName());
+        verify(alertCheckLimitDataAccess).searchAlertCheckLimits(any(AlertCheckLimitSearchQuery.class));
+    }
+
+    @Test
+    void testSearchAlertCheckLimits_WithLimitValueRange() {
+        // Arrange
+        AlertCheckLimitSearchQuery query = new AlertCheckLimitSearchQuery();
+        query.setPage(0);
+        query.setSize(20);
+        query.setSortBy("limitValue");
+        query.setSortDir("asc");
+        query.setLimitValueMin(5.0);
+        query.setLimitValueMax(15.0);
+
+        AlertCheckLimit limit1 = new AlertCheckLimit();
+        limit1.setId(UUID.randomUUID());
+        limit1.setTableName("aquark_data");
+        limit1.setColumnName("rain_d");
+        limit1.setLimitValue(10.5);
+
+        AlertCheckLimit limit2 = new AlertCheckLimit();
+        limit2.setId(UUID.randomUUID());
+        limit2.setTableName("aquark_data");
+        limit2.setColumnName("temp_avg");
+        limit2.setLimitValue(8.0);
+
+        List<AlertCheckLimit> limits = List.of(limit1, limit2);
+        Page<AlertCheckLimit> limitPage = new PageImpl<>(limits, PageRequest.of(0, 20), 2);
+
+        when(alertCheckLimitDataAccess.searchAlertCheckLimits(any(AlertCheckLimitSearchQuery.class)))
+                .thenReturn(limitPage);
+
+        // Act
+        PageResult<AlertCheckLimitVo> result = alertCheckLimitService.searchAlertCheckLimits(query);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(2, result.getContent().size());
+        assertEquals(2L, result.getTotalElements());
+        verify(alertCheckLimitDataAccess).searchAlertCheckLimits(any(AlertCheckLimitSearchQuery.class));
+    }
+
+    @Test
+    void testSearchAlertCheckLimits_InvalidSortField() {
+        // Arrange
+        AlertCheckLimitSearchQuery query = new AlertCheckLimitSearchQuery();
+        query.setPage(0);
+        query.setSize(20);
+        query.setSortBy("invalidField");
+        query.setSortDir("desc");
+
+        // Act & Assert
+        assertThrows(AppException.class, () -> alertCheckLimitService.searchAlertCheckLimits(query));
+    }
+
+    @Test
+    void testSearchAlertCheckLimits_InvalidSortDirection() {
+        // Arrange
+        AlertCheckLimitSearchQuery query = new AlertCheckLimitSearchQuery();
+        query.setPage(0);
+        query.setSize(20);
+        query.setSortBy("createdTime");
+        query.setSortDir("invalid");
+
+        // Act & Assert
+        assertThrows(AppException.class, () -> alertCheckLimitService.searchAlertCheckLimits(query));
+    }
+
+    @Test
+    void testSearchAlertCheckLimits_EmptyResult() {
+        // Arrange
+        AlertCheckLimitSearchQuery query = new AlertCheckLimitSearchQuery();
+        query.setPage(0);
+        query.setSize(20);
+        query.setSortBy("createdTime");
+        query.setSortDir("desc");
+        query.setTableName("non_existent");
+
+        Page<AlertCheckLimit> emptyPage = new PageImpl<>(Collections.emptyList(), PageRequest.of(0, 20), 0);
+
+        when(alertCheckLimitDataAccess.searchAlertCheckLimits(any(AlertCheckLimitSearchQuery.class)))
+                .thenReturn(emptyPage);
+
+        // Act
+        PageResult<AlertCheckLimitVo> result = alertCheckLimitService.searchAlertCheckLimits(query);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(0, result.getContent().size());
+        assertEquals(0L, result.getTotalElements());
     }
 }

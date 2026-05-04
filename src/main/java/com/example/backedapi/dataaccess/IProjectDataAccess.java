@@ -1,6 +1,8 @@
 package com.example.backedapi.dataaccess;
 
+import com.example.backedapi.Dto.dto.search.ProjectSearchQuery;
 import com.example.backedapi.Enity.Project;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
 import java.util.Optional;
@@ -53,4 +55,21 @@ public interface IProjectDataAccess {
      * @return 存在返回 true,否則返回 false
      */
     boolean existsById(UUID id);
+    
+    /**
+     * 分頁查詢專案
+     *
+     * @param query 查詢參數
+     * @return 分頁結果
+     */
+    Page<Project> searchProjects(ProjectSearchQuery query);
+    
+    /**
+     * 分頁查詢當前使用者的專案
+     *
+     * @param currentUserId 當前使用者ID
+     * @param query 查詢參數
+     * @return 分頁結果
+     */
+    Page<Project> searchCurrentUserProjects(String currentUserId, ProjectSearchQuery query);
 }

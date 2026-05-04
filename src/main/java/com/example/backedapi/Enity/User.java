@@ -33,7 +33,11 @@ public class User extends BaseEntity {
 
     @JsonIgnore
     @OneToMany(mappedBy = "user",fetch = FetchType.EAGER,cascade = CascadeType.ALL)
-    private List<SkillMapUserAndProject> skillMapUserAndProjects =new ArrayList<>();
+    private List<UserSkill> userSkills =new ArrayList<>();
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "user",fetch = FetchType.EAGER,cascade = CascadeType.ALL)
+    private List<UserProject> userProjects =new ArrayList<>();
     @Transient
     private List<String> roleArr;
 

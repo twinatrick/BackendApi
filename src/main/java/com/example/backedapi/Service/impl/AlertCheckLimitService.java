@@ -1,6 +1,9 @@
 package com.example.backedapi.Service.impl;
 
+import com.example.backedapi.Dto.dto.common.PageResult;
+import com.example.backedapi.Dto.dto.search.AlertCheckLimitSearchQuery;
 import com.example.backedapi.Service.IAlertCheckLimitService;
+import com.example.backedapi.Util.SortFieldValidator;
 import com.example.backedapi.dataaccess.IAlertCheckLimitDataAccess;
 import com.example.backedapi.mapper.AlertCheckLimitMapper;
 import com.example.backedapi.Dto.Vo.AlertCheckLimitVo;
@@ -9,9 +12,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -70,6 +76,23 @@ public class AlertCheckLimitService implements IAlertCheckLimitService {
     @Override
     public void deleteLimit(AlertCheckLimitVo alertCheckLimitVo) {
         deleteLimitEntity(alertCheckLimitMapper.toEntity(alertCheckLimitVo));
+    }
+    
+    @Override
+    public PageResult<AlertCheckLimitVo> searchAlertCheckLimits(AlertCheckLimitSearchQuery query) {
+        // 驗證排序欄位
+        Set<String> validSortFields = Set.of("id", "tableName", "columnName", "limitValue", "createdBy", "updatedBy", "createdTime", "updatedTime");
+        SortFieldValidator.validate(query.getSortBy(), query.getSortDir(), validSortFields);
+        
+        // 執行分頁查詢
+        Page<AlertCheckLimit> page = alertCheckLimitDataAccess.searchAlertCheckLimits(query);
+        
+        // 轉換為 VO
+        List<AlertCheckLimitVo> content = page.getContent().stream()
+                .map(alertCheckLimitMapper::toVo)
+                .collect(Collectors.toList());
+        
+        return PageResult.of(page, content);
     }
 
     @CachePut(value = "alertCheckLimit", key = "#alertCheckLimit.tableName + '.' + #alertCheckLimit.columnName")

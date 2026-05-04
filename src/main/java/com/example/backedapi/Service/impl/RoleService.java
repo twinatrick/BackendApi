@@ -1,6 +1,9 @@
 package com.example.backedapi.Service.impl;
 
+import com.example.backedapi.Dto.dto.common.PageResult;
+import com.example.backedapi.Dto.dto.search.RoleSearchQuery;
 import com.example.backedapi.Service.IRoleService;
+import com.example.backedapi.Util.SortFieldValidator;
 import com.example.backedapi.dataaccess.*;
 import com.example.backedapi.mapper.FunctionMapper;
 import com.example.backedapi.mapper.RoleMapper;
@@ -15,6 +18,7 @@ import com.example.backedapi.Enity.User;
 import com.example.backedapi.Enity.UserRole;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Example;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -345,6 +349,32 @@ public class RoleService implements IRoleService {
     public RoleOutVo getRoleByName(String name){
         Role role = roleDataAccess.findRoleByName(name);
         return role == null ? null : roleMapper.toVo(role);
+    }
+    
+    @Override
+    public PageResult<RoleOutVo> searchRoles(RoleSearchQuery query) {
+        // 定義允許的排序欄位
+        String[] allowedSortFields = {
+            "id", "name", "description", "permissions",
+            "createdBy", "updatedBy", "createdTime", "updatedTime"
+        };
+        
+        // 驗證排序欄位
+        SortFieldValidator.validateSortField(query.getSortBy(), allowedSortFields);
+        
+        // 驗證排序方向
+        SortFieldValidator.validateSortDirection(query.getSortDir());
+        
+        // 執行分頁查詢
+        Page<Role> rolePage = roleDataAccess.searchRoles(query);
+        
+        // 轉換為 VO
+        List<RoleOutVo> roleVos = rolePage.getContent().stream()
+                .map(roleMapper::toVo)
+                .toList();
+        
+        // 返回分頁結果
+        return PageResult.of(rolePage, roleVos);
     }
 
     private UUID mapUuid(String id) {

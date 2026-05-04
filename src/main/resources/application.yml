@@ -1,15 +1,21 @@
 jwt:
   secret:
-    use: secretsecretsecretsecretsecretll
-  issuer: backedApi
-  audience: backedApi
-  expiration-minutes: 60
+    use: ${JWT_SECRET_USE:secretsecretsecretsecretsecretll}
+  issuer: ${JWT_ISSUER:backedApi}
+  audience: ${JWT_AUDIENCE:backedApi}
+  expiration-minutes: ${JWT_EXPIRATION_MINUTES:60}
+
+app:
+  in-docker: ${APP_IN_DOCKER:false}
+
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/postgres
-    username: postgres
-    password: verYs3cret
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/postgres}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:verYs3cret}
     driver-class-name: org.postgresql.Driver
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:}
   jpa:
     hibernate:
       ddl-auto: update
@@ -18,9 +24,11 @@ spring:
       hibernate:
         format_sql: true
 server:
-  port: 8000
+  port: ${SERVER_PORT:8000}
+
 kafka:
   consumer:
-    group-id: myGroup
+    group-id: ${KAFKA_CONSUMER_GROUP_ID:myGroup}
+
 superuser:
-  key: change-me
+  key: ${SUPERUSER_KEY:change-me}

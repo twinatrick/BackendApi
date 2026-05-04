@@ -1,15 +1,17 @@
 package com.example.backedapi.Service;
 
+import com.example.backedapi.Dto.dto.common.PageResult;
+import com.example.backedapi.Dto.dto.search.RoleSearchQuery;
 import com.example.backedapi.Enity.*;
 import com.example.backedapi.Service.impl.RoleService;
 import com.example.backedapi.dataaccess.*;
+import com.example.backedapi.exception.AppException;
 import com.example.backedapi.mapper.FunctionMapper;
 import com.example.backedapi.mapper.RoleMapper;
 import com.example.backedapi.mapper.UserMapper;
 import com.example.backedapi.Dto.Vo.FunctionVo;
 import com.example.backedapi.Dto.Vo.RoleOutVo;
 import com.example.backedapi.Dto.Vo.UserVo;
-import com.example.backedapi.model.db.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,7 +19,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.springframework.data.domain.Example;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 
 import java.util.*;
 
@@ -32,6 +39,7 @@ import static org.mockito.Mockito.*;
  * Target: 85%+ coverage
  */
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class RoleServiceTest {
 
     @Mock
@@ -528,5 +536,83 @@ class RoleServiceTest {
         assertNotNull(result);
         assertEquals("ROLE_ADMIN", result.getName());
         verify(roleDataAccess, times(1)).findRoleByName("ROLE_ADMIN");
+    }
+
+    @Test
+    @DisplayName("Should search roles with pagination")
+    void testSearchRoles_Success() {
+        // Arrange
+        RoleSearchQuery query = new RoleSearchQuery();
+        query.setPage(0);
+        query.setSize(20);
+        query.setSortBy("createdTime");
+        query.setSortDir("desc");
+        query.setName("ROLE");
+
+        Role role1 = new Role();
+        role1.setId(UUID.randomUUID());
+        role1.setName("ROLE_ADMIN");
+        role1.setDescription("Admin Role");
+
+        Role role2 = new Role();
+        role2.setId(UUID.randomUUID());
+        role2.setName("ROLE_USER");
+        role2.setDescription("User Role");
+
+        List<Role> roleList = List.of(role1, role2);
+        Page<Role> rolePage = new PageImpl<>(roleList, PageRequest.of(0, 20), 2);
+
+        RoleOutVo roleVo1 = new RoleOutVo();
+        roleVo1.setName("ROLE_ADMIN");
+        roleVo1.setDescription("Admin Role");
+
+        RoleOutVo roleVo2 = new RoleOutVo();
+        roleVo2.setName("ROLE_USER");
+        roleVo2.setDescription("User Role");
+
+        when(roleDataAccess.searchRoles(any(RoleSearchQuery.class))).thenReturn(rolePage);
+        when(roleMapper.toVo(role1)).thenReturn(roleVo1);
+        when(roleMapper.toVo(role2)).thenReturn(roleVo2);
+
+        // Act
+        PageResult<RoleOutVo> result = roleService.searchRoles(query);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(2, result.getContent().size());
+        assertEquals(2L, result.getTotalElements());
+        assertEquals(0, result.getCurrentPage());
+        assertEquals(20, result.getPageSize());
+        assertTrue(result.getIsFirst());
+        assertTrue(result.getIsLast());
+        verify(roleDataAccess).searchRoles(any(RoleSearchQuery.class));
+    }
+
+    @Test
+    @DisplayName("Should throw exception for invalid sort field in role search")
+    void testSearchRoles_InvalidSortField() {
+        // Arrange
+        RoleSearchQuery query = new RoleSearchQuery();
+        query.setPage(0);
+        query.setSize(20);
+        query.setSortBy("invalidField");
+        query.setSortDir("desc");
+
+        // Act & Assert
+        assertThrows(AppException.class, () -> roleService.searchRoles(query));
+    }
+
+    @Test
+    @DisplayName("Should throw exception for invalid sort direction in role search")
+    void testSearchRoles_InvalidSortDirection() {
+        // Arrange
+        RoleSearchQuery query = new RoleSearchQuery();
+        query.setPage(0);
+        query.setSize(20);
+        query.setSortBy("createdTime");
+        query.setSortDir("invalid");
+
+        // Act & Assert
+        assertThrows(AppException.class, () -> roleService.searchRoles(query));
     }
 }

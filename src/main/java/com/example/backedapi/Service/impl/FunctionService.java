@@ -1,6 +1,9 @@
 package com.example.backedapi.Service.impl;
 
+import com.example.backedapi.Dto.dto.common.PageResult;
+import com.example.backedapi.Dto.dto.search.FunctionSearchQuery;
 import com.example.backedapi.Service.IFunctionService;
+import com.example.backedapi.Util.SortFieldValidator;
 import com.example.backedapi.dataaccess.IFunctionDataAccess;
 import com.example.backedapi.dataaccess.IRoleFunctionDataAccess;
 import com.example.backedapi.mapper.FunctionMapper;
@@ -8,6 +11,7 @@ import com.example.backedapi.Dto.Vo.FunctionVo;
 import com.example.backedapi.Enity.Function;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Example;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -152,6 +156,32 @@ public class FunctionService implements IFunctionService {
                 return null;
             }
             return functionMapper.toVo(functionList.getFirst());
+        }
+        
+        @Override
+        public PageResult<FunctionVo> searchFunctions(FunctionSearchQuery query) {
+            // 定義允許的排序欄位
+            String[] allowedSortFields = {
+                "id", "name", "parent", "sort", "type",
+                "createdBy", "updatedBy", "createdTime", "updatedTime"
+            };
+            
+            // 驗證排序欄位
+            SortFieldValidator.validateSortField(query.getSortBy(), allowedSortFields);
+            
+            // 驗證排序方向
+            SortFieldValidator.validateSortDirection(query.getSortDir());
+            
+            // 執行分頁查詢
+            Page<Function> functionPage = functionDataAccess.searchFunctions(query);
+            
+            // 轉換為 VO
+            List<FunctionVo> functionVos = functionPage.getContent().stream()
+                    .map(functionMapper::toVo)
+                    .toList();
+            
+            // 返回分頁結果
+            return PageResult.of(functionPage, functionVos);
         }
 
         private UUID mapUuid(String id) {

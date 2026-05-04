@@ -1,10 +1,15 @@
 package com.example.backedapi.dataaccess.impl;
 
+import com.example.backedapi.Dto.dto.search.FunctionSearchQuery;
 import com.example.backedapi.Repository.FunctionRepository;
 import com.example.backedapi.dataaccess.IFunctionDataAccess;
 import com.example.backedapi.Enity.Function;
+import com.example.backedapi.dataaccess.specification.FunctionSpecification;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Example;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 
@@ -80,5 +85,22 @@ public class FunctionDataAccessImpl implements IFunctionDataAccess {
     @Override
     public List<Function> findFunctionByNameAndParent(String name, String parent) {
         return functionRepository.findFunctionByNameAndParent(name, parent);
+    }
+    
+    @Override
+    public Page<Function> searchFunctions(FunctionSearchQuery query) {
+        // 建立排序
+        Sort sort = Sort.by(
+            "asc".equalsIgnoreCase(query.getNormalizedSortDir()) 
+                ? Sort.Direction.ASC 
+                : Sort.Direction.DESC,
+            query.getSortBy()
+        );
+        
+        // 建立分頁請求
+        Pageable pageable = PageRequest.of(query.getPage(), query.getSize(), sort);
+        
+        // 執行查詢
+        return functionRepository.findAll(FunctionSpecification.buildSpecification(query), pageable);
     }
 }

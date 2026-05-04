@@ -26,8 +26,13 @@ public class Project extends BaseEntity {
     //專案描述
     @Column(name = "description")
     private String description;
+
     @JsonIgnore
     @OneToMany(mappedBy = "project",fetch = FetchType.EAGER,cascade = CascadeType.ALL)
-    private List<SkillMapUserAndProject> skillMapUserAndProjects =new ArrayList<>();
+    private List<ProjectSkill> projectSkills =new ArrayList<>();
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "project",fetch = FetchType.EAGER,cascade = CascadeType.ALL)
+    private List<UserProject> userProjects =new ArrayList<>();
 
 }

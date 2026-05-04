@@ -14,6 +14,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -31,6 +33,7 @@ import static org.mockito.Mockito.*;
  * Uses Mockito to mock DataAccess dependencies.
  */
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class AquarkDataServiceTest {
 
     @Mock
@@ -70,6 +73,7 @@ class AquarkDataServiceTest {
             raw.setV6(data.getV6());
             raw.setV7(data.getV7());
             raw.setPeak(data.isPeak());
+            raw.setCSQ(data.getCSQ());
             return raw;
         });
         when(aquarkDataMapper.toEntity(any(AquarkDataRaw.class))).thenAnswer(invocation -> {
@@ -93,6 +97,7 @@ class AquarkDataServiceTest {
             data.setV6(raw.getV6());
             data.setV7(raw.getV7());
             data.setPeak(raw.isPeak());
+            data.setCSQ(raw.getCSQ());
             return data;
         });
     }

@@ -1,6 +1,8 @@
 package com.example.backedapi.dataaccess;
 
+import com.example.backedapi.Dto.dto.search.UserSearchQuery;
 import com.example.backedapi.Enity.User;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
 import java.util.Optional;
@@ -49,4 +51,13 @@ public interface IUserDataAccess {
      * @return list of users matching the keys
      */
     List<User> findAllById(List<UUID> keys);
+    
+    /**
+     * 分頁查詢使用者
+     *
+     * @param query 查詢參數
+     * @return 分頁結果
+     */
+    Page<User> searchUsers(UserSearchQuery query);
 }
+

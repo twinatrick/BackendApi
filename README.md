@@ -29,13 +29,30 @@
 docker compose -f compose.yaml up -d
 ```
 
-2. 本機啟動後端（見下方）
+2. 可選：先複製環境變數模板再調整
+
+```bash
+cp .env.example .env
+```
+
+3. 本機啟動後端（見下方）
 
 ### 本機啟動
 
 ```bash
 ./mvnw spring-boot:run
 ```
+
+### Docker 內啟動後端
+
+若後端服務跑在 Docker 內，請設定 `APP_IN_DOCKER=true`。
+當 `APP_IN_DOCKER=true` 且未手動指定 `KAFKA_BOOTSTRAP_SERVERS` 時，後端會自動使用 `kafka:9092`。
+否則（預設）會使用 `localhost:9092`。
+
+Kafka 對外廣播主機可用 `KAFKA_ADVERTISED_HOST` 控制：
+
+- Docker 內互連：`KAFKA_ADVERTISED_HOST=kafka`
+- 本機連線：`KAFKA_ADVERTISED_HOST=localhost`
 
 ## 重要設定
 

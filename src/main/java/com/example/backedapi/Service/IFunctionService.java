@@ -1,5 +1,7 @@
 package com.example.backedapi.Service;
 
+import com.example.backedapi.Dto.dto.common.PageResult;
+import com.example.backedapi.Dto.dto.search.FunctionSearchQuery;
 import com.example.backedapi.Dto.Vo.FunctionVo;
 
 import java.util.List;
@@ -24,4 +26,13 @@ public interface IFunctionService {
     FunctionVo getFunctionByName(String name);
 
     FunctionVo getFunctionByNameAndParent(String name, String parent);
+    
+    /**
+     * 分頁搜尋功能
+     * 
+     * @param query 搜尋查詢參數
+     * @return 分頁結果
+     */
+    PageResult<FunctionVo> searchFunctions(FunctionSearchQuery query);
 }
+

@@ -1,5 +1,7 @@
 package com.example.backedapi.Service;
 
+import com.example.backedapi.Dto.dto.common.PageResult;
+import com.example.backedapi.Dto.dto.search.RoleSearchQuery;
 import com.example.backedapi.Dto.Vo.RoleOutVo;
 import com.example.backedapi.Dto.Vo.FunctionVo;
 import com.example.backedapi.Dto.Vo.UserVo;
@@ -44,4 +46,13 @@ public interface IRoleService {
     List<RoleOutVo> getRoleByUser(String userId);
 
     RoleOutVo getRoleByName(String name);
+    
+    /**
+     * 分頁搜尋角色
+     * 
+     * @param query 搜尋查詢參數
+     * @return 分頁結果
+     */
+    PageResult<RoleOutVo> searchRoles(RoleSearchQuery query);
 }
+

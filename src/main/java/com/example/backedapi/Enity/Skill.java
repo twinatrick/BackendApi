@@ -25,6 +25,14 @@ public class Skill extends BaseEntity {
 
     @JsonIgnore
     @OneToMany(mappedBy = "skill",fetch = FetchType.EAGER,cascade = CascadeType.ALL)
-    private List<SkillMapUserAndProject> skillMapUserAndProjects =new ArrayList<>();
+    private List<SkillLevel> skillLevels =new ArrayList<>();
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "skill",fetch = FetchType.EAGER,cascade = CascadeType.ALL)
+    private List<UserSkill> userSkills =new ArrayList<>();
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "skill",fetch = FetchType.EAGER,cascade = CascadeType.ALL)
+    private List<ProjectSkill> projectSkills =new ArrayList<>();
 
 }

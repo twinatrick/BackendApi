@@ -1,5 +1,7 @@
 package com.example.backedapi.controller;
 
+import com.example.backedapi.Dto.dto.common.PageResult;
+import com.example.backedapi.Dto.dto.search.RoleSearchQuery;
 import com.example.backedapi.Service.IFunctionService;
 import com.example.backedapi.Service.IRoleService;
 import com.example.backedapi.Service.IUserService;
@@ -11,6 +13,7 @@ import com.example.backedapi.Dto.Vo.PermissionVo;
 import com.example.backedapi.Dto.Vo.ResponseType;
 import com.example.backedapi.Dto.Vo.RoleOutVo;
 import com.example.backedapi.Dto.Vo.UserVo;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -133,5 +136,12 @@ public class RoleController {
     @ApiOperationBadRequest(summary = "Get users by role", description = "Returns users assigned to a role.")
     public ResponseType<List<UserVo>> getUserByRole(@RequestBody RoleOutVo role) {
         return ResponseType.Success(roleService.getUserByRole(role.getId().toString()), "User fetched successfully");
+    }
+    
+    @PostMapping("/search")
+    @ApiOperationOk(summary = "Search roles with pagination", description = "搜尋角色並回傳分頁結果，支援多種查詢條件與排序")
+    public ResponseType<PageResult<RoleOutVo>> searchRoles(@Valid @RequestBody RoleSearchQuery query) {
+        PageResult<RoleOutVo> result = roleService.searchRoles(query);
+        return ResponseType.Success(result, "Roles fetched successfully");
     }
 }

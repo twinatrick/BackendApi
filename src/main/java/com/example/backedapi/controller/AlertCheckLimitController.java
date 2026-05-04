@@ -1,11 +1,14 @@
 package com.example.backedapi.controller;
 
+import com.example.backedapi.Dto.dto.common.PageResult;
+import com.example.backedapi.Dto.dto.search.AlertCheckLimitSearchQuery;
 import com.example.backedapi.Service.IAlertCheckLimitService;
 import com.example.backedapi.annotation.openapi.ApiControllerTag;
 import com.example.backedapi.annotation.openapi.ApiOperationBadRequest;
 import com.example.backedapi.annotation.openapi.ApiOperationOk;
 import com.example.backedapi.Dto.Vo.AlertCheckLimitVo;
 import com.example.backedapi.Dto.Vo.ResponseType;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -39,5 +42,12 @@ public class AlertCheckLimitController {
     public ResponseType<String> deleteLimit(@RequestBody AlertCheckLimitVo alertCheckLimitVo) {
         alertCheckLimitService.deleteLimit(alertCheckLimitVo);
         return ResponseType.Success("Limit deleted successfully");
+    }
+    
+    @PostMapping("/search")
+    @ApiOperationBadRequest(summary = "搜尋告警檢查限制", description = "支援分頁與條件查詢的告警檢查限制搜尋")
+    @Operation(summary = "搜尋告警檢查限制（分頁）", description = "支援 tableName、columnName、limitValue 範圍、createdBy 查詢條件，預設按 createdTime 降序排序")
+    public ResponseType<PageResult<AlertCheckLimitVo>> searchAlertCheckLimits(@RequestBody AlertCheckLimitSearchQuery query) {
+        return ResponseType.Success(alertCheckLimitService.searchAlertCheckLimits(query), "告警檢查限制查詢成功");
     }
 }

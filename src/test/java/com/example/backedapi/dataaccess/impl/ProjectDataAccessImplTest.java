@@ -1,5 +1,6 @@
 package com.example.backedapi.dataaccess.impl;
 
+import com.example.backedapi.Dto.dto.search.ProjectSearchQuery;
 import com.example.backedapi.Repository.ProjectRepository;
 import com.example.backedapi.dataaccess.IProjectDataAccess;
 import com.example.backedapi.Enity.Project;
@@ -8,6 +9,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.data.domain.Page;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.List;
@@ -289,5 +291,139 @@ class ProjectDataAccessImplTest {
         // 4. 刪除
         projectDataAccess.delete(updated.get(0));
         assertFalse(projectDataAccess.existsById(saved.getId()));
+    }
+    
+    // ==================== searchProjects 測試 ====================
+    
+    @Test
+    @DisplayName("searchProjects - 搜尋專案成功")
+    void searchProjects_shouldReturnProjects() {
+        // Given
+        Project project1 = new Project();
+        project1.setName("Backend API");
+        project1.setDescription("Backend development");
+        projectDataAccess.save(project1);
+        
+        Project project2 = new Project();
+        project2.setName("Frontend UI");
+        project2.setDescription("Frontend development");
+        projectDataAccess.save(project2);
+        
+        ProjectSearchQuery query = new ProjectSearchQuery();
+        query.setPage(0);
+        query.setSize(10);
+        query.setSortBy("name");
+        query.setSortDir("asc");
+        query.setName("Backend");
+        
+        // When
+        Page<Project> result = projectDataAccess.searchProjects(query);
+        
+        // Then
+        assertEquals(1, result.getTotalElements());
+        assertEquals("Backend API", result.getContent().get(0).getName());
+    }
+    
+    @Test
+    @DisplayName("searchProjects - 搜尋專案帶分頁")
+    void searchProjects_shouldReturnWithPagination() {
+        // Given
+        for (int i = 0; i < 5; i++) {
+            Project project = new Project();
+            project.setName("Project " + i);
+            projectDataAccess.save(project);
+        }
+        
+        ProjectSearchQuery query = new ProjectSearchQuery();
+        query.setPage(0);
+        query.setSize(2);
+        query.setSortBy("name");
+        query.setSortDir("asc");
+        
+        // When
+        Page<Project> result = projectDataAccess.searchProjects(query);
+        
+        // Then
+        assertEquals(5, result.getTotalElements());
+        assertEquals(3, result.getTotalPages());
+        assertEquals(2, result.getContent().size());
+    }
+    
+    @Test
+    @DisplayName("searchProjects - 搜尋專案降序排列")
+    void searchProjects_shouldReturnDescendingOrder() {
+        // Given
+        Project project1 = new Project();
+        project1.setName("AAA Project");
+        projectDataAccess.save(project1);
+        
+        Project project2 = new Project();
+        project2.setName("ZZZ Project");
+        projectDataAccess.save(project2);
+        
+        ProjectSearchQuery query = new ProjectSearchQuery();
+        query.setPage(0);
+        query.setSize(10);
+        query.setSortBy("name");
+        query.setSortDir("desc");
+        
+        // When
+        Page<Project> result = projectDataAccess.searchProjects(query);
+        
+        // Then
+        assertEquals(2, result.getTotalElements());
+        assertEquals("ZZZ Project", result.getContent().get(0).getName());
+        assertEquals("AAA Project", result.getContent().get(1).getName());
+    }
+    
+    // ==================== searchCurrentUserProjects 測試 ====================
+    
+    @Test
+    @DisplayName("searchCurrentUserProjects - 搜尋當前用戶專案")
+    void searchCurrentUserProjects_shouldReturnUserProjects() {
+        // Given
+        String userId = UUID.randomUUID().toString();
+        
+        Project project = new Project();
+        project.setName("User Project");
+        projectDataAccess.save(project);
+        
+        ProjectSearchQuery query = new ProjectSearchQuery();
+        query.setPage(0);
+        query.setSize(10);
+        query.setSortBy("name");
+        query.setSortDir("asc");
+        
+        // When
+        Page<Project> result = projectDataAccess.searchCurrentUserProjects(userId, query);
+        
+        // Then
+        assertNotNull(result);
+        // Note: 實際的用戶過濾邏輯在 Specification 中實現
+        // 這裡只驗證方法調用不會拋出異常
+    }
+    
+    @Test
+    @DisplayName("searchCurrentUserProjects - 帶查詢條件")
+    void searchCurrentUserProjects_shouldReturnWithFilter() {
+        // Given
+        String userId = UUID.randomUUID().toString();
+        
+        Project project = new Project();
+        project.setName("Filtered Project");
+        projectDataAccess.save(project);
+        
+        ProjectSearchQuery query = new ProjectSearchQuery();
+        query.setPage(0);
+        query.setSize(10);
+        query.setSortBy("name");
+        query.setSortDir("asc");
+        query.setName("Filtered");
+        
+        // When
+        Page<Project> result = projectDataAccess.searchCurrentUserProjects(userId, query);
+        
+        // Then
+        assertNotNull(result);
     }
 }

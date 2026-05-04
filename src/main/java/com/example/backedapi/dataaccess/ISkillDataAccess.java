@@ -1,7 +1,9 @@
 package com.example.backedapi.dataaccess;
 
+import com.example.backedapi.Dto.dto.search.SkillSearchQuery;
 import com.example.backedapi.Enity.Skill;
 import org.springframework.data.domain.Example;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
 import java.util.Optional;
@@ -50,4 +52,12 @@ public interface ISkillDataAccess {
      * @param skill the skill to delete
      */
     void delete(Skill skill);
+    
+    /**
+     * 搜尋技能（支援分頁與條件查詢）
+     *
+     * @param query 搜尋查詢參數
+     * @return 分頁結果
+     */
+    Page<Skill> searchSkills(SkillSearchQuery query);
 }

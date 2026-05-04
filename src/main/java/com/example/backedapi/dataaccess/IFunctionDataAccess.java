@@ -1,7 +1,9 @@
 package com.example.backedapi.dataaccess;
 
+import com.example.backedapi.Dto.dto.search.FunctionSearchQuery;
 import com.example.backedapi.Enity.Function;
 import org.springframework.data.domain.Example;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
 
 import java.util.List;
@@ -107,4 +109,12 @@ public interface IFunctionDataAccess {
      * @return list of matching functions
      */
     List<Function> findFunctionByNameAndParent(String name, String parent);
+    
+    /**
+     * 分頁查詢功能
+     *
+     * @param query 查詢參數
+     * @return 分頁結果
+     */
+    Page<Function> searchFunctions(FunctionSearchQuery query);
 }

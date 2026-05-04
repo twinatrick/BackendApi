@@ -1,7 +1,9 @@
 package com.example.backedapi.dataaccess;
 
+import com.example.backedapi.Dto.dto.search.RoleSearchQuery;
 import com.example.backedapi.Enity.Role;
 import org.springframework.data.domain.Example;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
 import java.util.Optional;
@@ -74,4 +76,12 @@ public interface IRoleDataAccess {
      * @return the role if found, null otherwise
      */
     Role findRoleByName(String name);
+    
+    /**
+     * 分頁查詢角色
+     *
+     * @param query 查詢參數
+     * @return 分頁結果
+     */
+    Page<Role> searchRoles(RoleSearchQuery query);
 }

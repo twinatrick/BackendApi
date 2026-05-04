@@ -1,10 +1,15 @@
 package com.example.backedapi.dataaccess.impl;
 
+import com.example.backedapi.Dto.dto.search.SkillSearchQuery;
 import com.example.backedapi.Repository.SkillRepository;
 import com.example.backedapi.dataaccess.ISkillDataAccess;
+import com.example.backedapi.dataaccess.specification.SkillSpecification;
 import com.example.backedapi.Enity.Skill;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Example;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -44,5 +49,22 @@ public class SkillDataAccessImpl implements ISkillDataAccess {
     @Override
     public void delete(Skill skill) {
         skillRepository.delete(skill);
+    }
+    
+    @Override
+    public Page<Skill> searchSkills(SkillSearchQuery query) {
+        Sort sort = Sort.by(
+            "asc".equalsIgnoreCase(query.getSortDir()) 
+                ? Sort.Direction.ASC 
+                : Sort.Direction.DESC,
+            query.getSortBy()
+        );
+        
+        PageRequest pageRequest = PageRequest.of(query.getPage(), query.getSize(), sort);
+        
+        return skillRepository.findAll(
+            SkillSpecification.buildSpecification(query),
+            pageRequest
+        );
     }
 }

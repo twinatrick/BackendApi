@@ -1,5 +1,7 @@
 package com.example.backedapi.controller;
 
+import com.example.backedapi.Dto.dto.common.PageResult;
+import com.example.backedapi.Dto.dto.search.FunctionSearchQuery;
 import com.example.backedapi.Service.IFunctionService;
 import com.example.backedapi.annotation.openapi.ApiControllerTag;
 import com.example.backedapi.annotation.openapi.ApiOperationBadRequest;
@@ -7,6 +9,7 @@ import com.example.backedapi.annotation.openapi.ApiOperationOk;
 import com.example.backedapi.Dto.Vo.FunctionTransVo;
 import com.example.backedapi.Dto.Vo.FunctionVo;
 import com.example.backedapi.Dto.Vo.ResponseType;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -55,5 +58,12 @@ public class FunctionController {
         functionService.saveFunction(function.getSaveMainFunction());
         functionService.saveFunctionNewChild(function.getSaveFunctionNewChild());
         return ResponseType.Success("Functions saved successfully");
+    }
+    
+    @PostMapping("/search")
+    @ApiOperationOk(summary = "Search functions with pagination", description = "搜尋功能並回傳分頁結果，支援多種查詢條件與排序")
+    public ResponseType<PageResult<FunctionVo>> searchFunctions(@Valid @RequestBody FunctionSearchQuery query) {
+        PageResult<FunctionVo> result = functionService.searchFunctions(query);
+        return ResponseType.Success(result, "Functions fetched successfully");
     }
 }

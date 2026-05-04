@@ -1,15 +1,18 @@
-
 package com.example.backedapi.controller;
 
+import com.example.backedapi.Dto.dto.common.PageResult;
+import com.example.backedapi.Dto.dto.search.UserSearchQuery;
 import com.example.backedapi.Service.ISkillService;
 import com.example.backedapi.Service.IUserService;
 import com.example.backedapi.annotation.openapi.ApiControllerTag;
 import com.example.backedapi.annotation.openapi.ApiOperationAuth;
 import com.example.backedapi.annotation.openapi.ApiOperationBadRequest;
 import com.example.backedapi.annotation.openapi.ApiOperationOk;
-import com.example.backedapi.Dto.Vo.BindUserSkillOrProject;
+import com.example.backedapi.Dto.Vo.UserProjectBindRequest;
+import com.example.backedapi.Dto.Vo.UserSkillBindRequest;
 import com.example.backedapi.Dto.Vo.ResponseType;
 import com.example.backedapi.Dto.Vo.UserVo;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -41,11 +44,18 @@ public class UserController {
         return new ResponseType<>(userService.getCurrentUserInfo());
     }
 
-    @PostMapping("/BindUserSkillOrProject")
-    @ApiOperationBadRequest(summary = "Bind user skill or project", description = "Binds a skill to a user or to a project and user.")
-    public ResponseType<String> BindUserSkillOrProject(@RequestBody BindUserSkillOrProject body) {
-        skillService.bindSkillByType(body.getType(), body.getSkill(), body.getProjectId(), body.getUserId());
-        return new ResponseType<>(0, "Bind updated successfully");
+    @PostMapping("/bindSkill")
+    @ApiOperationBadRequest(summary = "Bind user skill", description = "Binds a skill level to a user.")
+    public ResponseType<String> bindUserSkill(@RequestBody UserSkillBindRequest body) {
+        skillService.bindUserSkill(body.getUserId(), body.getSkillId(), body.getSkillLevelId());
+        return ResponseType.Success("User skill bound successfully");
+    }
+
+    @PostMapping("/bindProject")
+    @ApiOperationBadRequest(summary = "Bind user project", description = "Binds a user to a project.")
+    public ResponseType<String> bindUserProject(@RequestBody UserProjectBindRequest body) {
+        userService.bindUserProject(body.getUserId(), body.getProjectId());
+        return ResponseType.Success("User project bound successfully");
     }
 
     @GetMapping("/getAllUser")
@@ -60,4 +70,12 @@ public class UserController {
         userService.saveUserWithRole(user);
         return new ResponseType<>(0, "User updated successfully");
     }
+    
+    @PostMapping("/search")
+    @ApiOperationOk(summary = "Search users with pagination", description = "搜尋使用者並回傳分頁結果，支援多種查詢條件與排序")
+    public ResponseType<PageResult<UserVo>> searchUsers(@Valid @RequestBody UserSearchQuery query) {
+        PageResult<UserVo> result = userService.searchUsers(query);
+        return new ResponseType<>(result);
+    }
 }
+

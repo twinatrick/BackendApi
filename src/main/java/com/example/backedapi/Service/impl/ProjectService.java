@@ -1,13 +1,19 @@
 package com.example.backedapi.Service.impl;
 
+import com.example.backedapi.Dto.dto.common.PageResult;
+import com.example.backedapi.Dto.dto.search.ProjectSearchQuery;
+import com.example.backedapi.Enity.User;
+import com.example.backedapi.Enity.UserProject;
 import com.example.backedapi.Service.IProjectService;
+import com.example.backedapi.Util.SortFieldValidator;
+import com.example.backedapi.dataaccess.IProjectSkillDataAccess;
 import com.example.backedapi.dataaccess.IProjectDataAccess;
-import com.example.backedapi.dataaccess.ISkillMapUserAndProjectDataAccess;
+import com.example.backedapi.dataaccess.IUserProjectDataAccess;
 import com.example.backedapi.mapper.ProjectMapper;
 import com.example.backedapi.Dto.Vo.ProjectVo;
 import com.example.backedapi.Enity.Project;
-import com.example.backedapi.Enity.SkillMapUserAndProject;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,8 +29,10 @@ public class ProjectService implements IProjectService {
     
     // 依賴注入:通過構造函數注入介面(由 Lombok @RequiredArgsConstructor 自動生成)
     private final IProjectDataAccess projectDataAccess;
-    private final ISkillMapUserAndProjectDataAccess skillMapDataAccess;
+    private final IProjectSkillDataAccess projectSkillDataAccess;
+    private final IUserProjectDataAccess userProjectDataAccess;
     private final ProjectMapper projectMapper;
+    private final User currentUser;
     /**
      * 新增專案
      * @param project 要新增的專案實體
@@ -83,10 +91,81 @@ public class ProjectService implements IProjectService {
         Project existingProject = projectDataAccess.findById(project.getId())
             .orElseThrow(() -> new IllegalArgumentException("Project not found"));
         
-        List<SkillMapUserAndProject> skillMapUserAndProjectList = 
-            skillMapDataAccess.findByProject(existingProject);
-        
-        skillMapDataAccess.deleteAll(skillMapUserAndProjectList);
+        projectSkillDataAccess.deleteByProjectId(existingProject.getId());
+        userProjectDataAccess.deleteByProjectId(existingProject.getId());
         projectDataAccess.delete(existingProject);
+    }
+    
+    @Override
+    public PageResult<ProjectVo> searchProjects(ProjectSearchQuery query) {
+        // 定義允許的排序欄位
+        String[] allowedSortFields = {
+            "id", "name", "description",
+            "createdBy", "updatedBy", "createdTime", "updatedTime"
+        };
+        
+        // 驗證排序欄位
+        SortFieldValidator.validateSortField(query.getSortBy(), allowedSortFields);
+        
+        // 驗證排序方向
+        SortFieldValidator.validateSortDirection(query.getSortDir());
+        
+        // 執行分頁查詢
+        Page<Project> projectPage = projectDataAccess.searchProjects(query);
+        
+        // 轉換為 VO
+        List<ProjectVo> projectVos = projectPage.getContent().stream()
+                .map(projectMapper::toVo)
+                .toList();
+        
+        // 返回分頁結果
+        return PageResult.of(projectPage, projectVos);
+    }
+    
+    @Override
+    public List<ProjectVo> getCurrentUserProjects() {
+        if (currentUser == null || currentUser.getId() == null) {
+            throw new IllegalStateException("未找到當前登入的使用者");
+        }
+        
+        // 透過 UserProject 關聯取得當前使用者的專案
+        List<UserProject> userProjects = userProjectDataAccess.findByUserId(currentUser.getId());
+        return userProjects.stream()
+                .map(UserProject::getProject)
+                .map(projectMapper::toVo)
+                .toList();
+    }
+    
+    @Override
+    public PageResult<ProjectVo> searchCurrentUserProjects(ProjectSearchQuery query) {
+        if (currentUser == null || currentUser.getId() == null) {
+            throw new IllegalStateException("未找到當前登入的使用者");
+        }
+        
+        // 定義允許的排序欄位
+        String[] allowedSortFields = {
+            "id", "name", "description",
+            "createdBy", "updatedBy", "createdTime", "updatedTime"
+        };
+        
+        // 驗證排序欄位
+        SortFieldValidator.validateSortField(query.getSortBy(), allowedSortFields);
+        
+        // 驗證排序方向
+        SortFieldValidator.validateSortDirection(query.getSortDir());
+        
+        // 執行分頁查詢（只查詢當前使用者的專案）
+        Page<Project> projectPage = projectDataAccess.searchCurrentUserProjects(
+            currentUser.getId().toString(), 
+            query
+        );
+        
+        // 轉換為 VO
+        List<ProjectVo> projectVos = projectPage.getContent().stream()
+                .map(projectMapper::toVo)
+                .toList();
+        
+        // 返回分頁結果
+        return PageResult.of(projectPage, projectVos);
     }
 }

@@ -1,10 +1,16 @@
 package com.example.backedapi.dataaccess.impl;
 
+import com.example.backedapi.Dto.dto.search.RoleSearchQuery;
 import com.example.backedapi.Repository.RoleRepository;
 import com.example.backedapi.dataaccess.IRoleDataAccess;
 import com.example.backedapi.Enity.Role;
+import com.example.backedapi.dataaccess.specification.RoleSpecification;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Example;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -59,5 +65,22 @@ public class RoleDataAccessImpl implements IRoleDataAccess {
     @Override
     public Role findRoleByName(String name) {
         return roleRepository.findRoleByName(name);
+    }
+    
+    @Override
+    public Page<Role> searchRoles(RoleSearchQuery query) {
+        // 建立排序
+        Sort sort = Sort.by(
+            "asc".equalsIgnoreCase(query.getNormalizedSortDir()) 
+                ? Sort.Direction.ASC 
+                : Sort.Direction.DESC,
+            query.getSortBy()
+        );
+        
+        // 建立分頁請求
+        Pageable pageable = PageRequest.of(query.getPage(), query.getSize(), sort);
+        
+        // 執行查詢
+        return roleRepository.findAll(RoleSpecification.buildSpecification(query), pageable);
     }
 }

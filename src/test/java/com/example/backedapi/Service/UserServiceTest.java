@@ -1,8 +1,13 @@
 package com.example.backedapi.Service;
 
+import com.example.backedapi.Dto.dto.common.PageResult;
+import com.example.backedapi.Dto.dto.search.UserSearchQuery;
 import com.example.backedapi.dataaccess.IFunctionDataAccess;
+import com.example.backedapi.dataaccess.IProjectDataAccess;
 import com.example.backedapi.dataaccess.IUserDataAccess;
+import com.example.backedapi.dataaccess.IUserProjectDataAccess;
 import com.example.backedapi.Service.impl.UserService;
+import com.example.backedapi.exception.AppException;
 import com.example.backedapi.mapper.FunctionMapper;
 import com.example.backedapi.mapper.UserMapper;
 import com.example.backedapi.Dto.Vo.FunctionVo;
@@ -16,6 +21,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,11 +37,13 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
+
 /**
  * Unit tests for UserService.
  * Tests service layer business logic with mocked data access dependencies.
  */
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class UserServiceTest {
 
     @Mock
@@ -45,6 +57,12 @@ class UserServiceTest {
 
     @Mock
     private IRoleService roleService;
+
+    @Mock
+    private IProjectDataAccess projectDataAccess;
+
+    @Mock
+    private IUserProjectDataAccess userProjectDataAccess;
 
     @Mock
     private UserMapper userMapper;
@@ -61,6 +79,7 @@ class UserServiceTest {
     @BeforeEach
     void setUp() {
         testUser = new User();
+        testUser.setId(UUID.randomUUID());
         testUser.setEmail("test@example.com");
         testUser.setPassword("hashedPassword");
         testUser.setDisabled(false);
@@ -314,5 +333,375 @@ class UserServiceTest {
         assertNotNull(result);
         assertTrue(result.isEmpty());
         verify(functionDataAccess, times(3)).findAllById(anyList());
+    }
+
+    @Test
+    @DisplayName("Should search users with pagination")
+    void testSearchUsers_Success() {
+        // Arrange
+        UserSearchQuery query = new UserSearchQuery();
+        query.setPage(0);
+        query.setSize(20);
+        query.setSortBy("createdTime");
+        query.setSortDir("desc");
+        query.setName("test");
+
+        User user1 = new User();
+        user1.setId(UUID.randomUUID());
+        user1.setName("testUser1");
+        user1.setEmail("test1@example.com");
+
+        User user2 = new User();
+        user2.setId(UUID.randomUUID());
+        user2.setName("testUser2");
+        user2.setEmail("test2@example.com");
+
+        List<User> userList = List.of(user1, user2);
+        Page<User> userPage = new PageImpl<>(userList, PageRequest.of(0, 20), 2);
+
+        UserVo userVo1 = new UserVo();
+        userVo1.setId(user1.getId().toString());
+        userVo1.setName("testUser1");
+
+        UserVo userVo2 = new UserVo();
+        userVo2.setId(user2.getId().toString());
+        userVo2.setName("testUser2");
+
+        when(userDataAccess.searchUsers(any(UserSearchQuery.class))).thenReturn(userPage);
+        when(userMapper.toVo(user1)).thenReturn(userVo1);
+        when(userMapper.toVo(user2)).thenReturn(userVo2);
+
+        // Act
+        PageResult<UserVo> result = userService.searchUsers(query);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(2, result.getContent().size());
+        assertEquals(2L, result.getTotalElements());
+        assertEquals(0, result.getCurrentPage());
+        assertEquals(20, result.getPageSize());
+        assertTrue(result.getIsFirst());
+        assertTrue(result.getIsLast());
+        verify(userDataAccess).searchUsers(any(UserSearchQuery.class));
+    }
+
+    @Test
+    @DisplayName("Should throw exception for invalid sort field")
+    void testSearchUsers_InvalidSortField() {
+        // Arrange
+        UserSearchQuery query = new UserSearchQuery();
+        query.setPage(0);
+        query.setSize(20);
+        query.setSortBy("invalidField");
+        query.setSortDir("desc");
+
+        // Act & Assert
+        assertThrows(AppException.class, () -> userService.searchUsers(query));
+    }
+
+    @Test
+    @DisplayName("Should throw exception for invalid sort direction")
+    void testSearchUsers_InvalidSortDirection() {
+        // Arrange
+        UserSearchQuery query = new UserSearchQuery();
+        query.setPage(0);
+        query.setSize(20);
+        query.setSortBy("createdTime");
+        query.setSortDir("invalid");
+
+        // Act & Assert
+        assertThrows(AppException.class, () -> userService.searchUsers(query));
+    }
+
+    @Test
+    @DisplayName("Should get user by ID successfully")
+    void testGetUserById_Success() {
+        // Arrange
+        UUID userId = UUID.randomUUID();
+        testUser.setId(userId);
+        when(userDataAccess.findById(userId)).thenReturn(java.util.Optional.of(testUser));
+
+        // Act
+        UserVo result = userService.getUserById(userId.toString());
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(testUser.getEmail(), result.getEmail());
+        verify(userDataAccess).findById(userId);
+    }
+
+    @Test
+    @DisplayName("Should throw exception when user ID is null")
+    void testGetUserById_NullId() {
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> userService.getUserById(null));
+        assertEquals("Key must not be null", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("Should throw exception when user ID is blank")
+    void testGetUserById_BlankId() {
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> userService.getUserById("   "));
+        assertEquals("Key must not be null", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("Should throw exception when user not found")
+    void testGetUserById_UserNotFound() {
+        // Arrange
+        UUID userId = UUID.randomUUID();
+        when(userDataAccess.findById(userId)).thenReturn(java.util.Optional.empty());
+
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> userService.getUserById(userId.toString()));
+        assertEquals("User not found", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("Should bind user to project successfully")
+    void testBindUserProject_Success() {
+        // Arrange
+        UUID userId = UUID.randomUUID();
+        UUID projectId = UUID.randomUUID();
+        
+        com.example.backedapi.Enity.Project project = new com.example.backedapi.Enity.Project();
+        project.setId(projectId);
+        
+        com.example.backedapi.Enity.UserProject userProject = new com.example.backedapi.Enity.UserProject();
+        userProject.setUser(testUser);
+        userProject.setProject(project);
+        
+        when(userDataAccess.findById(userId)).thenReturn(java.util.Optional.of(testUser));
+        when(projectDataAccess.findById(projectId)).thenReturn(java.util.Optional.of(project));
+        when(userProjectDataAccess.existsByUserIdAndProjectId(userId, projectId)).thenReturn(false);
+        when(userProjectDataAccess.save(any(com.example.backedapi.Enity.UserProject.class))).thenReturn(userProject);
+
+        // Act
+        userService.bindUserProject(userId.toString(), projectId.toString());
+
+        // Assert
+        verify(userDataAccess).findById(userId);
+        verify(projectDataAccess).findById(projectId);
+        verify(userProjectDataAccess).existsByUserIdAndProjectId(userId, projectId);
+        verify(userProjectDataAccess).save(any(com.example.backedapi.Enity.UserProject.class));
+    }
+
+    @Test
+    @DisplayName("Should throw exception when binding user ID is null")
+    void testBindUserProject_NullUserId() {
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> userService.bindUserProject(null, UUID.randomUUID().toString()));
+        assertEquals("Key must not be null", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("Should throw exception when binding project ID is null")
+    void testBindUserProject_NullProjectId() {
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> userService.bindUserProject(UUID.randomUUID().toString(), null));
+        assertEquals("Key must not be null", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("Should throw exception when user not found for binding")
+    void testBindUserProject_UserNotFound() {
+        // Arrange
+        UUID userId = UUID.randomUUID();
+        UUID projectId = UUID.randomUUID();
+        when(userDataAccess.findById(userId)).thenReturn(java.util.Optional.empty());
+
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> userService.bindUserProject(userId.toString(), projectId.toString()));
+        assertEquals("User not found", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("Should throw exception when project not found for binding")
+    void testBindUserProject_ProjectNotFound() {
+        // Arrange
+        UUID userId = UUID.randomUUID();
+        UUID projectId = UUID.randomUUID();
+        when(userDataAccess.findById(userId)).thenReturn(java.util.Optional.of(testUser));
+        when(projectDataAccess.findById(projectId)).thenReturn(java.util.Optional.empty());
+
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> userService.bindUserProject(userId.toString(), projectId.toString()));
+        assertEquals("Project not found", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("Should throw exception when project already bound to user")
+    void testBindUserProject_AlreadyBound() {
+        // Arrange
+        UUID userId = UUID.randomUUID();
+        UUID projectId = UUID.randomUUID();
+        
+        com.example.backedapi.Enity.Project project = new com.example.backedapi.Enity.Project();
+        project.setId(projectId);
+        
+        when(userDataAccess.findById(userId)).thenReturn(java.util.Optional.of(testUser));
+        when(projectDataAccess.findById(projectId)).thenReturn(java.util.Optional.of(project));
+        when(userProjectDataAccess.existsByUserIdAndProjectId(userId, projectId)).thenReturn(true);
+
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> userService.bindUserProject(userId.toString(), projectId.toString()));
+        assertEquals("Project already bind to user", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("Should get all users VO successfully")
+    void testGetAllUsersVo() {
+        // Arrange
+        List<User> users = List.of(testUser);
+        when(userDataAccess.findAll()).thenReturn(users);
+
+        // Act
+        List<UserVo> result = userService.getAllUsersVo();
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        verify(userDataAccess).findAll();
+    }
+
+    @Test
+    @DisplayName("Should get current user info successfully")
+    void testGetCurrentUserInfo() {
+        // Arrange
+        UUID functionId = UUID.randomUUID();
+        UUID parentId = UUID.randomUUID();
+        
+        when(currentUser.getEmail()).thenReturn("test@example.com");
+        when(userDataAccess.findByEmail("test@example.com")).thenReturn(List.of(testUser));
+        
+        FunctionVo functionVo = new FunctionVo();
+        functionVo.setId(functionId.toString());
+        functionVo.setParent(parentId.toString());
+        
+        UserVo userVo = new UserVo();
+        userVo.setEmail("test@example.com");
+        userVo.setPermissions(new ArrayList<>(List.of(functionVo)));
+        
+        when(userMapper.toVo(testUser)).thenReturn(userVo);
+        
+        Function childFunction = new Function();
+        childFunction.setId(functionId);
+        childFunction.setParent(parentId.toString());
+        
+        Function parentFunction = new Function();
+        parentFunction.setId(parentId);
+        parentFunction.setParent("");
+        
+        when(functionDataAccess.findAllById(List.of(functionId))).thenReturn(List.of(childFunction));
+        when(functionDataAccess.findAllById(List.of(parentId))).thenReturn(List.of(parentFunction));
+        when(functionDataAccess.findAllById(argThat(list -> list.contains(parentId)))).thenReturn(List.of(parentFunction));
+        
+        FunctionVo parentVo = new FunctionVo();
+        parentVo.setId(parentId.toString());
+        when(functionMapper.toVo(parentFunction)).thenReturn(parentVo);
+
+        // Act
+        UserVo result = userService.getCurrentUserInfo();
+
+        // Assert
+        assertNotNull(result);
+        assertEquals("test@example.com", result.getEmail());
+        assertTrue(result.getPermissions().size() >= 1);
+        verify(currentUser).getEmail();
+        verify(userDataAccess).findByEmail("test@example.com");
+    }
+
+    @Test
+    @DisplayName("Should throw exception when current user not found")
+    void testGetCurrentUserInfo_UserNotFound() {
+        // Arrange
+        when(currentUser.getEmail()).thenReturn("notfound@example.com");
+        when(userDataAccess.findByEmail("notfound@example.com")).thenReturn(new ArrayList<>());
+
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> userService.getCurrentUserInfo());
+        assertEquals("User not found", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("Should throw exception when updating non-existing user with role")
+    void testSaveUserWithRole_ExistingUser_NotFound() {
+        // Arrange
+        UserVo userVo = new UserVo();
+        userVo.setId("existing-id");
+        userVo.setEmail("notfound@example.com");
+        userVo.setPassword("newPassword");
+        userVo.setRoleArr(List.of(UUID.randomUUID().toString()));
+
+        when(userDataAccess.findByEmail("notfound@example.com")).thenReturn(new ArrayList<>());
+
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> userService.saveUserWithRole(userVo));
+        assertEquals("User not found", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("Should not hash password if already hashed ($2a$)")
+    void testCreateUser_AlreadyHashedPassword_2a() {
+        // Arrange
+        UserVo userVo = new UserVo();
+        userVo.setEmail("test@example.com");
+        userVo.setPassword("$2a$10$alreadyHashedPassword");
+        
+        doNothing().when(userDataAccess).save(any(User.class));
+
+        // Act
+        UserVo result = userService.createUser(userVo);
+
+        // Assert
+        assertNotNull(result);
+        verify(userDataAccess).save(any(User.class));
+    }
+
+    @Test
+    @DisplayName("Should not hash password if already hashed ($2b$)")
+    void testSaveUser_AlreadyHashedPassword_2b() {
+        // Arrange
+        UserVo userVo = new UserVo();
+        userVo.setEmail("test@example.com");
+        userVo.setPassword("$2b$10$alreadyHashedPassword");
+        
+        doNothing().when(userDataAccess).save(any(User.class));
+
+        // Act
+        UserVo result = userService.saveUser(userVo);
+
+        // Assert
+        assertNotNull(result);
+        verify(userDataAccess).save(any(User.class));
+    }
+
+    @Test
+    @DisplayName("Should not hash password if already hashed ($2y$)")
+    void testSaveUser_AlreadyHashedPassword_2y() {
+        // Arrange
+        UserVo userVo = new UserVo();
+        userVo.setEmail("test@example.com");
+        userVo.setPassword("$2y$10$alreadyHashedPassword");
+        
+        doNothing().when(userDataAccess).save(any(User.class));
+
+        // Act
+        UserVo result = userService.saveUser(userVo);
+
+        // Assert
+        assertNotNull(result);
+        verify(userDataAccess).save(any(User.class));
     }
 }

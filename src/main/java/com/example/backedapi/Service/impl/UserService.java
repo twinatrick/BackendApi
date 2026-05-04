@@ -1,17 +1,25 @@
 package com.example.backedapi.Service.impl;
 
+import com.example.backedapi.Dto.dto.common.PageResult;
+import com.example.backedapi.Dto.dto.search.UserSearchQuery;
 import com.example.backedapi.Service.IRoleService;
 import com.example.backedapi.Service.IUserService;
+import com.example.backedapi.Util.SortFieldValidator;
 import com.example.backedapi.dataaccess.IFunctionDataAccess;
+import com.example.backedapi.dataaccess.IProjectDataAccess;
 import com.example.backedapi.dataaccess.IUserDataAccess;
+import com.example.backedapi.dataaccess.IUserProjectDataAccess;
 import com.example.backedapi.mapper.FunctionMapper;
 import com.example.backedapi.mapper.UserMapper;
 import com.example.backedapi.Enity.Function;
+import com.example.backedapi.Enity.Project;
 import com.example.backedapi.Enity.User;
+import com.example.backedapi.Enity.UserProject;
 import com.example.backedapi.Dto.Vo.FunctionVo;
 import com.example.backedapi.Dto.Vo.UserVo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CachePut;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -27,6 +35,8 @@ public class UserService implements IUserService {
     private final IUserDataAccess userDataAccess;
     private final IRoleService roleService;
     private final IFunctionDataAccess functionDataAccess;
+    private final IProjectDataAccess projectDataAccess;
+    private final IUserProjectDataAccess userProjectDataAccess;
     private final UserMapper userMapper;
     private final FunctionMapper functionMapper;
     private final User currentUser;
@@ -136,7 +146,56 @@ public class UserService implements IUserService {
         return getUser();
     }
 
+    @Override
+    public void bindUserProject(String userId, String projectId) {
+        UUID userUuid = mapUuid(userId);
+        UUID projectUuid = mapUuid(projectId);
+        if (userUuid == null || projectUuid == null) {
+            throw new IllegalArgumentException("Key must not be null");
+        }
+        User user = userDataAccess.findById(userUuid).orElseThrow(
+                () -> new IllegalArgumentException("User not found")
+        );
+        Project project = projectDataAccess.findById(projectUuid).orElseThrow(
+                () -> new IllegalArgumentException("Project not found")
+        );
+        if (userProjectDataAccess.existsByUserIdAndProjectId(userUuid, projectUuid)) {
+            throw new IllegalArgumentException("Project already bind to user");
+        }
+
+        UserProject userProject = new UserProject();
+        userProject.setUser(user);
+        userProject.setProject(project);
+        userProjectDataAccess.save(userProject);
+    }
+
     private UUID mapUuid(String id) {
         return id == null || id.isBlank() ? null : UUID.fromString(id);
+    }
+    
+    @Override
+    public PageResult<UserVo> searchUsers(UserSearchQuery query) {
+        // 定義允許的排序欄位
+        String[] allowedSortFields = {
+            "id", "name", "email", "phone", "disabled", 
+            "createdBy", "updatedBy", "createdTime", "updatedTime"
+        };
+        
+        // 驗證排序欄位
+        SortFieldValidator.validateSortField(query.getSortBy(), allowedSortFields);
+        
+        // 驗證排序方向
+        SortFieldValidator.validateSortDirection(query.getSortDir());
+        
+        // 執行分頁查詢
+        Page<User> userPage = userDataAccess.searchUsers(query);
+        
+        // 轉換為 VO
+        List<UserVo> userVos = userPage.getContent().stream()
+                .map(userMapper::toVo)
+                .toList();
+        
+        // 返回分頁結果
+        return PageResult.of(userPage, userVos);
     }
 }

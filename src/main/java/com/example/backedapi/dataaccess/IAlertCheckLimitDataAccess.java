@@ -1,6 +1,8 @@
 package com.example.backedapi.dataaccess;
 
+import com.example.backedapi.Dto.dto.search.AlertCheckLimitSearchQuery;
 import com.example.backedapi.Enity.AlertCheckLimit;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
 
@@ -40,4 +42,12 @@ public interface IAlertCheckLimitDataAccess {
      * @param alertCheckLimit limit to delete
      */
     void delete(AlertCheckLimit alertCheckLimit);
+    
+    /**
+     * 搜尋告警檢查限制（支援分頁與條件查詢）
+     *
+     * @param query 搜尋查詢參數
+     * @return 分頁結果
+     */
+    Page<AlertCheckLimit> searchAlertCheckLimits(AlertCheckLimitSearchQuery query);
 }

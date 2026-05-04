@@ -1,418 +1,1103 @@
 package com.example.backedapi.Service;
 
-import com.example.backedapi.Service.impl.SkillService;
-import com.example.backedapi.dataaccess.IProjectDataAccess;
-import com.example.backedapi.dataaccess.ISkillDataAccess;
-import com.example.backedapi.dataaccess.ISkillMapUserAndProjectDataAccess;
-import com.example.backedapi.dataaccess.IUserDataAccess;
-import com.example.backedapi.mapper.SkillMapper;
+import com.example.backedapi.Dto.dto.common.PageResult;
+import com.example.backedapi.Dto.dto.search.SkillLevelSearchQuery;
+import com.example.backedapi.Dto.dto.search.SkillSearchQuery;
+import com.example.backedapi.Dto.Vo.CurrentUserSkillVo;
+import com.example.backedapi.Dto.Vo.SkillLevelVo;
 import com.example.backedapi.Dto.Vo.SkillVo;
-import com.example.backedapi.Enity.Project;
-import com.example.backedapi.Enity.Skill;
-import com.example.backedapi.Enity.SkillMapUserAndProject;
-import com.example.backedapi.Enity.User;
+import com.example.backedapi.Enity.*;
+import com.example.backedapi.Service.impl.SkillService;
+import com.example.backedapi.dataaccess.*;
+import com.example.backedapi.exception.AppException;
+import com.example.backedapi.mapper.SkillMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Example;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-/**
- * Unit tests for SkillService.
- * Uses Mockito to mock DataAccess dependencies.
- */
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class SkillServiceTest {
 
     @Mock
     private ISkillDataAccess skillDataAccess;
-
     @Mock
     private IUserDataAccess userDataAccess;
-
     @Mock
     private IProjectDataAccess projectDataAccess;
-
     @Mock
-    private ISkillMapUserAndProjectDataAccess skillMapUserAndProjectDataAccess;
-
+    private ISkillLevelDataAccess skillLevelDataAccess;
+    @Mock
+    private IUserSkillDataAccess userSkillDataAccess;
+    @Mock
+    private IProjectSkillDataAccess projectSkillDataAccess;
+    @Mock
+    private IUserProjectDataAccess userProjectDataAccess;
     @Mock
     private SkillMapper skillMapper;
+    @Mock
+    private User currentUser;
 
     @InjectMocks
     private SkillService skillService;
 
     private Skill testSkill;
-    private User testUser;
-    private Project testProject;
+    private SkillVo testSkillVo;
+    private SkillLevel testSkillLevel;
+    private SkillLevelVo testSkillLevelVo;
     private UUID testSkillId;
     private UUID testUserId;
-    private UUID testProjectId;
 
     @BeforeEach
     void setUp() {
         testSkillId = UUID.randomUUID();
         testUserId = UUID.randomUUID();
-        testProjectId = UUID.randomUUID();
 
         testSkill = new Skill();
         testSkill.setId(testSkillId);
         testSkill.setName("Java");
+        testSkill.setDescription("Java Programming");
 
-        testUser = new User();
-        testUser.setId(testUserId);
-        testUser.setName("Test User");
+        testSkillVo = new SkillVo();
+        testSkillVo.setId(testSkillId);
+        testSkillVo.setName("Java");
+        testSkillVo.setDescription("Java Programming");
 
-        testProject = new Project();
-        testProject.setId(testProjectId);
-        testProject.setName("Test Project");
+        testSkillLevel = new SkillLevel();
+        testSkillLevel.setId(UUID.randomUUID());
+        testSkillLevel.setSkill(testSkill);
+        testSkillLevel.setLevelValue(1);
+        testSkillLevel.setTitle("Beginner");
 
-        when(skillMapper.toEntity(any(SkillVo.class))).thenAnswer(invocation -> {
-            SkillVo vo = invocation.getArgument(0);
-            Skill skill = new Skill();
-            if (vo.getId() != null && !vo.getId().isBlank()) {
-                skill.setId(UUID.fromString(vo.getId()));
-            }
-            skill.setName(vo.getName());
-            return skill;
-        });
-        when(skillMapper.toVo(any(Skill.class))).thenAnswer(invocation -> {
-            Skill skill = invocation.getArgument(0);
-            SkillVo vo = new SkillVo();
-            if (skill.getId() != null) {
-                vo.setId(skill.getId().toString());
-            }
-            vo.setName(skill.getName());
-            return vo;
-        });
+        testSkillLevelVo = new SkillLevelVo();
+        testSkillLevelVo.setId(testSkillLevel.getId().toString());
+        testSkillLevelVo.setSkillId(testSkillId.toString());
+        testSkillLevelVo.setLevelValue(1);
+        testSkillLevelVo.setTitle("Beginner");
+
+        when(skillMapper.toVo(any(Skill.class))).thenReturn(testSkillVo);
     }
 
     @Test
-    void testAddSkill_Success() {
-        SkillVo newSkill = new SkillVo();
-        newSkill.setName("Python");
+    void bindUserSkill_shouldSave_whenValid() {
+        UUID userId = UUID.randomUUID();
+        UUID skillId = UUID.randomUUID();
+        UUID levelId = UUID.randomUUID();
 
-        when(skillDataAccess.exists(any(Example.class))).thenReturn(false);
-        when(skillDataAccess.save(any(Skill.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        User user = new User();
+        user.setId(userId);
+        Skill skill = new Skill();
+        skill.setId(skillId);
+        SkillLevel level = new SkillLevel();
+        level.setId(levelId);
+        level.setSkill(skill);
 
-        SkillVo result = skillService.addSkill(newSkill);
+        when(userDataAccess.findById(userId)).thenReturn(Optional.of(user));
+        when(skillDataAccess.findById(skillId)).thenReturn(Optional.of(skill));
+        when(skillLevelDataAccess.findById(levelId)).thenReturn(Optional.of(level));
+        when(userSkillDataAccess.existsByUserIdAndSkillId(userId, skillId)).thenReturn(false);
+
+        skillService.bindUserSkill(userId.toString(), skillId.toString(), levelId.toString());
+
+        verify(userSkillDataAccess).save(any());
+    }
+
+    @Test
+    void bindProjectSkill_shouldThrow_whenLevelNotBelongToSkill() {
+        UUID projectId = UUID.randomUUID();
+        UUID skillId = UUID.randomUUID();
+        UUID otherSkillId = UUID.randomUUID();
+        UUID levelId = UUID.randomUUID();
+
+        Project project = new Project();
+        project.setId(projectId);
+        Skill skill = new Skill();
+        skill.setId(skillId);
+        Skill otherSkill = new Skill();
+        otherSkill.setId(otherSkillId);
+        SkillLevel level = new SkillLevel();
+        level.setId(levelId);
+        level.setSkill(otherSkill);
+
+        when(projectDataAccess.findById(projectId)).thenReturn(Optional.of(project));
+        when(skillDataAccess.findById(skillId)).thenReturn(Optional.of(skill));
+        when(skillLevelDataAccess.findById(levelId)).thenReturn(Optional.of(level));
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                skillService.bindProjectSkill(projectId.toString(), skillId.toString(), levelId.toString())
+        );
+
+        assertEquals("Skill level does not belong to skill", exception.getMessage());
+        verify(projectSkillDataAccess, never()).save(any());
+    }
+
+    @Test
+    void addSkillLevel_shouldSave_whenValid() {
+        UUID skillId = UUID.randomUUID();
+
+        Skill skill = new Skill();
+        skill.setId(skillId);
+
+        SkillLevelVo request = new SkillLevelVo();
+        request.setSkillId(skillId.toString());
+        request.setLevelValue(1);
+        request.setTitle("Beginner");
+        request.setDescription("Basic understanding");
+
+        SkillLevel saved = new SkillLevel();
+        saved.setId(UUID.randomUUID());
+        saved.setSkill(skill);
+        saved.setLevelValue(1);
+        saved.setTitle("Beginner");
+        saved.setDescription("Basic understanding");
+
+        when(skillDataAccess.findById(skillId)).thenReturn(Optional.of(skill));
+        when(skillLevelDataAccess.existsBySkillIdAndLevelValue(skillId, 1)).thenReturn(false);
+        when(skillLevelDataAccess.save(any(SkillLevel.class))).thenReturn(saved);
+
+        SkillLevelVo result = skillService.addSkillLevel(request);
+
+        assertEquals(skillId.toString(), result.getSkillId());
+        assertEquals(1, result.getLevelValue());
+        verify(skillLevelDataAccess).save(any(SkillLevel.class));
+    }
+
+    @Test
+    void testSearchSkills_Success() {
+        // Arrange
+        SkillSearchQuery query = new SkillSearchQuery();
+        query.setPage(0);
+        query.setSize(20);
+        query.setSortBy("createdTime");
+        query.setSortDir("desc");
+        query.setName("Java");
+
+        List<Skill> skills = List.of(testSkill);
+        Page<Skill> skillPage = new PageImpl<>(skills, PageRequest.of(0, 20), 1);
+
+        when(skillDataAccess.searchSkills(any(SkillSearchQuery.class))).thenReturn(skillPage);
+
+        // Act
+        PageResult<SkillVo> result = skillService.searchSkills(query);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(1, result.getContent().size());
+        assertEquals(1L, result.getTotalElements());
+        assertEquals("Java", result.getContent().get(0).getName());
+        verify(skillDataAccess).searchSkills(any(SkillSearchQuery.class));
+    }
+
+    @Test
+    void testSearchSkills_InvalidSortField() {
+        // Arrange
+        SkillSearchQuery query = new SkillSearchQuery();
+        query.setPage(0);
+        query.setSize(20);
+        query.setSortBy("invalidField");
+        query.setSortDir("desc");
+
+        // Act & Assert
+        assertThrows(AppException.class, () -> skillService.searchSkills(query));
+    }
+
+    @Test
+    void testGetCurrentUserSkills_Success() {
+        // Arrange
+        when(currentUser.getId()).thenReturn(testUserId);
+
+        UserSkill userSkill = new UserSkill();
+        userSkill.setUser(currentUser);
+        userSkill.setSkill(testSkill);
+        userSkill.setSkillLevel(testSkillLevel);
+
+        when(userSkillDataAccess.findByUserId(testUserId)).thenReturn(List.of(userSkill));
+        when(userProjectDataAccess.findByUserId(testUserId)).thenReturn(Collections.emptyList());
+
+        // Act
+        List<CurrentUserSkillVo> result = skillService.getCurrentUserSkills();
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals("Java", result.get(0).getName());
+        assertEquals("USER", result.get(0).getSourceType());
+        assertNull(result.get(0).getProjectId());
+        verify(userSkillDataAccess).findByUserId(testUserId);
+    }
+
+    @Test
+    void testGetCurrentUserSkills_WithProjectSkills() {
+        // Arrange
+        when(currentUser.getId()).thenReturn(testUserId);
+
+        UUID projectId = UUID.randomUUID();
+        Project project = new Project();
+        project.setId(projectId);
+        project.setName("Test Project");
+
+        Skill projectSkill = new Skill();
+        projectSkill.setId(UUID.randomUUID());
+        projectSkill.setName("Python");
+
+        SkillLevel projectSkillLevel = new SkillLevel();
+        projectSkillLevel.setSkill(projectSkill);
+        projectSkillLevel.setLevelValue(2);
+
+        ProjectSkill projSkill = new ProjectSkill();
+        projSkill.setProject(project);
+        projSkill.setSkill(projectSkill);
+        projSkill.setSkillLevel(projectSkillLevel);
+
+        // 設置 project 的 projectSkills 列表
+        project.setProjectSkills(List.of(projSkill));
+
+        UserProject userProject = new UserProject();
+        userProject.setUser(currentUser);
+        userProject.setProject(project);
+
+        SkillVo pythonVo = new SkillVo();
+        pythonVo.setId(projectSkill.getId());
+        pythonVo.setName("Python");
+
+        when(userSkillDataAccess.findByUserId(testUserId)).thenReturn(Collections.emptyList());
+        when(userProjectDataAccess.findByUserId(testUserId)).thenReturn(List.of(userProject));
+        when(skillMapper.toVo(projectSkill)).thenReturn(pythonVo);
+
+        // Act
+        List<CurrentUserSkillVo> result = skillService.getCurrentUserSkills();
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals("Python", result.get(0).getName());
+        assertEquals("PROJECT", result.get(0).getSourceType());
+        assertEquals(projectId, result.get(0).getProjectId());
+        assertEquals("Test Project", result.get(0).getProjectName());
+    }
+
+    @Test
+    void testSearchCurrentUserSkills_Success() {
+        // Arrange
+        when(currentUser.getId()).thenReturn(testUserId);
+
+        SkillSearchQuery query = new SkillSearchQuery();
+        query.setPage(0);
+        query.setSize(20);
+        query.setSortBy("name");
+        query.setSortDir("asc");
+        query.setName("Java");
+
+        UserSkill userSkill = new UserSkill();
+        userSkill.setUser(currentUser);
+        userSkill.setSkill(testSkill);
+        userSkill.setSkillLevel(testSkillLevel);
+
+        when(userSkillDataAccess.findByUserId(testUserId)).thenReturn(List.of(userSkill));
+        when(userProjectDataAccess.findByUserId(testUserId)).thenReturn(Collections.emptyList());
+
+        // Act
+        PageResult<CurrentUserSkillVo> result = skillService.searchCurrentUserSkills(query);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(1, result.getContent().size());
+        assertEquals("Java", result.getContent().get(0).getName());
+        assertEquals(0, result.getCurrentPage());
+    }
+
+    @Test
+    void testSearchCurrentUserSkills_Pagination() {
+        // Arrange
+        when(currentUser.getId()).thenReturn(testUserId);
+
+        SkillSearchQuery query = new SkillSearchQuery();
+        query.setPage(0);
+        query.setSize(1);
+        query.setSortBy("name");
+        query.setSortDir("asc");
+
+        Skill skill2 = new Skill();
+        skill2.setId(UUID.randomUUID());
+        skill2.setName("Python");
+
+        SkillLevel level2 = new SkillLevel();
+        level2.setSkill(skill2);
+        level2.setLevelValue(2);
+
+        UserSkill userSkill1 = new UserSkill();
+        userSkill1.setSkill(testSkill);
+        userSkill1.setSkillLevel(testSkillLevel);
+
+        UserSkill userSkill2 = new UserSkill();
+        userSkill2.setSkill(skill2);
+        userSkill2.setSkillLevel(level2);
+
+        SkillVo skillVo2 = new SkillVo();
+        skillVo2.setId(skill2.getId());
+        skillVo2.setName("Python");
+
+        when(userSkillDataAccess.findByUserId(testUserId)).thenReturn(List.of(userSkill1, userSkill2));
+        when(userProjectDataAccess.findByUserId(testUserId)).thenReturn(Collections.emptyList());
+        when(skillMapper.toVo(skill2)).thenReturn(skillVo2);
+
+        // Act
+        PageResult<CurrentUserSkillVo> result = skillService.searchCurrentUserSkills(query);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(1, result.getContent().size()); // Only 1 per page
+        assertEquals(2L, result.getTotalElements()); // Total 2 skills
+        assertEquals(2, result.getTotalPages()); // 2 pages
+    }
+
+    @Test
+    void testSearchSkillLevels_Success() {
+        // Arrange
+        SkillLevelSearchQuery query = new SkillLevelSearchQuery();
+        query.setPage(0);
+        query.setSize(20);
+        query.setSortBy("levelValue");
+        query.setSortDir("asc");
+        query.setSkillId(testSkillId);
+
+        List<SkillLevel> levels = List.of(testSkillLevel);
+        Page<SkillLevel> levelPage = new PageImpl<>(levels, PageRequest.of(0, 20), 1);
+
+        when(skillLevelDataAccess.searchSkillLevels(any(SkillLevelSearchQuery.class))).thenReturn(levelPage);
+
+        // Act
+        PageResult<SkillLevelVo> result = skillService.searchSkillLevels(query);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(1, result.getContent().size());
+        assertEquals(1L, result.getTotalElements());
+        verify(skillLevelDataAccess).searchSkillLevels(any(SkillLevelSearchQuery.class));
+    }
+
+    @Test
+    void testSearchSkillLevels_InvalidSortField() {
+        // Arrange
+        SkillLevelSearchQuery query = new SkillLevelSearchQuery();
+        query.setPage(0);
+        query.setSize(20);
+        query.setSortBy("invalidField");
+        query.setSortDir("asc");
+
+        // Act & Assert
+        assertThrows(AppException.class, () -> skillService.searchSkillLevels(query));
+    }
+
+    @Test
+    void addSkill_shouldSave_whenValid() {
+        SkillVo request = new SkillVo();
+        request.setName("Java");
+        request.setDescription("Java Programming");
+
+        Skill skill = new Skill();
+        skill.setName("Java");
+
+        when(skillMapper.toEntity(request)).thenReturn(skill);
+        when(skillDataAccess.exists(any())).thenReturn(false);
+        when(skillDataAccess.save(any(Skill.class))).thenReturn(testSkill);
+
+        SkillVo result = skillService.addSkill(request);
 
         assertNotNull(result);
-        assertEquals("Python", result.getName());
-        verify(skillDataAccess).exists(any(Example.class));
         verify(skillDataAccess).save(any(Skill.class));
     }
 
     @Test
-    void testAddSkill_KeyNotNull_ThrowsException() {
-        SkillVo skillWithKey = new SkillVo();
-        skillWithKey.setId(testSkillId.toString());
-        skillWithKey.setName("Java");
+    void addSkill_shouldThrow_whenIdNotNull() {
+        SkillVo request = new SkillVo();
+        request.setId(UUID.randomUUID());
+        request.setName("Java");
 
-        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            skillService.addSkill(skillWithKey);
-        });
+        Skill skill = new Skill();
+        skill.setId(UUID.randomUUID());
+        skill.setName("Java");
 
+        when(skillMapper.toEntity(request)).thenReturn(skill);
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                skillService.addSkill(request)
+        );
         assertEquals("Key must be null", exception.getMessage());
-        verify(skillDataAccess, never()).save(any());
     }
 
     @Test
-    void testAddSkill_NameNull_ThrowsException() {
-        SkillVo skillWithoutName = new SkillVo();
-        skillWithoutName.setName(null);
+    void addSkill_shouldThrow_whenNameNull() {
+        SkillVo request = new SkillVo();
 
-        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            skillService.addSkill(skillWithoutName);
-        });
+        Skill skill = new Skill();
 
+        when(skillMapper.toEntity(request)).thenReturn(skill);
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                skillService.addSkill(request)
+        );
         assertEquals("Name must not be null", exception.getMessage());
-        verify(skillDataAccess, never()).save(any());
     }
 
     @Test
-    void testAddSkill_NameAlreadyExists_ThrowsException() {
-        SkillVo newSkill = new SkillVo();
-        newSkill.setName("Existing Skill");
+    void addSkill_shouldThrow_whenNameAlreadyExists() {
+        SkillVo request = new SkillVo();
+        request.setName("Java");
 
-        when(skillDataAccess.exists(any(Example.class))).thenReturn(true);
+        Skill skill = new Skill();
+        skill.setName("Java");
 
-        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            skillService.addSkill(newSkill);
-        });
+        when(skillMapper.toEntity(request)).thenReturn(skill);
+        when(skillDataAccess.exists(any())).thenReturn(true);
 
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                skillService.addSkill(request)
+        );
         assertEquals("Name already exists", exception.getMessage());
-        verify(skillDataAccess, never()).save(any());
     }
 
     @Test
-    void testUpdateSkill_Success() {
-        SkillVo updateSkill = new SkillVo();
-        updateSkill.setId(testSkillId.toString());
-        updateSkill.setName("Java");
+    void updateSkill_shouldSave_whenValid() {
+        SkillVo request = new SkillVo();
+        request.setId(testSkillId);
+        request.setName("Java Updated");
 
-        when(skillDataAccess.save(any(Skill.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        Skill skill = new Skill();
+        skill.setId(testSkillId);
+        skill.setName("Java Updated");
 
-        skillService.updateSkill(updateSkill);
+        when(skillMapper.toEntity(request)).thenReturn(skill);
 
-        verify(skillDataAccess).save(any(Skill.class));
+        skillService.updateSkill(request);
+
+        verify(skillDataAccess).save(skill);
     }
 
     @Test
-    void testUpdateSkill_KeyNull_ThrowsException() {
-        SkillVo skillWithoutKey = new SkillVo();
-        skillWithoutKey.setName("Java");
+    void updateSkill_shouldThrow_whenIdNull() {
+        SkillVo request = new SkillVo();
+        request.setName("Java");
 
-        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            skillService.updateSkill(skillWithoutKey);
-        });
+        Skill skill = new Skill();
+        skill.setName("Java");
 
+        when(skillMapper.toEntity(request)).thenReturn(skill);
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                skillService.updateSkill(request)
+        );
         assertEquals("Key must not be null", exception.getMessage());
-        verify(skillDataAccess, never()).save(any());
     }
 
     @Test
-    void testUpdateSkill_NameNull_ThrowsException() {
-        SkillVo skillWithoutName = new SkillVo();
-        skillWithoutName.setId(testSkillId.toString());
-        skillWithoutName.setName(null);
+    void updateSkill_shouldThrow_whenNameNull() {
+        SkillVo request = new SkillVo();
+        request.setId(testSkillId);
 
-        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            skillService.updateSkill(skillWithoutName);
-        });
+        Skill skill = new Skill();
+        skill.setId(testSkillId);
 
+        when(skillMapper.toEntity(request)).thenReturn(skill);
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                skillService.updateSkill(request)
+        );
         assertEquals("Name must not be null", exception.getMessage());
-        verify(skillDataAccess, never()).save(any());
     }
 
     @Test
-    void testGetSkill() {
-        List<Skill> skills = List.of(testSkill, new Skill());
+    void getSkill_shouldReturnAll() {
+        List<Skill> skills = List.of(testSkill);
         when(skillDataAccess.findAll()).thenReturn(skills);
 
         List<SkillVo> result = skillService.getSkill();
 
-        assertEquals(2, result.size());
+        assertNotNull(result);
+        assertEquals(1, result.size());
         verify(skillDataAccess).findAll();
     }
 
     @Test
-    void testBindSkillToUser_Success() {
-        when(skillDataAccess.findById(testSkillId)).thenReturn(Optional.of(testSkill));
-        when(userDataAccess.findById(testUserId)).thenReturn(Optional.of(testUser));
-        when(skillMapUserAndProjectDataAccess.findOne(any(Example.class))).thenReturn(Optional.empty());
-        when(skillMapUserAndProjectDataAccess.save(any(SkillMapUserAndProject.class)))
-                .thenReturn(new SkillMapUserAndProject());
+    void addSkillLevel_shouldThrow_whenIdNotNull() {
+        SkillLevelVo request = new SkillLevelVo();
+        request.setId("some-id");
+        request.setSkillId(testSkillId.toString());
 
-        skillService.BindSkillToUser(testSkillId.toString(), testUserId.toString());
-
-        verify(skillDataAccess).findById(testSkillId);
-        verify(userDataAccess).findById(testUserId);
-        verify(skillMapUserAndProjectDataAccess).findOne(any(Example.class));
-        verify(skillMapUserAndProjectDataAccess).save(any(SkillMapUserAndProject.class));
-    }
-
-    @Test
-    void testBindSkillToUser_SkillNotFound_ThrowsException() {
-        when(skillDataAccess.findById(testSkillId)).thenReturn(Optional.empty());
-
-        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            skillService.BindSkillToUser(testSkillId.toString(), testUserId.toString());
-        });
-
-        assertEquals("Skill not found", exception.getMessage());
-        verify(userDataAccess, never()).findById(any());
-    }
-
-    @Test
-    void testBindSkillToUser_UserNotFound_ThrowsException() {
-        when(skillDataAccess.findById(testSkillId)).thenReturn(Optional.of(testSkill));
-        when(userDataAccess.findById(testUserId)).thenReturn(Optional.empty());
-
-        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            skillService.BindSkillToUser(testSkillId.toString(), testUserId.toString());
-        });
-
-        assertEquals("User not found", exception.getMessage());
-        verify(skillMapUserAndProjectDataAccess, never()).save(any());
-    }
-
-    @Test
-    void testBindSkillToUser_AlreadyBound_ThrowsException() {
-        SkillMapUserAndProject existing = new SkillMapUserAndProject();
-        existing.setSkill(testSkill);
-        existing.setUser(testUser);
-
-        when(skillDataAccess.findById(testSkillId)).thenReturn(Optional.of(testSkill));
-        when(userDataAccess.findById(testUserId)).thenReturn(Optional.of(testUser));
-        when(skillMapUserAndProjectDataAccess.findOne(any(Example.class))).thenReturn(Optional.of(existing));
-
-        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            skillService.BindSkillToUser(testSkillId.toString(), testUserId.toString());
-        });
-
-        assertEquals("Skill already bind to user", exception.getMessage());
-        verify(skillMapUserAndProjectDataAccess, never()).save(any());
-    }
-
-    @Test
-    void testBindSkillToProjectAndUser_Success() {
-        when(skillDataAccess.findById(testSkillId)).thenReturn(Optional.of(testSkill));
-        when(projectDataAccess.findById(testProjectId)).thenReturn(Optional.of(testProject));
-        when(userDataAccess.findById(testUserId)).thenReturn(Optional.of(testUser));
-        when(skillMapUserAndProjectDataAccess.findOne(any(Example.class))).thenReturn(Optional.empty());
-        when(skillMapUserAndProjectDataAccess.save(any(SkillMapUserAndProject.class)))
-                .thenReturn(new SkillMapUserAndProject());
-
-        skillService.BindSkillToProjectAndUser(
-                testSkillId.toString(),
-                testProjectId.toString(),
-                testUserId.toString()
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                skillService.addSkillLevel(request)
         );
-
-        verify(skillDataAccess).findById(testSkillId);
-        verify(projectDataAccess).findById(testProjectId);
-        verify(userDataAccess).findById(testUserId);
-        verify(skillMapUserAndProjectDataAccess).save(any(SkillMapUserAndProject.class));
+        assertEquals("Key must be null", exception.getMessage());
     }
 
     @Test
-    void testBindSkillToProjectAndUser_SkillNotFound_ThrowsException() {
-        when(skillDataAccess.findById(testSkillId)).thenReturn(Optional.empty());
+    void addSkillLevel_shouldThrow_whenSkillIdNull() {
+        SkillLevelVo request = new SkillLevelVo();
+        request.setLevelValue(1);
+        request.setTitle("Beginner");
 
-        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            skillService.BindSkillToProjectAndUser(
-                    testSkillId.toString(),
-                    testProjectId.toString(),
-                    testUserId.toString()
-            );
-        });
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                skillService.addSkillLevel(request)
+        );
+        assertEquals("Skill key must not be null", exception.getMessage());
+    }
 
+    @Test
+    void addSkillLevel_shouldThrow_whenSkillNotFound() {
+        UUID skillId = UUID.randomUUID();
+        SkillLevelVo request = new SkillLevelVo();
+        request.setSkillId(skillId.toString());
+        request.setLevelValue(1);
+        request.setTitle("Beginner");
+
+        when(skillDataAccess.findById(skillId)).thenReturn(Optional.empty());
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                skillService.addSkillLevel(request)
+        );
         assertEquals("Skill not found", exception.getMessage());
     }
 
     @Test
-    void testBindSkillToProjectAndUser_ProjectNotFound_ThrowsException() {
-        when(skillDataAccess.findById(testSkillId)).thenReturn(Optional.of(testSkill));
-        when(projectDataAccess.findById(testProjectId)).thenReturn(Optional.empty());
+    void addSkillLevel_shouldThrow_whenLevelValueAlreadyExists() {
+        UUID skillId = UUID.randomUUID();
+        Skill skill = new Skill();
+        skill.setId(skillId);
 
-        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            skillService.BindSkillToProjectAndUser(
-                    testSkillId.toString(),
-                    testProjectId.toString(),
-                    testUserId.toString()
-            );
-        });
+        SkillLevelVo request = new SkillLevelVo();
+        request.setSkillId(skillId.toString());
+        request.setLevelValue(1);
+        request.setTitle("Beginner");
 
+        when(skillDataAccess.findById(skillId)).thenReturn(Optional.of(skill));
+        when(skillLevelDataAccess.existsBySkillIdAndLevelValue(skillId, 1)).thenReturn(true);
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                skillService.addSkillLevel(request)
+        );
+        assertEquals("Skill level value already exists", exception.getMessage());
+    }
+
+    @Test
+    void addSkillLevel_shouldThrow_whenLevelValueInvalid() {
+        UUID skillId = UUID.randomUUID();
+        SkillLevelVo request = new SkillLevelVo();
+        request.setSkillId(skillId.toString());
+        request.setLevelValue(0);
+        request.setTitle("Beginner");
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                skillService.addSkillLevel(request)
+        );
+        assertEquals("Level value must be greater than 0", exception.getMessage());
+    }
+
+    @Test
+    void addSkillLevel_shouldThrow_whenTitleNull() {
+        UUID skillId = UUID.randomUUID();
+        SkillLevelVo request = new SkillLevelVo();
+        request.setSkillId(skillId.toString());
+        request.setLevelValue(1);
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                skillService.addSkillLevel(request)
+        );
+        assertEquals("Title must not be null", exception.getMessage());
+    }
+
+    @Test
+    void updateSkillLevel_shouldSave_whenValid() {
+        UUID levelId = UUID.randomUUID();
+        UUID skillId = UUID.randomUUID();
+        
+        Skill skill = new Skill();
+        skill.setId(skillId);
+        
+        SkillLevel existingLevel = new SkillLevel();
+        existingLevel.setId(levelId);
+        existingLevel.setSkill(skill);
+        existingLevel.setLevelValue(1);
+
+        SkillLevelVo request = new SkillLevelVo();
+        request.setId(levelId.toString());
+        request.setLevelValue(2);
+        request.setTitle("Intermediate");
+
+        when(skillLevelDataAccess.findById(levelId)).thenReturn(Optional.of(existingLevel));
+        when(skillLevelDataAccess.findBySkillIdOrderByLevelValueAsc(skillId)).thenReturn(List.of(existingLevel));
+
+        skillService.updateSkillLevel(request);
+
+        verify(skillLevelDataAccess).save(existingLevel);
+        assertEquals(2, existingLevel.getLevelValue());
+        assertEquals("Intermediate", existingLevel.getTitle());
+    }
+
+    @Test
+    void updateSkillLevel_shouldThrow_whenIdNull() {
+        SkillLevelVo request = new SkillLevelVo();
+        request.setLevelValue(1);
+        request.setTitle("Beginner");
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                skillService.updateSkillLevel(request)
+        );
+        assertEquals("Key must not be null", exception.getMessage());
+    }
+
+    @Test
+    void updateSkillLevel_shouldThrow_whenNotFound() {
+        UUID levelId = UUID.randomUUID();
+        SkillLevelVo request = new SkillLevelVo();
+        request.setId(levelId.toString());
+        request.setLevelValue(1);
+        request.setTitle("Beginner");
+
+        when(skillLevelDataAccess.findById(levelId)).thenReturn(Optional.empty());
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                skillService.updateSkillLevel(request)
+        );
+        assertEquals("Skill level not found", exception.getMessage());
+    }
+
+    @Test
+    void updateSkillLevel_shouldThrow_whenLevelValueUsedByOther() {
+        UUID levelId1 = UUID.randomUUID();
+        UUID levelId2 = UUID.randomUUID();
+        UUID skillId = UUID.randomUUID();
+        
+        Skill skill = new Skill();
+        skill.setId(skillId);
+        
+        SkillLevel level1 = new SkillLevel();
+        level1.setId(levelId1);
+        level1.setSkill(skill);
+        level1.setLevelValue(1);
+
+        SkillLevel level2 = new SkillLevel();
+        level2.setId(levelId2);
+        level2.setSkill(skill);
+        level2.setLevelValue(2);
+
+        SkillLevelVo request = new SkillLevelVo();
+        request.setId(levelId1.toString());
+        request.setLevelValue(2); // Trying to use level2's value
+        request.setTitle("Updated");
+
+        when(skillLevelDataAccess.findById(levelId1)).thenReturn(Optional.of(level1));
+        when(skillLevelDataAccess.findBySkillIdOrderByLevelValueAsc(skillId)).thenReturn(List.of(level1, level2));
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                skillService.updateSkillLevel(request)
+        );
+        assertEquals("Skill level value already exists", exception.getMessage());
+    }
+
+    @Test
+    void getSkillLevels_shouldReturnLevels() {
+        UUID skillId = UUID.randomUUID();
+        Skill skill = new Skill();
+        skill.setId(skillId);
+
+        when(skillDataAccess.findById(skillId)).thenReturn(Optional.of(skill));
+        when(skillLevelDataAccess.findBySkillIdOrderByLevelValueAsc(skillId)).thenReturn(List.of(testSkillLevel));
+
+        List<SkillLevelVo> result = skillService.getSkillLevels(skillId.toString());
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        verify(skillLevelDataAccess).findBySkillIdOrderByLevelValueAsc(skillId);
+    }
+
+    @Test
+    void getSkillLevels_shouldThrow_whenSkillIdNull() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                skillService.getSkillLevels(null)
+        );
+        assertEquals("Skill key must not be null", exception.getMessage());
+    }
+
+    @Test
+    void getSkillLevels_shouldThrow_whenSkillNotFound() {
+        UUID skillId = UUID.randomUUID();
+        when(skillDataAccess.findById(skillId)).thenReturn(Optional.empty());
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                skillService.getSkillLevels(skillId.toString())
+        );
+        assertEquals("Skill not found", exception.getMessage());
+    }
+
+    @Test
+    void deleteSkillLevel_shouldDelete_whenValid() {
+        UUID levelId = UUID.randomUUID();
+        SkillLevel level = new SkillLevel();
+        level.setId(levelId);
+
+        when(skillLevelDataAccess.findById(levelId)).thenReturn(Optional.of(level));
+        when(userSkillDataAccess.existsBySkillLevelId(levelId)).thenReturn(false);
+        when(projectSkillDataAccess.existsBySkillLevelId(levelId)).thenReturn(false);
+
+        skillService.deleteSkillLevel(levelId.toString());
+
+        verify(skillLevelDataAccess).delete(level);
+    }
+
+    @Test
+    void deleteSkillLevel_shouldThrow_whenIdNull() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                skillService.deleteSkillLevel(null)
+        );
+        assertEquals("Skill level key must not be null", exception.getMessage());
+    }
+
+    @Test
+    void deleteSkillLevel_shouldThrow_whenInUseByUser() {
+        UUID levelId = UUID.randomUUID();
+        when(userSkillDataAccess.existsBySkillLevelId(levelId)).thenReturn(true);
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                skillService.deleteSkillLevel(levelId.toString())
+        );
+        assertEquals("Skill level is already in use", exception.getMessage());
+    }
+
+    @Test
+    void deleteSkillLevel_shouldThrow_whenInUseByProject() {
+        UUID levelId = UUID.randomUUID();
+        when(userSkillDataAccess.existsBySkillLevelId(levelId)).thenReturn(false);
+        when(projectSkillDataAccess.existsBySkillLevelId(levelId)).thenReturn(true);
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                skillService.deleteSkillLevel(levelId.toString())
+        );
+        assertEquals("Skill level is already in use", exception.getMessage());
+    }
+
+    @Test
+    void deleteSkillLevel_shouldThrow_whenNotFound() {
+        UUID levelId = UUID.randomUUID();
+        when(userSkillDataAccess.existsBySkillLevelId(levelId)).thenReturn(false);
+        when(projectSkillDataAccess.existsBySkillLevelId(levelId)).thenReturn(false);
+        when(skillLevelDataAccess.findById(levelId)).thenReturn(Optional.empty());
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                skillService.deleteSkillLevel(levelId.toString())
+        );
+        assertEquals("Skill level not found", exception.getMessage());
+    }
+
+    @Test
+    void bindUserSkill_shouldThrow_whenUserIdNull() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                skillService.bindUserSkill(null, UUID.randomUUID().toString(), UUID.randomUUID().toString())
+        );
+        assertEquals("Key must not be null", exception.getMessage());
+    }
+
+    @Test
+    void bindUserSkill_shouldThrow_whenUserNotFound() {
+        UUID userId = UUID.randomUUID();
+        UUID skillId = UUID.randomUUID();
+        UUID levelId = UUID.randomUUID();
+
+        when(userDataAccess.findById(userId)).thenReturn(Optional.empty());
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                skillService.bindUserSkill(userId.toString(), skillId.toString(), levelId.toString())
+        );
+        assertEquals("User not found", exception.getMessage());
+    }
+
+    @Test
+    void bindUserSkill_shouldThrow_whenSkillNotFound() {
+        UUID userId = UUID.randomUUID();
+        UUID skillId = UUID.randomUUID();
+        UUID levelId = UUID.randomUUID();
+
+        User user = new User();
+        user.setId(userId);
+
+        when(userDataAccess.findById(userId)).thenReturn(Optional.of(user));
+        when(skillDataAccess.findById(skillId)).thenReturn(Optional.empty());
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                skillService.bindUserSkill(userId.toString(), skillId.toString(), levelId.toString())
+        );
+        assertEquals("Skill not found", exception.getMessage());
+    }
+
+    @Test
+    void bindUserSkill_shouldThrow_whenSkillLevelNotFound() {
+        UUID userId = UUID.randomUUID();
+        UUID skillId = UUID.randomUUID();
+        UUID levelId = UUID.randomUUID();
+
+        User user = new User();
+        user.setId(userId);
+        Skill skill = new Skill();
+        skill.setId(skillId);
+
+        when(userDataAccess.findById(userId)).thenReturn(Optional.of(user));
+        when(skillDataAccess.findById(skillId)).thenReturn(Optional.of(skill));
+        when(skillLevelDataAccess.findById(levelId)).thenReturn(Optional.empty());
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                skillService.bindUserSkill(userId.toString(), skillId.toString(), levelId.toString())
+        );
+        assertEquals("Skill level not found", exception.getMessage());
+    }
+
+    @Test
+    void bindUserSkill_shouldThrow_whenAlreadyBound() {
+        UUID userId = UUID.randomUUID();
+        UUID skillId = UUID.randomUUID();
+        UUID levelId = UUID.randomUUID();
+
+        User user = new User();
+        user.setId(userId);
+        Skill skill = new Skill();
+        skill.setId(skillId);
+        SkillLevel level = new SkillLevel();
+        level.setId(levelId);
+        level.setSkill(skill);
+
+        when(userDataAccess.findById(userId)).thenReturn(Optional.of(user));
+        when(skillDataAccess.findById(skillId)).thenReturn(Optional.of(skill));
+        when(skillLevelDataAccess.findById(levelId)).thenReturn(Optional.of(level));
+        when(userSkillDataAccess.existsByUserIdAndSkillId(userId, skillId)).thenReturn(true);
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                skillService.bindUserSkill(userId.toString(), skillId.toString(), levelId.toString())
+        );
+        assertEquals("Skill already bind to user", exception.getMessage());
+    }
+
+    @Test
+    void bindProjectSkill_shouldSave_whenValid() {
+        UUID projectId = UUID.randomUUID();
+        UUID skillId = UUID.randomUUID();
+        UUID levelId = UUID.randomUUID();
+
+        Project project = new Project();
+        project.setId(projectId);
+        Skill skill = new Skill();
+        skill.setId(skillId);
+        SkillLevel level = new SkillLevel();
+        level.setId(levelId);
+        level.setSkill(skill);
+
+        when(projectDataAccess.findById(projectId)).thenReturn(Optional.of(project));
+        when(skillDataAccess.findById(skillId)).thenReturn(Optional.of(skill));
+        when(skillLevelDataAccess.findById(levelId)).thenReturn(Optional.of(level));
+        when(projectSkillDataAccess.existsByProjectIdAndSkillId(projectId, skillId)).thenReturn(false);
+
+        skillService.bindProjectSkill(projectId.toString(), skillId.toString(), levelId.toString());
+
+        verify(projectSkillDataAccess).save(any(ProjectSkill.class));
+    }
+
+    @Test
+    void bindProjectSkill_shouldThrow_whenProjectIdNull() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                skillService.bindProjectSkill(null, UUID.randomUUID().toString(), UUID.randomUUID().toString())
+        );
+        assertEquals("Key must not be null", exception.getMessage());
+    }
+
+    @Test
+    void bindProjectSkill_shouldThrow_whenProjectNotFound() {
+        UUID projectId = UUID.randomUUID();
+        UUID skillId = UUID.randomUUID();
+        UUID levelId = UUID.randomUUID();
+
+        when(projectDataAccess.findById(projectId)).thenReturn(Optional.empty());
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                skillService.bindProjectSkill(projectId.toString(), skillId.toString(), levelId.toString())
+        );
         assertEquals("Project not found", exception.getMessage());
     }
 
     @Test
-    void testBindSkillToProjectAndUser_UserNotFound_ThrowsException() {
-        when(skillDataAccess.findById(testSkillId)).thenReturn(Optional.of(testSkill));
-        when(projectDataAccess.findById(testProjectId)).thenReturn(Optional.of(testProject));
-        when(userDataAccess.findById(testUserId)).thenReturn(Optional.empty());
+    void bindProjectSkill_shouldThrow_whenSkillNotFound() {
+        UUID projectId = UUID.randomUUID();
+        UUID skillId = UUID.randomUUID();
+        UUID levelId = UUID.randomUUID();
 
-        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            skillService.BindSkillToProjectAndUser(
-                    testSkillId.toString(),
-                    testProjectId.toString(),
-                    testUserId.toString()
-            );
-        });
+        Project project = new Project();
+        project.setId(projectId);
 
-        assertEquals("User not found", exception.getMessage());
+        when(projectDataAccess.findById(projectId)).thenReturn(Optional.of(project));
+        when(skillDataAccess.findById(skillId)).thenReturn(Optional.empty());
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                skillService.bindProjectSkill(projectId.toString(), skillId.toString(), levelId.toString())
+        );
+        assertEquals("Skill not found", exception.getMessage());
     }
 
     @Test
-    void testBindSkillToProjectAndUser_AlreadyBound_ThrowsException() {
-        SkillMapUserAndProject existing = new SkillMapUserAndProject();
+    void bindProjectSkill_shouldThrow_whenSkillLevelNotFound() {
+        UUID projectId = UUID.randomUUID();
+        UUID skillId = UUID.randomUUID();
+        UUID levelId = UUID.randomUUID();
 
-        when(skillDataAccess.findById(testSkillId)).thenReturn(Optional.of(testSkill));
-        when(projectDataAccess.findById(testProjectId)).thenReturn(Optional.of(testProject));
-        when(userDataAccess.findById(testUserId)).thenReturn(Optional.of(testUser));
-        when(skillMapUserAndProjectDataAccess.findOne(any(Example.class))).thenReturn(Optional.of(existing));
+        Project project = new Project();
+        project.setId(projectId);
+        Skill skill = new Skill();
+        skill.setId(skillId);
 
-        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            skillService.BindSkillToProjectAndUser(
-                    testSkillId.toString(),
-                    testProjectId.toString(),
-                    testUserId.toString()
-            );
-        });
+        when(projectDataAccess.findById(projectId)).thenReturn(Optional.of(project));
+        when(skillDataAccess.findById(skillId)).thenReturn(Optional.of(skill));
+        when(skillLevelDataAccess.findById(levelId)).thenReturn(Optional.empty());
 
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                skillService.bindProjectSkill(projectId.toString(), skillId.toString(), levelId.toString())
+        );
+        assertEquals("Skill level not found", exception.getMessage());
+    }
+
+    @Test
+    void bindProjectSkill_shouldThrow_whenAlreadyBound() {
+        UUID projectId = UUID.randomUUID();
+        UUID skillId = UUID.randomUUID();
+        UUID levelId = UUID.randomUUID();
+
+        Project project = new Project();
+        project.setId(projectId);
+        Skill skill = new Skill();
+        skill.setId(skillId);
+        SkillLevel level = new SkillLevel();
+        level.setId(levelId);
+        level.setSkill(skill);
+
+        when(projectDataAccess.findById(projectId)).thenReturn(Optional.of(project));
+        when(skillDataAccess.findById(skillId)).thenReturn(Optional.of(skill));
+        when(skillLevelDataAccess.findById(levelId)).thenReturn(Optional.of(level));
+        when(projectSkillDataAccess.existsByProjectIdAndSkillId(projectId, skillId)).thenReturn(true);
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                skillService.bindProjectSkill(projectId.toString(), skillId.toString(), levelId.toString())
+        );
         assertEquals("Skill already bind to project", exception.getMessage());
-        verify(skillMapUserAndProjectDataAccess, never()).save(any());
     }
 
     @Test
-    void testDeleteSkill_Success() {
-        List<SkillMapUserAndProject> mappings = List.of(new SkillMapUserAndProject());
+    void deleteSkill_shouldDelete_whenValid() {
+        SkillVo request = new SkillVo();
+        request.setId(testSkillId);
 
-        when(skillDataAccess.findById(testSkillId)).thenReturn(Optional.of(testSkill));
-        when(skillMapUserAndProjectDataAccess.findAll(any(Example.class))).thenReturn(mappings);
-        doNothing().when(skillMapUserAndProjectDataAccess).deleteAll(mappings);
-        doNothing().when(skillDataAccess).delete(testSkill);
+        Skill skill = new Skill();
+        skill.setId(testSkillId);
 
-        SkillVo skillToDelete = new SkillVo();
-        skillToDelete.setId(testSkillId.toString());
-        skillService.deleteSkill(skillToDelete);
+        when(skillMapper.toEntity(request)).thenReturn(skill);
+        when(skillDataAccess.findById(testSkillId)).thenReturn(Optional.of(skill));
 
-        verify(skillDataAccess).findById(testSkillId);
-        verify(skillMapUserAndProjectDataAccess).findAll(any(Example.class));
-        verify(skillMapUserAndProjectDataAccess).deleteAll(mappings);
-        verify(skillDataAccess).delete(testSkill);
+        skillService.deleteSkill(request);
+
+        verify(userSkillDataAccess).deleteBySkillId(testSkillId);
+        verify(projectSkillDataAccess).deleteBySkillId(testSkillId);
+        verify(skillLevelDataAccess).deleteBySkillId(testSkillId);
+        verify(skillDataAccess).delete(skill);
     }
 
     @Test
-    void testDeleteSkill_KeyNull_ThrowsException() {
-        SkillVo skillWithoutKey = new SkillVo();
+    void deleteSkill_shouldThrow_whenIdNull() {
+        SkillVo request = new SkillVo();
+        Skill skill = new Skill();
 
-        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            skillService.deleteSkill(skillWithoutKey);
-        });
+        when(skillMapper.toEntity(request)).thenReturn(skill);
 
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                skillService.deleteSkill(request)
+        );
         assertEquals("Key must not be null", exception.getMessage());
-        verify(skillDataAccess, never()).delete(any());
     }
 
     @Test
-    void testDeleteSkill_SkillNotFound_ThrowsException() {
+    void deleteSkill_shouldThrow_whenNotFound() {
+        SkillVo request = new SkillVo();
+        request.setId(testSkillId);
+
+        Skill skill = new Skill();
+        skill.setId(testSkillId);
+
+        when(skillMapper.toEntity(request)).thenReturn(skill);
         when(skillDataAccess.findById(testSkillId)).thenReturn(Optional.empty());
 
-        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            SkillVo skillToDelete = new SkillVo();
-            skillToDelete.setId(testSkillId.toString());
-            skillService.deleteSkill(skillToDelete);
-        });
-
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                skillService.deleteSkill(request)
+        );
         assertEquals("Skill not found", exception.getMessage());
-        verify(skillDataAccess, never()).delete(any());
     }
 
     @Test
-    void testDeleteSkill_WithNoMappings_Success() {
-        when(skillDataAccess.findById(testSkillId)).thenReturn(Optional.of(testSkill));
-        when(skillMapUserAndProjectDataAccess.findAll(any(Example.class))).thenReturn(Collections.emptyList());
-        doNothing().when(skillMapUserAndProjectDataAccess).deleteAll(Collections.emptyList());
-        doNothing().when(skillDataAccess).delete(testSkill);
+    void testSearchCurrentUserSkills_WithDescriptionFilter() {
+        when(currentUser.getId()).thenReturn(testUserId);
 
-        SkillVo skillToDelete = new SkillVo();
-        skillToDelete.setId(testSkillId.toString());
-        skillService.deleteSkill(skillToDelete);
+        SkillSearchQuery query = new SkillSearchQuery();
+        query.setPage(0);
+        query.setSize(20);
+        query.setSortBy("name");
+        query.setSortDir("asc");
+        query.setDescription("Programming");
 
-        verify(skillMapUserAndProjectDataAccess).deleteAll(Collections.emptyList());
-        verify(skillDataAccess).delete(testSkill);
+        testSkillVo.setDescription("Java Programming");
+
+        UserSkill userSkill = new UserSkill();
+        userSkill.setUser(currentUser);
+        userSkill.setSkill(testSkill);
+        userSkill.setSkillLevel(testSkillLevel);
+
+        when(userSkillDataAccess.findByUserId(testUserId)).thenReturn(List.of(userSkill));
+        when(userProjectDataAccess.findByUserId(testUserId)).thenReturn(Collections.emptyList());
+
+        PageResult<CurrentUserSkillVo> result = skillService.searchCurrentUserSkills(query);
+
+        assertNotNull(result);
+        assertEquals(1, result.getContent().size());
+    }
+
+    @Test
+    void testSearchCurrentUserSkills_WithCreatedByFilter() {
+        when(currentUser.getId()).thenReturn(testUserId);
+
+        SkillSearchQuery query = new SkillSearchQuery();
+        query.setPage(0);
+        query.setSize(20);
+        query.setSortBy("name");
+        query.setSortDir("asc");
+        query.setCreatedBy("admin");
+
+        testSkillVo.setCreatedBy("admin");
+
+        UserSkill userSkill = new UserSkill();
+        userSkill.setUser(currentUser);
+        userSkill.setSkill(testSkill);
+        userSkill.setSkillLevel(testSkillLevel);
+
+        when(userSkillDataAccess.findByUserId(testUserId)).thenReturn(List.of(userSkill));
+        when(userProjectDataAccess.findByUserId(testUserId)).thenReturn(Collections.emptyList());
+
+        PageResult<CurrentUserSkillVo> result = skillService.searchCurrentUserSkills(query);
+
+        assertNotNull(result);
+        assertEquals(1, result.getContent().size());
     }
 }

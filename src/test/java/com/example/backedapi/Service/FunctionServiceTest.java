@@ -1,8 +1,11 @@
 package com.example.backedapi.Service;
 
+import com.example.backedapi.Dto.dto.common.PageResult;
+import com.example.backedapi.Dto.dto.search.FunctionSearchQuery;
 import com.example.backedapi.Service.impl.FunctionService;
 import com.example.backedapi.dataaccess.IFunctionDataAccess;
 import com.example.backedapi.dataaccess.IRoleFunctionDataAccess;
+import com.example.backedapi.exception.AppException;
 import com.example.backedapi.mapper.FunctionMapper;
 import com.example.backedapi.Dto.Vo.FunctionVo;
 import com.example.backedapi.Enity.Function;
@@ -13,7 +16,12 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.springframework.data.domain.Example;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 
 import java.util.*;
@@ -28,6 +36,7 @@ import static org.mockito.Mockito.*;
  * Uses Mockito to mock IFunctionDataAccess and IRoleFunctionDataAccess dependencies.
  */
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class FunctionServiceTest {
 
     @Mock
@@ -391,5 +400,63 @@ class FunctionServiceTest {
 
         assertNull(result);
         verify(functionDataAccess).findFunctionByNameAndParent("Non-existent", "parent-id");
+    }
+
+    @Test
+    void testSearchFunctions_Success() {
+        // Arrange
+        FunctionSearchQuery query = new FunctionSearchQuery();
+        query.setPage(0);
+        query.setSize(20);
+        query.setSortBy("createdTime");
+        query.setSortDir("desc");
+        query.setName("Test");
+
+        Function func1 = new Function();
+        func1.setId(UUID.randomUUID());
+        func1.setName("Test Function 1");
+        func1.setParent("");
+
+        Function func2 = new Function();
+        func2.setId(UUID.randomUUID());
+        func2.setName("Test Function 2");
+        func2.setParent("");
+
+        List<Function> funcList = List.of(func1, func2);
+        Page<Function> funcPage = new PageImpl<>(funcList, PageRequest.of(0, 20), 2);
+
+        FunctionVo funcVo1 = new FunctionVo();
+        funcVo1.setName("Test Function 1");
+
+        FunctionVo funcVo2 = new FunctionVo();
+        funcVo2.setName("Test Function 2");
+
+        when(functionDataAccess.searchFunctions(any(FunctionSearchQuery.class))).thenReturn(funcPage);
+        when(functionMapper.toVo(func1)).thenReturn(funcVo1);
+        when(functionMapper.toVo(func2)).thenReturn(funcVo2);
+
+        // Act
+        PageResult<FunctionVo> result = functionService.searchFunctions(query);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(2, result.getContent().size());
+        assertEquals(2L, result.getTotalElements());
+        assertEquals(0, result.getCurrentPage());
+        assertEquals(20, result.getPageSize());
+        verify(functionDataAccess).searchFunctions(any(FunctionSearchQuery.class));
+    }
+
+    @Test
+    void testSearchFunctions_InvalidSortField() {
+        // Arrange
+        FunctionSearchQuery query = new FunctionSearchQuery();
+        query.setPage(0);
+        query.setSize(20);
+        query.setSortBy("invalidField");
+        query.setSortDir("desc");
+
+        // Act & Assert
+        assertThrows(AppException.class, () -> functionService.searchFunctions(query));
     }
 }

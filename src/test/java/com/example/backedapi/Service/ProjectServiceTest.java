@@ -1,17 +1,26 @@
 package com.example.backedapi.Service;
 
+import com.example.backedapi.Dto.dto.common.PageResult;
+import com.example.backedapi.Dto.dto.search.ProjectSearchQuery;
+import com.example.backedapi.Dto.Vo.ProjectVo;
+import com.example.backedapi.Enity.Project;
+import com.example.backedapi.Enity.User;
+import com.example.backedapi.Enity.UserProject;
 import com.example.backedapi.Service.impl.ProjectService;
 import com.example.backedapi.dataaccess.IProjectDataAccess;
-import com.example.backedapi.dataaccess.ISkillMapUserAndProjectDataAccess;
-import com.example.backedapi.Enity.Project;
-import com.example.backedapi.Enity.SkillMapUserAndProject;
+import com.example.backedapi.dataaccess.IProjectSkillDataAccess;
+import com.example.backedapi.dataaccess.IUserProjectDataAccess;
+import com.example.backedapi.exception.AppException;
+import com.example.backedapi.mapper.ProjectMapper;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 
 import java.util.Collections;
 import java.util.List;
@@ -20,271 +29,229 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-/**
- * ProjectService 單元測試
- * 使用 Mockito 模擬 DataAccess 層,不依賴數據庫
- * 
- * 測試策略:
- * 1. 測試正常業務流程
- * 2. 測試異常情況處理
- * 3. 驗證與 DataAccess 層的交互
- */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("ProjectService 單元測試")
 class ProjectServiceTest {
-    
+
     @Mock
     private IProjectDataAccess projectDataAccess;
-    
     @Mock
-    private ISkillMapUserAndProjectDataAccess skillMapDataAccess;
-    
+    private IProjectSkillDataAccess projectSkillDataAccess;
+    @Mock
+    private IUserProjectDataAccess userProjectDataAccess;
+    @Mock
+    private ProjectMapper projectMapper;
+
     @InjectMocks
     private ProjectService projectService;
-    
+
+    @Mock
+    private User currentUser;
+
     private Project testProject;
-    
+    private ProjectVo testProjectVo;
+    private UUID testId;
+
     @BeforeEach
     void setUp() {
+        testId = UUID.randomUUID();
         testProject = new Project();
+        testProject.setId(testId);
         testProject.setName("Test Project");
+        testProject.setDescription("Test Description");
+
+        testProjectVo = new ProjectVo();
+        testProjectVo.setId(testId);
+        testProjectVo.setName("Test Project");
+        testProjectVo.setDescription("Test Description");
     }
-    
-    // ==================== addProject 測試 ====================
-    
+
     @Test
-    @DisplayName("addProject - 成功新增專案")
-    void addProject_shouldSaveProject_whenValid() {
-        // Given
-        when(projectDataAccess.findByName("Test Project"))
-            .thenReturn(Collections.emptyList());
-        when(projectDataAccess.save(testProject))
-            .thenReturn(testProject);
-        
-        // When
-        Project result = projectService.addProject(testProject);
-        
-        // Then
-        assertNotNull(result);
-        verify(projectDataAccess, times(1)).findByName("Test Project");
-        verify(projectDataAccess, times(1)).save(testProject);
-    }
-    
-    @Test
-    @DisplayName("addProject - Key 不為 null 時拋出例外")
-    void addProject_shouldThrowException_whenKeyNotNull() {
-        // Given
-        testProject.setId(UUID.randomUUID());
-        
-        // When & Then
-        IllegalArgumentException exception = assertThrows(
-            IllegalArgumentException.class,
-            () -> projectService.addProject(testProject)
-        );
-        
-        assertEquals("Key must be null", exception.getMessage());
-        verify(projectDataAccess, never()).save(any());
-        verify(projectDataAccess, never()).findByName(any());
-    }
-    
-    @Test
-    @DisplayName("addProject - Name 為 null 時拋出例外")
-    void addProject_shouldThrowException_whenNameIsNull() {
-        // Given
-        testProject.setName(null);
-        
-        // When & Then
-        IllegalArgumentException exception = assertThrows(
-            IllegalArgumentException.class,
-            () -> projectService.addProject(testProject)
-        );
-        
-        assertEquals("Name must not be null", exception.getMessage());
-        verify(projectDataAccess, never()).save(any());
-        verify(projectDataAccess, never()).findByName(any());
-    }
-    
-    @Test
-    @DisplayName("addProject - Name 已存在時拋出例外")
-    void addProject_shouldThrowException_whenNameExists() {
-        // Given
-        Project existingProject = new Project();
-        existingProject.setName("Test Project");
-        when(projectDataAccess.findByName("Test Project"))
-            .thenReturn(List.of(existingProject));
-        
-        // When & Then
-        IllegalArgumentException exception = assertThrows(
-            IllegalArgumentException.class,
-            () -> projectService.addProject(testProject)
-        );
-        
+    void addProject_shouldThrow_whenNameExists() {
+        ProjectVo vo = new ProjectVo();
+        vo.setName("Demo");
+
+        Project entity = new Project();
+        entity.setName("Demo");
+
+        when(projectMapper.toEntity(vo)).thenReturn(entity);
+        when(projectDataAccess.findByName("Demo")).thenReturn(List.of(new Project()));
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> projectService.addProject(vo));
         assertEquals("Name already exists", exception.getMessage());
-        verify(projectDataAccess, times(1)).findByName("Test Project");
-        verify(projectDataAccess, never()).save(any());
     }
-    
-    // ==================== updateProject 測試 ====================
-    
+
     @Test
-    @DisplayName("updateProject - 成功更新專案")
-    void updateProject_shouldUpdateProject_whenValid() {
-        // Given
+    void deleteProject_shouldDeleteMappingsAndProject() {
         UUID projectId = UUID.randomUUID();
-        testProject.setId(projectId);
-        
-        // When
-        projectService.updateProject(testProject);
-        
-        // Then
-        verify(projectDataAccess, times(1)).save(testProject);
+
+        ProjectVo vo = new ProjectVo();
+        vo.setId(projectId);
+        Project mapped = new Project();
+        mapped.setId(projectId);
+        Project existing = new Project();
+        existing.setId(projectId);
+
+        when(projectMapper.toEntity(vo)).thenReturn(mapped);
+        when(projectDataAccess.findById(projectId)).thenReturn(Optional.of(existing));
+
+        projectService.deleteProject(vo);
+
+        verify(projectSkillDataAccess).deleteByProjectId(projectId);
+        verify(userProjectDataAccess).deleteByProjectId(projectId);
+        verify(projectDataAccess).delete(existing);
     }
-    
+
     @Test
-    @DisplayName("updateProject - Key 為 null 時拋出例外")
-    void updateProject_shouldThrowException_whenKeyIsNull() {
-        // When & Then
-        IllegalArgumentException exception = assertThrows(
-            IllegalArgumentException.class,
-            () -> projectService.updateProject(testProject)
-        );
-        
-        assertEquals("Key must not be null", exception.getMessage());
-        verify(projectDataAccess, never()).save(any());
+    void updateProject_shouldSave_whenValid() {
+        UUID projectId = UUID.randomUUID();
+
+        ProjectVo vo = new ProjectVo();
+        vo.setId(projectId);
+        vo.setName("Updated");
+
+        Project mapped = new Project();
+        mapped.setId(projectId);
+        mapped.setName("Updated");
+
+        when(projectMapper.toEntity(vo)).thenReturn(mapped);
+
+        projectService.updateProject(vo);
+
+        verify(projectDataAccess).save(any(Project.class));
     }
-    
+
     @Test
-    @DisplayName("updateProject - Name 為 null 時拋出例外")
-    void updateProject_shouldThrowException_whenNameIsNull() {
-        // Given
-        testProject.setId(UUID.randomUUID());
-        testProject.setName(null);
-        
-        // When & Then
-        IllegalArgumentException exception = assertThrows(
-            IllegalArgumentException.class,
-            () -> projectService.updateProject(testProject)
-        );
-        
-        assertEquals("Name must not be null", exception.getMessage());
-        verify(projectDataAccess, never()).save(any());
-    }
-    
-    // ==================== getProject 測試 ====================
-    
-    @Test
-    @DisplayName("getProject - 返回所有專案")
-    void getProject_shouldReturnAllProjects() {
-        // Given
+    void testSearchProjects_Success() {
+        // Arrange
+        ProjectSearchQuery query = new ProjectSearchQuery();
+        query.setPage(0);
+        query.setSize(20);
+        query.setSortBy("createdTime");
+        query.setSortDir("desc");
+        query.setName("Test");
+
         List<Project> projects = List.of(testProject);
-        when(projectDataAccess.findAll()).thenReturn(projects);
-        
-        // When
-        List<Project> result = projectService.getProject();
-        
-        // Then
+        Page<Project> projectPage = new PageImpl<>(projects, PageRequest.of(0, 20), 1);
+
+        when(projectDataAccess.searchProjects(any(ProjectSearchQuery.class))).thenReturn(projectPage);
+        when(projectMapper.toVo(testProject)).thenReturn(testProjectVo);
+
+        // Act
+        PageResult<ProjectVo> result = projectService.searchProjects(query);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(1, result.getContent().size());
+        assertEquals(1L, result.getTotalElements());
+        assertEquals("Test Project", result.getContent().get(0).getName());
+        verify(projectDataAccess).searchProjects(any(ProjectSearchQuery.class));
+    }
+
+    @Test
+    void testSearchProjects_InvalidSortField() {
+        // Arrange
+        ProjectSearchQuery query = new ProjectSearchQuery();
+        query.setPage(0);
+        query.setSize(20);
+        query.setSortBy("invalidField");
+        query.setSortDir("desc");
+
+        // Act & Assert
+        assertThrows(AppException.class, () -> projectService.searchProjects(query));
+    }
+
+    @Test
+    void testSearchProjects_InvalidSortDirection() {
+        // Arrange
+        ProjectSearchQuery query = new ProjectSearchQuery();
+        query.setPage(0);
+        query.setSize(20);
+        query.setSortBy("createdTime");
+        query.setSortDir("invalid");
+
+        // Act & Assert
+        assertThrows(AppException.class, () -> projectService.searchProjects(query));
+    }
+
+    @Test
+    void testGetCurrentUserProjects_Success() {
+        // Arrange
+        UUID userId = UUID.randomUUID();
+        when(currentUser.getId()).thenReturn(userId);
+
+        UserProject userProject = new UserProject();
+        userProject.setProject(testProject);
+
+        when(userProjectDataAccess.findByUserId(userId)).thenReturn(List.of(userProject));
+        when(projectMapper.toVo(testProject)).thenReturn(testProjectVo);
+
+        // Act
+        List<ProjectVo> result = projectService.getCurrentUserProjects();
+
+        // Assert
         assertNotNull(result);
         assertEquals(1, result.size());
-        assertEquals(testProject, result.get(0));
-        verify(projectDataAccess, times(1)).findAll();
+        assertEquals("Test Project", result.get(0).getName());
+        verify(userProjectDataAccess).findByUserId(userId);
     }
-    
+
     @Test
-    @DisplayName("getProject - 返回空列表當無專案時")
-    void getProject_shouldReturnEmptyList_whenNoProjects() {
-        // Given
-        when(projectDataAccess.findAll()).thenReturn(Collections.emptyList());
-        
-        // When
-        List<Project> result = projectService.getProject();
-        
-        // Then
+    void testSearchCurrentUserProjects_Success() {
+        // Arrange
+        UUID userId = UUID.randomUUID();
+        when(currentUser.getId()).thenReturn(userId);
+
+        ProjectSearchQuery query = new ProjectSearchQuery();
+        query.setPage(0);
+        query.setSize(20);
+        query.setSortBy("createdTime");
+        query.setSortDir("desc");
+        query.setName("Test");
+
+        List<Project> projects = List.of(testProject);
+        Page<Project> projectPage = new PageImpl<>(projects, PageRequest.of(0, 20), 1);
+
+        when(projectDataAccess.searchCurrentUserProjects(any(String.class), any(ProjectSearchQuery.class)))
+                .thenReturn(projectPage);
+        when(projectMapper.toVo(testProject)).thenReturn(testProjectVo);
+
+        // Act
+        PageResult<ProjectVo> result = projectService.searchCurrentUserProjects(query);
+
+        // Assert
         assertNotNull(result);
-        assertTrue(result.isEmpty());
-        verify(projectDataAccess, times(1)).findAll();
+        assertEquals(1, result.getContent().size());
+        assertEquals(1L, result.getTotalElements());
+        assertEquals("Test Project", result.getContent().get(0).getName());
+        verify(projectDataAccess).searchCurrentUserProjects(any(String.class), any(ProjectSearchQuery.class));
     }
-    
-    // ==================== deleteProject 測試 ====================
-    
+
     @Test
-    @DisplayName("deleteProject - 成功刪除專案及關聯")
-    void deleteProject_shouldDeleteProjectAndMappings() {
-        // Given
-        UUID projectId = UUID.randomUUID();
-        testProject.setId(projectId);
-        
-        when(projectDataAccess.findById(projectId))
-            .thenReturn(Optional.of(testProject));
-        
-        SkillMapUserAndProject mapping = new SkillMapUserAndProject();
-        when(skillMapDataAccess.findByProject(testProject))
-            .thenReturn(List.of(mapping));
-        
-        // When
-        projectService.deleteProject(testProject);
-        
-        // Then
-        verify(projectDataAccess, times(1)).findById(projectId);
-        verify(skillMapDataAccess, times(1)).findByProject(testProject);
-        verify(skillMapDataAccess, times(1)).deleteAll(List.of(mapping));
-        verify(projectDataAccess, times(1)).delete(testProject);
-    }
-    
-    @Test
-    @DisplayName("deleteProject - 無關聯時僅刪除專案")
-    void deleteProject_shouldDeleteProject_whenNoMappings() {
-        // Given
-        UUID projectId = UUID.randomUUID();
-        testProject.setId(projectId);
-        
-        when(projectDataAccess.findById(projectId))
-            .thenReturn(Optional.of(testProject));
-        when(skillMapDataAccess.findByProject(testProject))
-            .thenReturn(Collections.emptyList());
-        
-        // When
-        projectService.deleteProject(testProject);
-        
-        // Then
-        verify(skillMapDataAccess, times(1)).deleteAll(Collections.emptyList());
-        verify(projectDataAccess, times(1)).delete(testProject);
-    }
-    
-    @Test
-    @DisplayName("deleteProject - 專案不存在時拋出例外")
-    void deleteProject_shouldThrowException_whenProjectNotFound() {
-        // Given
-        UUID projectId = UUID.randomUUID();
-        testProject.setId(projectId);
-        
-        when(projectDataAccess.findById(projectId))
-            .thenReturn(Optional.empty());
-        
-        // When & Then
-        IllegalArgumentException exception = assertThrows(
-            IllegalArgumentException.class,
-            () -> projectService.deleteProject(testProject)
-        );
-        
-        assertEquals("Project not found", exception.getMessage());
-        verify(projectDataAccess, times(1)).findById(projectId);
-        verify(skillMapDataAccess, never()).findByProject(any());
-        verify(projectDataAccess, never()).delete(any());
-    }
-    
-    @Test
-    @DisplayName("deleteProject - Key 為 null 時拋出例外")
-    void deleteProject_shouldThrowException_whenKeyIsNull() {
-        // When & Then
-        IllegalArgumentException exception = assertThrows(
-            IllegalArgumentException.class,
-            () -> projectService.deleteProject(testProject)
-        );
-        
-        assertEquals("Key must not be null", exception.getMessage());
-        verify(projectDataAccess, never()).findById(any());
-        verify(projectDataAccess, never()).delete(any());
+    void testSearchCurrentUserProjects_EmptyResult() {
+        // Arrange
+        UUID userId = UUID.randomUUID();
+        when(currentUser.getId()).thenReturn(userId);
+
+        ProjectSearchQuery query = new ProjectSearchQuery();
+        query.setPage(0);
+        query.setSize(20);
+        query.setSortBy("createdTime");
+        query.setSortDir("desc");
+
+        Page<Project> emptyPage = new PageImpl<>(Collections.emptyList(), PageRequest.of(0, 20), 0);
+
+        when(projectDataAccess.searchCurrentUserProjects(any(String.class), any(ProjectSearchQuery.class)))
+                .thenReturn(emptyPage);
+
+        // Act
+        PageResult<ProjectVo> result = projectService.searchCurrentUserProjects(query);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(0, result.getContent().size());
+        assertEquals(0L, result.getTotalElements());
     }
 }

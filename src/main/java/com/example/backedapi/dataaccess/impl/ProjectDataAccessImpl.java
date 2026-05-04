@@ -1,9 +1,15 @@
 package com.example.backedapi.dataaccess.impl;
 
+import com.example.backedapi.Dto.dto.search.ProjectSearchQuery;
 import com.example.backedapi.Repository.ProjectRepository;
 import com.example.backedapi.dataaccess.IProjectDataAccess;
 import com.example.backedapi.Enity.Project;
+import com.example.backedapi.dataaccess.specification.ProjectSpecification;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -52,5 +58,42 @@ public class ProjectDataAccessImpl implements IProjectDataAccess {
     @Override
     public boolean existsById(UUID id) {
         return projectRepository.existsById(id);
+    }
+    
+    @Override
+    public Page<Project> searchProjects(ProjectSearchQuery query) {
+        // 建立排序
+        Sort sort = Sort.by(
+            "asc".equalsIgnoreCase(query.getNormalizedSortDir()) 
+                ? Sort.Direction.ASC 
+                : Sort.Direction.DESC,
+            query.getSortBy()
+        );
+        
+        // 建立分頁請求
+        Pageable pageable = PageRequest.of(query.getPage(), query.getSize(), sort);
+        
+        // 執行查詢
+        return projectRepository.findAll(ProjectSpecification.buildSpecification(query), pageable);
+    }
+    
+    @Override
+    public Page<Project> searchCurrentUserProjects(String currentUserId, ProjectSearchQuery query) {
+        // 建立排序
+        Sort sort = Sort.by(
+            "asc".equalsIgnoreCase(query.getNormalizedSortDir()) 
+                ? Sort.Direction.ASC 
+                : Sort.Direction.DESC,
+            query.getSortBy()
+        );
+        
+        // 建立分頁請求
+        Pageable pageable = PageRequest.of(query.getPage(), query.getSize(), sort);
+        
+        // 執行查詢（包含使用者過濾條件）
+        return projectRepository.findAll(
+            ProjectSpecification.buildCurrentUserSpecification(currentUserId, query), 
+            pageable
+        );
     }
 }

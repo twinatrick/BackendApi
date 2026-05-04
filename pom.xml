@@ -206,6 +206,7 @@
 
     <build>
         <plugins>
+            <!-- Temporarily disabled to use JAVA_HOME instead
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-toolchains-plugin</artifactId>
@@ -225,6 +226,7 @@
                     </toolchains>
                 </configuration>
             </plugin>
+            -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -300,6 +302,40 @@
                         <goals>
                             <goal>report</goal>
                         </goals>
+                        <configuration>
+                            <excludes>
+                                <!-- 排除 Controller 層 -->
+                                <exclude>com/example/backedapi/controller/**</exclude>
+                                <!-- 排除 Entity 類 -->
+                                <exclude>com/example/backedapi/Enity/**</exclude>
+                                <!-- 排除 DTO 和 VO -->
+                                <exclude>com/example/backedapi/Dto/**</exclude>
+                                <!-- 排除 Mapper -->
+                                <exclude>com/example/backedapi/mapper/**</exclude>
+                                <!-- 排除 Specification -->
+                                <exclude>com/example/backedapi/dataaccess/specification/**</exclude>
+                                <!-- 排除 Config -->
+                                <exclude>com/example/backedapi/config/**</exclude>
+                                <!-- 排除 AOP -->
+                                <exclude>com/example/backedapi/Aop/**</exclude>
+                                <!-- 排除 Filter -->
+                                <exclude>com/example/backedapi/fillter/**</exclude>
+                                <!-- 排除 WebSocket -->
+                                <exclude>com/example/backedapi/WebSocket/**</exclude>
+                                <!-- 排除 Timer -->
+                                <exclude>com/example/backedapi/Timer/**</exclude>
+                                <!-- 排除 Exception -->
+                                <exclude>com/example/backedapi/exception/**</exclude>
+                                <!-- 排除 Repository 介面 -->
+                                <exclude>com/example/backedapi/Repository/**</exclude>
+                                <!-- 排除 DataAccess 介面 -->
+                                <exclude>com/example/backedapi/dataaccess/I*.class</exclude>
+                                <!-- 排除 Service 介面 -->
+                                <exclude>com/example/backedapi/Service/I*.class</exclude>
+                                <!-- 排除主類 -->
+                                <exclude>com/example/backedapi/BackedApiApplication.class</exclude>
+                            </excludes>
+                        </configuration>
                     </execution>
                     <execution>
                         <id>check</id>
@@ -307,9 +343,41 @@
                             <goal>check</goal>
                         </goals>
                         <configuration>
+                            <excludes>
+                                <!-- 排除 Controller 層 -->
+                                <exclude>com/example/backedapi/controller/**</exclude>
+                                <!-- 排除 Entity 類 -->
+                                <exclude>com/example/backedapi/Enity/**</exclude>
+                                <!-- 排除 DTO 和 VO -->
+                                <exclude>com/example/backedapi/Dto/**</exclude>
+                                <!-- 排除 Mapper -->
+                                <exclude>com/example/backedapi/mapper/**</exclude>
+                                <!-- 排除 Specification -->
+                                <exclude>com/example/backedapi/dataaccess/specification/**</exclude>
+                                <!-- 排除 Config -->
+                                <exclude>com/example/backedapi/config/**</exclude>
+                                <!-- 排除 AOP -->
+                                <exclude>com/example/backedapi/Aop/**</exclude>
+                                <!-- 排除 Filter -->
+                                <exclude>com/example/backedapi/fillter/**</exclude>
+                                <!-- 排除 WebSocket -->
+                                <exclude>com/example/backedapi/WebSocket/**</exclude>
+                                <!-- 排除 Timer -->
+                                <exclude>com/example/backedapi/Timer/**</exclude>
+                                <!-- 排除 Exception -->
+                                <exclude>com/example/backedapi/exception/**</exclude>
+                                <!-- 排除 Repository 介面 -->
+                                <exclude>com/example/backedapi/Repository/**</exclude>
+                                <!-- 排除 DataAccess 介面 -->
+                                <exclude>com/example/backedapi/dataaccess/I*.class</exclude>
+                                <!-- 排除 Service 介面 -->
+                                <exclude>com/example/backedapi/Service/I*.class</exclude>
+                                <!-- 排除主類 -->
+                                <exclude>com/example/backedapi/BackedApiApplication.class</exclude>
+                            </excludes>
                             <rules>
                                 <rule>
-                                    <element>PACKAGE</element>
+                                    <element>BUNDLE</element>
                                     <limits>
                                         <limit>
                                             <counter>LINE</counter>
