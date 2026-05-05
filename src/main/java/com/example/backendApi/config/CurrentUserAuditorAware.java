@@ -1,10 +1,12 @@
 package com.example.backendApi.config;
 
 import com.example.backendApi.Entity.User;
-import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.beans.factory.support.ScopeNotActiveException;
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.stereotype.Component;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.web.context.request.RequestAttributes;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -12,29 +14,25 @@ import java.util.UUID;
 @Component
 public class CurrentUserAuditorAware implements AuditorAware<String> {
 
-    private final ObjectProvider<User> currentUserProvider;
-
-    public CurrentUserAuditorAware(ObjectProvider<User> currentUserProvider) {
-        this.currentUserProvider = currentUserProvider;
-    }
-
     @Override
     public Optional<String> getCurrentAuditor() {
-        User currentUser;
+        RequestAttributes attributes;
         try {
-            currentUser = currentUserProvider.getIfAvailable();
-        } catch (ScopeNotActiveException ex) {
+            attributes = RequestContextHolder.getRequestAttributes();
+        } catch (IllegalStateException ex) {
             return Optional.empty();
         }
-        if (currentUser == null) {
+        if (!(attributes instanceof ServletRequestAttributes servletAttributes)) {
             return Optional.empty();
         }
-        UUID userId;
-        try {
-            userId = currentUser.getId();
-        } catch (ScopeNotActiveException | IllegalStateException ex) {
+        HttpServletRequest request = servletAttributes.getRequest();
+
+        Object userAttribute = request.getAttribute("user");
+        if (!(userAttribute instanceof User currentUser)) {
             return Optional.empty();
         }
+
+        UUID userId = currentUser.getId();
         if (userId == null) {
             return Optional.empty();
         }

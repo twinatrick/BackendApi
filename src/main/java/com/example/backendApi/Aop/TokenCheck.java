@@ -55,6 +55,10 @@ public class TokenCheck {
             JwtClaims claims = jwtAuthenticationToken.verifyJWT(token);
             String email = (String) claims.getClaimValue("email");
             User user = userDataAccess.findByEmail(email).stream().findFirst().orElse(null);
+            if (user == null) {
+                response.setStatus(HttpStatus.UNAUTHORIZED.value());
+                return ResponseType.Fail("AUTH_ERROR", "Unauthorized", 401);
+            }
             request.setAttribute("user", user);
 
         } catch (InvalidJwtException e) {
