@@ -5,7 +5,7 @@ import com.example.backendApi.Service.IApiFetcher;
 import com.example.backendApi.Service.IAquarkDataService;
 import com.example.backendApi.Service.ICheckApiService;
 import com.example.backendApi.Service.IAlarmService;
-import com.example.backendApi.Dto.dto.AlarmMessage;
+import com.example.backendApi.Dto.Vo.dto.AlarmMessage;
 import com.example.backendApi.Dto.Vo.aquarkUse.RowData;
 import com.example.backendApi.Dto.Vo.aquarkUse.aquarkApiReturnVo;
 import com.example.backendApi.Dto.Vo.aquarkUse.AquarkDataRaw;

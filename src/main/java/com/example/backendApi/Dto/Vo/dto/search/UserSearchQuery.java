@@ -1,6 +1,6 @@
-package com.example.backendApi.Dto.dto.search;
+package com.example.backendApi.Dto.Vo.dto.search;
 
-import com.example.backendApi.Dto.dto.common.BaseSearchQuery;
+import com.example.backendApi.Dto.Vo.dto.common.BaseSearchQuery;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;

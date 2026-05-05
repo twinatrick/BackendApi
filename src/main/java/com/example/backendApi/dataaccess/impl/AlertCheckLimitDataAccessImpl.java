@@ -1,6 +1,6 @@
 package com.example.backendApi.dataaccess.impl;
 
-import com.example.backendApi.Dto.dto.search.AlertCheckLimitSearchQuery;
+import com.example.backendApi.Dto.Vo.dto.search.AlertCheckLimitSearchQuery;
 import com.example.backendApi.Repository.AlertCheckLimitRepository;
 import com.example.backendApi.dataaccess.IAlertCheckLimitDataAccess;
 import com.example.backendApi.dataaccess.specification.AlertCheckLimitSpecification;

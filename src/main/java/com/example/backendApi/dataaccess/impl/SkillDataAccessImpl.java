@@ -1,6 +1,6 @@
 package com.example.backendApi.dataaccess.impl;
 
-import com.example.backendApi.Dto.dto.search.SkillSearchQuery;
+import com.example.backendApi.Dto.Vo.dto.search.SkillSearchQuery;
 import com.example.backendApi.Repository.SkillRepository;
 import com.example.backendApi.dataaccess.ISkillDataAccess;
 import com.example.backendApi.dataaccess.specification.SkillSpecification;

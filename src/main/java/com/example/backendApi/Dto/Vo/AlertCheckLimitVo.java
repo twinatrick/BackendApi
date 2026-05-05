@@ -1,6 +1,8 @@
 package com.example.backendApi.Dto.Vo;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.io.Serializable;
@@ -9,6 +11,8 @@ import java.util.UUID;
 
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class AlertCheckLimitVo implements Serializable {
 
     private UUID id;
@@ -16,11 +20,4 @@ public class AlertCheckLimitVo implements Serializable {
     private String columnName;
 
     private double limitValue;
-
-    public AlertCheckLimitVo(UUID id, String tableName, String columnName, double limitValue) {
-        this.id = id;
-        this.tableName = tableName;
-        this.columnName = columnName;
-        this.limitValue = limitValue;
-    }
 }

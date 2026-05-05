@@ -1,7 +1,7 @@
 package com.example.backendApi.Service;
 
-import com.example.backendApi.Dto.dto.common.PageResult;
-import com.example.backendApi.Dto.dto.search.ProjectSearchQuery;
+import com.example.backendApi.Dto.Vo.dto.common.PageResult;
+import com.example.backendApi.Dto.Vo.dto.search.ProjectSearchQuery;
 import com.example.backendApi.Dto.Vo.ProjectVo;
 
 import java.util.List;

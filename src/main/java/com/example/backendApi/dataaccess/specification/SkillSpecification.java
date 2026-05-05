@@ -1,6 +1,6 @@
 package com.example.backendApi.dataaccess.specification;
 
-import com.example.backendApi.Dto.dto.search.SkillSearchQuery;
+import com.example.backendApi.Dto.Vo.dto.search.SkillSearchQuery;
 import com.example.backendApi.Entity.Skill;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;

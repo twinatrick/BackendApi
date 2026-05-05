@@ -1,5 +1,6 @@
 package com.example.backendApi.controller;
 
+import com.example.backendApi.Dto.Response.Token;
 import com.example.backendApi.Service.IRoleService;
 import com.example.backendApi.Service.IUserService;
 import com.example.backendApi.annotation.openapi.ApiControllerTag;
@@ -57,7 +58,7 @@ public class AuthController {
     @Ingnore
     @PostMapping("/signup")
     @ApiOperationBadRequest(summary = "Register a new user", description = "Creates a user account and returns a JWT access token.")
-    public ResponseType<?> signup(@RequestBody SignupRequest request) throws JoseException {
+    public ResponseType<Token> signup(@RequestBody SignupRequest request) throws JoseException {
         if (!userService.getUserByEmail(request.getEmail()).isEmpty()) {
             throw new AppException("VALIDATION_ERROR", "User already exists", 400);
         }
@@ -75,8 +76,8 @@ public class AuthController {
             roleService.userBindRole(savedUser.getId(), List.of(defaultRoles.getFirst().getId().toString()));
         }
         httpResponse.addHeader("Authorization", "Bearer " + token);
-        HashMap<String,String> res=new HashMap<>();
-        res.put("accessToken",token);
+        Token res=new Token();
+        res.setAccessToken(token);
         return new ResponseType<>(0, res,"User registered successfully");
 //        return ResponseEntity.ok("User registered successfully");
     }
@@ -86,7 +87,7 @@ public class AuthController {
     @Ingnore
     @PostMapping("/login")
     @ApiOperationAuth(summary = "User login", description = "Authenticates user credentials and returns a JWT access token.")
-    public ResponseType<?> login(@RequestBody LoginRequest request) throws JoseException {
+    public ResponseType<Token> login(@RequestBody LoginRequest request) throws JoseException {
         List<UserVo> user = userService.getUserByEmail(request.getEmail());
         if (user.isEmpty() || !BCrypt.checkpw(request.getPassword(), user.getFirst().getPassword())) {
             throw new AppException("AUTH_ERROR", "Invalid username or password", 401);
@@ -95,8 +96,8 @@ public class AuthController {
         String token = jwtUtils.generateJWT(request.getEmail());
 
         httpResponse.addHeader("Authorization", "Bearer " + token);
-        HashMap<String,String> res=new HashMap<>();
-        res.put("accessToken",token);
+        Token res=new Token();
+        res.setAccessToken(token);
         return new ResponseType<>(0, res,"Login successful");
 
     }

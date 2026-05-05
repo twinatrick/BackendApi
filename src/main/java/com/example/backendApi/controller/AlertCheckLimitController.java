@@ -1,7 +1,7 @@
 package com.example.backendApi.controller;
 
-import com.example.backendApi.Dto.dto.common.PageResult;
-import com.example.backendApi.Dto.dto.search.AlertCheckLimitSearchQuery;
+import com.example.backendApi.Dto.Vo.dto.common.PageResult;
+import com.example.backendApi.Dto.Vo.dto.search.AlertCheckLimitSearchQuery;
 import com.example.backendApi.Service.IAlertCheckLimitService;
 import com.example.backendApi.annotation.openapi.ApiControllerTag;
 import com.example.backendApi.annotation.openapi.ApiOperationBadRequest;

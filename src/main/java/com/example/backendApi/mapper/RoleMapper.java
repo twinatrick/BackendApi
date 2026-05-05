@@ -1,6 +1,7 @@
 package com.example.backendApi.mapper;
 
 import com.example.backendApi.Dto.Vo.RoleOutVo;
+import com.example.backendApi.Entity.BaseEntity;
 import com.example.backendApi.Entity.Role;
 import com.example.backendApi.Entity.RoleFunction;
 import org.mapstruct.AfterMapping;
@@ -23,7 +24,7 @@ public interface RoleMapper {
         }
         List<String> ids = role.getRoleFunctions().stream()
                 .map(RoleFunction::getFunction)
-                .map(function -> function.getId())
+                .map(BaseEntity::getId)
                 .map(UUID::toString)
                 .toList();
         vo.setFunctionIds(ids);

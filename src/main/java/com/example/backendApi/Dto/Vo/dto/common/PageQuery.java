@@ -1,4 +1,4 @@
-package com.example.backendApi.Dto.dto.common;
+package com.example.backendApi.Dto.Vo.dto.common;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Max;

@@ -1,7 +1,7 @@
 package com.example.backendApi.Service.impl;
 
-import com.example.backendApi.Dto.dto.common.PageResult;
-import com.example.backendApi.Dto.dto.search.ProjectSearchQuery;
+import com.example.backendApi.Dto.Vo.dto.common.PageResult;
+import com.example.backendApi.Dto.Vo.dto.search.ProjectSearchQuery;
 import com.example.backendApi.Entity.User;
 import com.example.backendApi.Entity.UserProject;
 import com.example.backendApi.Service.IProjectService;

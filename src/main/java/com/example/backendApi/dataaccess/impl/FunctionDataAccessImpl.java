@@ -1,6 +1,6 @@
 package com.example.backendApi.dataaccess.impl;
 
-import com.example.backendApi.Dto.dto.search.FunctionSearchQuery;
+import com.example.backendApi.Dto.Vo.dto.search.FunctionSearchQuery;
 import com.example.backendApi.Repository.FunctionRepository;
 import com.example.backendApi.dataaccess.IFunctionDataAccess;
 import com.example.backendApi.Entity.Function;

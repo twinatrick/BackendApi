@@ -11,7 +11,7 @@ public class SpringdocConfig {
     public GroupedOpenApi myApi() {
         return GroupedOpenApi.builder()
                 .group("BackendApi") // 自定義 API 分組名稱
-                .pathsToMatch("/backend/**") // 只包含 /backend/** 路徑下的 API
+                .pathsToMatch("/**") // 包含所有 API 路徑
                 .build();
     }
 }

@@ -1,7 +1,7 @@
 package com.example.backendApi.controller;
 
-import com.example.backendApi.Dto.dto.common.PageResult;
-import com.example.backendApi.Dto.dto.search.UserSearchQuery;
+import com.example.backendApi.Dto.Vo.dto.common.PageResult;
+import com.example.backendApi.Dto.Vo.dto.search.UserSearchQuery;
 import com.example.backendApi.Service.ISkillService;
 import com.example.backendApi.Service.IUserService;
 import com.example.backendApi.annotation.openapi.ApiControllerTag;
