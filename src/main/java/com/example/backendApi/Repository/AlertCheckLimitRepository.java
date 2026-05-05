@@ -1,6 +1,6 @@
 package com.example.backendApi.Repository;
 
-import com.example.backendApi.Enity.AlertCheckLimit;
+import com.example.backendApi.Entity.AlertCheckLimit;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;

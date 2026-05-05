@@ -1,8 +1,8 @@
 package com.example.backendApi.dataaccess;
 
-import com.example.backendApi.Enity.Role;
-import com.example.backendApi.Enity.User;
-import com.example.backendApi.Enity.UserRole;
+import com.example.backendApi.Entity.Role;
+import com.example.backendApi.Entity.User;
+import com.example.backendApi.Entity.UserRole;
 
 import java.util.List;
 

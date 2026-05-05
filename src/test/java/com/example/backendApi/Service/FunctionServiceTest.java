@@ -8,7 +8,7 @@ import com.example.backendApi.dataaccess.IRoleFunctionDataAccess;
 import com.example.backendApi.exception.AppException;
 import com.example.backendApi.mapper.FunctionMapper;
 import com.example.backendApi.Dto.Vo.FunctionVo;
-import com.example.backendApi.Enity.Function;
+import com.example.backendApi.Entity.Function;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

@@ -2,7 +2,7 @@ package com.example.backendApi.dataaccess.impl;
 
 import com.example.backendApi.Repository.UserSkillRepository;
 import com.example.backendApi.dataaccess.IUserSkillDataAccess;
-import com.example.backendApi.Enity.UserSkill;
+import com.example.backendApi.Entity.UserSkill;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

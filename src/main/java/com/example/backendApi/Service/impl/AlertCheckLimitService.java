@@ -7,7 +7,7 @@ import com.example.backendApi.Util.SortFieldValidator;
 import com.example.backendApi.dataaccess.IAlertCheckLimitDataAccess;
 import com.example.backendApi.mapper.AlertCheckLimitMapper;
 import com.example.backendApi.Dto.Vo.AlertCheckLimitVo;
-import com.example.backendApi.Enity.AlertCheckLimit;
+import com.example.backendApi.Entity.AlertCheckLimit;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;

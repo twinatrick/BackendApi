@@ -1,7 +1,7 @@
 package com.example.backendApi.mapper;
 
 import com.example.backendApi.Dto.Vo.SkillVo;
-import com.example.backendApi.Enity.Skill;
+import com.example.backendApi.Entity.Skill;
 import org.mapstruct.Mapper;
 
 @Mapper(componentModel = "spring")

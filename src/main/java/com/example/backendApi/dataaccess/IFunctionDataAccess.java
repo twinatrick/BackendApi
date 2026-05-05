@@ -1,7 +1,7 @@
 package com.example.backendApi.dataaccess;
 
 import com.example.backendApi.Dto.dto.search.FunctionSearchQuery;
-import com.example.backendApi.Enity.Function;
+import com.example.backendApi.Entity.Function;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;

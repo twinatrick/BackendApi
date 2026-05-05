@@ -4,7 +4,7 @@ import com.example.backendApi.Dto.dto.search.SkillLevelSearchQuery;
 import com.example.backendApi.Repository.SkillLevelRepository;
 import com.example.backendApi.dataaccess.ISkillLevelDataAccess;
 import com.example.backendApi.dataaccess.specification.SkillLevelSpecification;
-import com.example.backendApi.Enity.SkillLevel;
+import com.example.backendApi.Entity.SkillLevel;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;

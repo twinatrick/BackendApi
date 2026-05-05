@@ -1,6 +1,6 @@
 package com.example.backendApi.Repository;
 
-import com.example.backendApi.Enity.SkillLevel;
+import com.example.backendApi.Entity.SkillLevel;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 

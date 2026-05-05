@@ -1,8 +1,8 @@
 package com.example.backendApi.mapper;
 
 import com.example.backendApi.Dto.Vo.RoleOutVo;
-import com.example.backendApi.Enity.Role;
-import com.example.backendApi.Enity.RoleFunction;
+import com.example.backendApi.Entity.Role;
+import com.example.backendApi.Entity.RoleFunction;
 import org.mapstruct.AfterMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingTarget;

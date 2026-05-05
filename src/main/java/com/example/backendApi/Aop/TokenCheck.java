@@ -2,7 +2,7 @@ package com.example.backendApi.Aop;
 
 import com.example.backendApi.dataaccess.IUserDataAccess;
 import com.example.backendApi.fillter.JwtAuthenticationToken;
-import com.example.backendApi.Enity.User;
+import com.example.backendApi.Entity.User;
 import com.example.backendApi.Dto.Vo.ResponseType;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;

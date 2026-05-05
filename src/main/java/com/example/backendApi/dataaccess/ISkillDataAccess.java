@@ -1,7 +1,7 @@
 package com.example.backendApi.dataaccess;
 
 import com.example.backendApi.Dto.dto.search.SkillSearchQuery;
-import com.example.backendApi.Enity.Skill;
+import com.example.backendApi.Entity.Skill;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
 

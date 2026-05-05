@@ -2,7 +2,7 @@ package com.example.backendApi.dataaccess.impl;
 
 import com.example.backendApi.Repository.AlertCheckLimitRepository;
 import com.example.backendApi.dataaccess.IAlertCheckLimitDataAccess;
-import com.example.backendApi.Enity.AlertCheckLimit;
+import com.example.backendApi.Entity.AlertCheckLimit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

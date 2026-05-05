@@ -1,7 +1,7 @@
 package com.example.backendApi.dataaccess.specification;
 
 import com.example.backendApi.Dto.dto.search.FunctionSearchQuery;
-import com.example.backendApi.Enity.Function;
+import com.example.backendApi.Entity.Function;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 

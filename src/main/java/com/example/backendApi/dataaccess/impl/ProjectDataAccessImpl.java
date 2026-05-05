@@ -3,7 +3,7 @@ package com.example.backendApi.dataaccess.impl;
 import com.example.backendApi.Dto.dto.search.ProjectSearchQuery;
 import com.example.backendApi.Repository.ProjectRepository;
 import com.example.backendApi.dataaccess.IProjectDataAccess;
-import com.example.backendApi.Enity.Project;
+import com.example.backendApi.Entity.Project;
 import com.example.backendApi.dataaccess.specification.ProjectSpecification;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;

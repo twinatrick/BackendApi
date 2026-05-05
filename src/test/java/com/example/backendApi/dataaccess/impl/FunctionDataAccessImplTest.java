@@ -2,7 +2,7 @@ package com.example.backendApi.dataaccess.impl;
 
 import com.example.backendApi.Repository.FunctionRepository;
 import com.example.backendApi.dataaccess.IFunctionDataAccess;
-import com.example.backendApi.Enity.Function;
+import com.example.backendApi.Entity.Function;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

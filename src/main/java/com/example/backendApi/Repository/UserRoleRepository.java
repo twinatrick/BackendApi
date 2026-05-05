@@ -1,8 +1,8 @@
 package com.example.backendApi.Repository;
 
-import com.example.backendApi.Enity.Role;
-import com.example.backendApi.Enity.User;
-import com.example.backendApi.Enity.UserRole;
+import com.example.backendApi.Entity.Role;
+import com.example.backendApi.Entity.User;
+import com.example.backendApi.Entity.UserRole;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

@@ -1,7 +1,7 @@
 package com.example.backendApi.dataaccess;
 
 import com.example.backendApi.Dto.dto.search.UserSearchQuery;
-import com.example.backendApi.Enity.User;
+import com.example.backendApi.Entity.User;
 import org.springframework.data.domain.Page;
 
 import java.util.List;

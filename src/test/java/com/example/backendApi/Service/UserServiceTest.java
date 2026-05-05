@@ -12,8 +12,8 @@ import com.example.backendApi.mapper.FunctionMapper;
 import com.example.backendApi.mapper.UserMapper;
 import com.example.backendApi.Dto.Vo.FunctionVo;
 import com.example.backendApi.Dto.Vo.UserVo;
-import com.example.backendApi.Enity.Function;
-import com.example.backendApi.Enity.User;
+import com.example.backendApi.Entity.Function;
+import com.example.backendApi.Entity.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -468,17 +468,17 @@ class UserServiceTest {
         UUID userId = UUID.randomUUID();
         UUID projectId = UUID.randomUUID();
         
-        com.example.backendApi.Enity.Project project = new com.example.backendApi.Enity.Project();
+        com.example.backendApi.Entity.Project project = new com.example.backendApi.Entity.Project();
         project.setId(projectId);
         
-        com.example.backendApi.Enity.UserProject userProject = new com.example.backendApi.Enity.UserProject();
+        com.example.backendApi.Entity.UserProject userProject = new com.example.backendApi.Entity.UserProject();
         userProject.setUser(testUser);
         userProject.setProject(project);
         
         when(userDataAccess.findById(userId)).thenReturn(java.util.Optional.of(testUser));
         when(projectDataAccess.findById(projectId)).thenReturn(java.util.Optional.of(project));
         when(userProjectDataAccess.existsByUserIdAndProjectId(userId, projectId)).thenReturn(false);
-        when(userProjectDataAccess.save(any(com.example.backendApi.Enity.UserProject.class))).thenReturn(userProject);
+        when(userProjectDataAccess.save(any(com.example.backendApi.Entity.UserProject.class))).thenReturn(userProject);
 
         // Act
         userService.bindUserProject(userId.toString(), projectId.toString());
@@ -487,7 +487,7 @@ class UserServiceTest {
         verify(userDataAccess).findById(userId);
         verify(projectDataAccess).findById(projectId);
         verify(userProjectDataAccess).existsByUserIdAndProjectId(userId, projectId);
-        verify(userProjectDataAccess).save(any(com.example.backendApi.Enity.UserProject.class));
+        verify(userProjectDataAccess).save(any(com.example.backendApi.Entity.UserProject.class));
     }
 
     @Test
@@ -544,7 +544,7 @@ class UserServiceTest {
         UUID userId = UUID.randomUUID();
         UUID projectId = UUID.randomUUID();
         
-        com.example.backendApi.Enity.Project project = new com.example.backendApi.Enity.Project();
+        com.example.backendApi.Entity.Project project = new com.example.backendApi.Entity.Project();
         project.setId(projectId);
         
         when(userDataAccess.findById(userId)).thenReturn(java.util.Optional.of(testUser));

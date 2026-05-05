@@ -1,7 +1,7 @@
 package com.example.backendApi.dataaccess;
 
 import com.example.backendApi.Dto.dto.search.SkillLevelSearchQuery;
-import com.example.backendApi.Enity.SkillLevel;
+import com.example.backendApi.Entity.SkillLevel;
 import org.springframework.data.domain.Page;
 
 import java.util.List;

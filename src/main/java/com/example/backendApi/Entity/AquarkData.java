@@ -1,4 +1,4 @@
-package com.example.backendApi.Enity;
+package com.example.backendApi.Entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

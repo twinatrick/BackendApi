@@ -7,7 +7,7 @@ import com.example.backendApi.dataaccess.IAlertCheckLimitDataAccess;
 import com.example.backendApi.exception.AppException;
 import com.example.backendApi.mapper.AlertCheckLimitMapper;
 import com.example.backendApi.Dto.Vo.AlertCheckLimitVo;
-import com.example.backendApi.Enity.AlertCheckLimit;
+import com.example.backendApi.Entity.AlertCheckLimit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

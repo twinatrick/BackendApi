@@ -3,7 +3,7 @@ package com.example.backendApi.dataaccess.impl;
 import com.example.backendApi.Dto.dto.search.ProjectSearchQuery;
 import com.example.backendApi.Repository.ProjectRepository;
 import com.example.backendApi.dataaccess.IProjectDataAccess;
-import com.example.backendApi.Enity.Project;
+import com.example.backendApi.Entity.Project;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

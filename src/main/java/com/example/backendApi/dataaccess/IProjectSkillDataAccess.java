@@ -1,6 +1,6 @@
 package com.example.backendApi.dataaccess;
 
-import com.example.backendApi.Enity.ProjectSkill;
+import com.example.backendApi.Entity.ProjectSkill;
 
 import java.util.UUID;
 

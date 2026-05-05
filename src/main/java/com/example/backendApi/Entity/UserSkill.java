@@ -1,4 +1,4 @@
-package com.example.backendApi.Enity;
+package com.example.backendApi.Entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Entity;
@@ -16,14 +16,14 @@ import lombok.Setter;
 @Entity
 @NoArgsConstructor
 @Table(
-        name = "project_skill",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"project_id", "skill_id"})
+        name = "user_skill",
+        uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "skill_id"})
 )
-public class ProjectSkill extends BaseEntity {
+public class UserSkill extends BaseEntity {
     @JsonIgnore
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "project_id", nullable = false)
-    private Project project;
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "skill_id", nullable = false)

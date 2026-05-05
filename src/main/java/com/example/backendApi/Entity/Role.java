@@ -1,4 +1,4 @@
-package com.example.backendApi.Enity;
+package com.example.backendApi.Entity;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -10,29 +10,28 @@ import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;
+
 @Getter
 @Setter
-@NoArgsConstructor
+@Table(name = "role")
 @Entity
-@Table(name = "project")
+@NoArgsConstructor
 @JsonIdentityInfo(
         generator = ObjectIdGenerators.PropertyGenerator.class,
         property = "id")
 
-public class Project extends BaseEntity {
-    //skill Name
+public class Role extends BaseEntity {
     @Column(name = "name")
     private String name;
-    //專案描述
     @Column(name = "description")
     private String description;
-
+    @Column(name = "permissions")
+    private String permissions;
     @JsonIgnore
-    @OneToMany(mappedBy = "project",fetch = FetchType.EAGER,cascade = CascadeType.ALL)
-    private List<ProjectSkill> projectSkills =new ArrayList<>();
-
+    @OneToMany(mappedBy = "role", fetch = FetchType.EAGER,cascade = CascadeType.ALL)
+    private List<UserRole> userRoles =new ArrayList<>();
     @JsonIgnore
-    @OneToMany(mappedBy = "project",fetch = FetchType.EAGER,cascade = CascadeType.ALL)
-    private List<UserProject> userProjects =new ArrayList<>();
+    @OneToMany(mappedBy = "role", fetch = FetchType.EAGER,cascade = CascadeType.ALL)
+    private List<RoleFunction> roleFunctions =new ArrayList<>();
 
 }

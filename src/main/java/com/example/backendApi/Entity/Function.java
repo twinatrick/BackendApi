@@ -1,4 +1,4 @@
-package com.example.backendApi.Enity;
+package com.example.backendApi.Entity;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;

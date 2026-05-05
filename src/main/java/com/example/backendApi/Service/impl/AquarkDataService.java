@@ -6,7 +6,7 @@ import com.example.backendApi.mapper.AquarkDataMapper;
 import com.example.backendApi.Dto.Vo.aquarkUse.AquarkDataRaw;
 import com.example.backendApi.Dto.Vo.aquarkUse.CriteriaAPIFilter;
 import com.example.backendApi.Dto.Vo.aquarkUse.AverageAquark;
-import com.example.backendApi.Enity.AquarkData;
+import com.example.backendApi.Entity.AquarkData;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;

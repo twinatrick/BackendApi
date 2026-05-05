@@ -1,6 +1,6 @@
 package com.example.backendApi.config;
 
-import com.example.backendApi.Enity.User;
+import com.example.backendApi.Entity.User;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.support.ScopeNotActiveException;
 import org.springframework.data.domain.AuditorAware;

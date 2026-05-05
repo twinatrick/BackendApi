@@ -2,9 +2,9 @@ package com.example.backendApi.mapper;
 
 import com.example.backendApi.Dto.Vo.FunctionVo;
 import com.example.backendApi.Dto.Vo.UserVo;
-import com.example.backendApi.Enity.Function;
-import com.example.backendApi.Enity.User;
-import com.example.backendApi.Enity.UserRole;
+import com.example.backendApi.Entity.Function;
+import com.example.backendApi.Entity.User;
+import com.example.backendApi.Entity.UserRole;
 import org.mapstruct.AfterMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

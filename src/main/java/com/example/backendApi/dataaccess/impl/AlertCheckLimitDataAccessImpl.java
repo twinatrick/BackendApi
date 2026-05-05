@@ -4,7 +4,7 @@ import com.example.backendApi.Dto.dto.search.AlertCheckLimitSearchQuery;
 import com.example.backendApi.Repository.AlertCheckLimitRepository;
 import com.example.backendApi.dataaccess.IAlertCheckLimitDataAccess;
 import com.example.backendApi.dataaccess.specification.AlertCheckLimitSpecification;
-import com.example.backendApi.Enity.AlertCheckLimit;
+import com.example.backendApi.Entity.AlertCheckLimit;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;

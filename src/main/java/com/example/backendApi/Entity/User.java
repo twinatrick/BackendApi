@@ -1,4 +1,4 @@
-package com.example.backendApi.Enity;
+package com.example.backendApi.Entity;
 
 import com.example.backendApi.Dto.Vo.FunctionVo;
 import com.fasterxml.jackson.annotation.JsonIgnore;

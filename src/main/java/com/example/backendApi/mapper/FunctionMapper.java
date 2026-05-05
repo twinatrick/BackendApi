@@ -1,7 +1,7 @@
 package com.example.backendApi.mapper;
 
 import com.example.backendApi.Dto.Vo.FunctionVo;
-import com.example.backendApi.Enity.Function;
+import com.example.backendApi.Entity.Function;
 import org.mapstruct.AfterMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

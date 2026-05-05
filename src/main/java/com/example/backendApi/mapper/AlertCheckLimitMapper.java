@@ -1,7 +1,7 @@
 package com.example.backendApi.mapper;
 
 import com.example.backendApi.Dto.Vo.AlertCheckLimitVo;
-import com.example.backendApi.Enity.AlertCheckLimit;
+import com.example.backendApi.Entity.AlertCheckLimit;
 import org.mapstruct.Mapper;
 
 @Mapper(componentModel = "spring")

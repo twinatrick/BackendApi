@@ -1,6 +1,6 @@
 package com.example.backendApi.config;
 
-import com.example.backendApi.Enity.User;
+import com.example.backendApi.Entity.User;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

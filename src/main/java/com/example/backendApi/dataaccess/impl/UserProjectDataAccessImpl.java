@@ -2,7 +2,7 @@ package com.example.backendApi.dataaccess.impl;
 
 import com.example.backendApi.Repository.UserProjectRepository;
 import com.example.backendApi.dataaccess.IUserProjectDataAccess;
-import com.example.backendApi.Enity.UserProject;
+import com.example.backendApi.Entity.UserProject;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

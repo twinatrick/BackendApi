@@ -3,7 +3,7 @@ package com.example.backendApi.dataaccess.impl;
 import com.example.backendApi.Dto.dto.search.UserSearchQuery;
 import com.example.backendApi.Repository.UserRepository;
 import com.example.backendApi.dataaccess.IUserDataAccess;
-import com.example.backendApi.Enity.User;
+import com.example.backendApi.Entity.User;
 import com.example.backendApi.dataaccess.specification.UserSpecification;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;

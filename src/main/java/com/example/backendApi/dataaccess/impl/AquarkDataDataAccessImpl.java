@@ -3,7 +3,7 @@ package com.example.backendApi.dataaccess.impl;
 import com.example.backendApi.Repository.AquarkDataRepository;
 import com.example.backendApi.dataaccess.IAquarkDataDataAccess;
 import com.example.backendApi.Dto.Vo.aquarkUse.CriteriaAPIFilter;
-import com.example.backendApi.Enity.AquarkData;
+import com.example.backendApi.Entity.AquarkData;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;

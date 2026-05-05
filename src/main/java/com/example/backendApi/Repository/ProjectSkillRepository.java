@@ -1,6 +1,6 @@
 package com.example.backendApi.Repository;
 
-import com.example.backendApi.Enity.ProjectSkill;
+import com.example.backendApi.Entity.ProjectSkill;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.UUID;

@@ -8,7 +8,7 @@ import com.example.backendApi.dataaccess.IFunctionDataAccess;
 import com.example.backendApi.dataaccess.IRoleFunctionDataAccess;
 import com.example.backendApi.mapper.FunctionMapper;
 import com.example.backendApi.Dto.Vo.FunctionVo;
-import com.example.backendApi.Enity.Function;
+import com.example.backendApi.Entity.Function;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;

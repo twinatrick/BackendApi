@@ -2,7 +2,7 @@ package com.example.backendApi.Service;
 
 import com.example.backendApi.Dto.dto.common.PageResult;
 import com.example.backendApi.Dto.dto.search.RoleSearchQuery;
-import com.example.backendApi.Enity.*;
+import com.example.backendApi.Entity.*;
 import com.example.backendApi.Service.impl.RoleService;
 import com.example.backendApi.dataaccess.*;
 import com.example.backendApi.exception.AppException;
