@@ -9,6 +9,10 @@ app:
   in-docker: ${APP_IN_DOCKER:false}
 
 spring:
+  data:
+    redis:
+      host: ${REDIS_HOST:}
+      port: ${REDIS_PORT:6379}
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/postgres}
     username: ${SPRING_DATASOURCE_USERNAME:postgres}
@@ -30,5 +34,9 @@ kafka:
   consumer:
     group-id: ${KAFKA_CONSUMER_GROUP_ID:myGroup}
 
+redis:
+  cache:
+    ttl-hours: ${REDIS_CACHE_TTL_HOURS:1}
+
 superuser:
-  key: ${SUPERUSER_KEY:change-me}
+  key: ${SUPERUSER_KEY:genAdminKey}

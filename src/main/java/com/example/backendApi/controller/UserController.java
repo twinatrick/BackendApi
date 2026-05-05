@@ -20,7 +20,7 @@ import java.util.List;
 
 
 @RestController
-@RequestMapping("/backend/users")
+@RequestMapping("/users")
 @ApiControllerTag(name = "Users", description = "Backend API endpoints - User management")
 public class UserController {
 

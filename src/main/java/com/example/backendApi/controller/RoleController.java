@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/backend/role")
+@RequestMapping("/role")
 @ApiControllerTag(name = "Roles", description = "Backend API endpoints - Role and permission management")
 public class RoleController {
     @Autowired

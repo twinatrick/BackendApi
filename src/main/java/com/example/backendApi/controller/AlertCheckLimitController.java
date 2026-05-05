@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/backend/alertCheckLimit")
+@RequestMapping("/alertCheckLimit")
 @ApiControllerTag(name = "Alert Limits", description = "Backend API endpoints - Alert threshold management")
 public class AlertCheckLimitController {
     private final IAlertCheckLimitService alertCheckLimitService;

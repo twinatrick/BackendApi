@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.*;
 
 @RestController
-@RequestMapping("/backend/auth")
+@RequestMapping("/auth")
 @ApiControllerTag(name = "Auth", description = "Backend API endpoints - Authentication and registration")
 public class AuthController {
 //    @Autowired

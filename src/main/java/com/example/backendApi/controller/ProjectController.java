@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/backend/project")
+@RequestMapping("/project")
 @ApiControllerTag(name = "Projects", description = "Backend API endpoints - Project management")
 public class ProjectController {
     private final IProjectService projectService;

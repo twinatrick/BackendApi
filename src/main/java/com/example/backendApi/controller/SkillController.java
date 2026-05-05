@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/backend/skill")
+@RequestMapping("/skill")
 @ApiControllerTag(name = "Skills", description = "Backend API endpoints - Skill management")
 public class SkillController {
     private final ISkillService skillService;

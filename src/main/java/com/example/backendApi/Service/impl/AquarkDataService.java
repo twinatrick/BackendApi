@@ -141,7 +141,7 @@ public class AquarkDataService implements IAquarkDataService {
 
     }
 
-    @Cacheable(value = "aquarkData", key = "#aquarkData.station_id + '_' + #aquarkData.trans_time.toString()")
+    @Cacheable(value = "aquarkData", key = "#result.station_id + '_' + #result.trans_time.toString()", unless = "#result == null")
     @Override
     public AquarkDataRaw getAquarkData(AquarkDataRaw aquarkDataRaw) {
         AquarkData aquarkData = aquarkDataMapper.toEntity(aquarkDataRaw);
@@ -150,7 +150,7 @@ public class AquarkDataService implements IAquarkDataService {
     }
 
     // 更新數據庫
-    @CachePut(value = "aquarkData", key = "#aquarkData.station_id + '_' + #aquarkData.trans_time.toString()")
+    @CachePut(value = "aquarkData", key = "#result.station_id + '_' + #result.trans_time.toString()", unless = "#result == null")
     @Override
     public AquarkDataRaw updateAquarkData(AquarkDataRaw aquarkDataRaw) {
         AquarkData aquarkData = aquarkDataMapper.toEntity(aquarkDataRaw);

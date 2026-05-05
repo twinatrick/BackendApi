@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/backend/function")
+@RequestMapping("/function")
 @ApiControllerTag(name = "Functions", description = "Backend API endpoints - Function management")
 public class FunctionController {
     private final IFunctionService functionService;

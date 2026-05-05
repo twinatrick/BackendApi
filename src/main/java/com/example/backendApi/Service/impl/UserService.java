@@ -18,7 +18,9 @@ import com.example.backendApi.Entity.UserProject;
 import com.example.backendApi.Dto.Vo.FunctionVo;
 import com.example.backendApi.Dto.Vo.UserVo;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
@@ -40,7 +42,10 @@ public class UserService implements IUserService {
     private final UserMapper userMapper;
     private final FunctionMapper functionMapper;
     private final User currentUser;
-    @CachePut(value = "users", key = "#user.email")
+    @Caching(put = {
+        @CachePut(value = "users", key = "#result.id", unless = "#result == null"),
+        @CachePut(value = "users", key = "#result.email", unless = "#result == null")
+    })
     @Override
     public UserVo createUser(UserVo userVo) {
         User user = userMapper.toEntity(userVo);
@@ -59,13 +64,13 @@ public class UserService implements IUserService {
     public List<UserVo> getUserByEmail(String email) {
         return userDataAccess.findByEmail(email).stream().map(userMapper::toVo).toList();
     }
-//    @Cacheable(value = "users", key = "#email")
+    @Cacheable(value = "users", key = "#email", unless = "#result == null")
     @Override
     public UserVo getOnlyUserByEmail(String email) {
         List<User> users = userDataAccess.findByEmail(email);
         return userMapper.toVo(users.getFirst());
     }
-//    @CachePut(value = "users", key = "#user.email")
+    @Cacheable(value = "users", key = "#result.id", unless = "#result == null")
     @Override
     public UserVo getUserById(String id) {
         UUID userId = mapUuid(id);
@@ -78,7 +83,10 @@ public class UserService implements IUserService {
         return userMapper.toVo(user);
     }
 
-    //    @CachePut(value = "users", key = "#user.email")
+    @Caching(put = {
+        @CachePut(value = "users", key = "#result.id", unless = "#result == null"),
+        @CachePut(value = "users", key = "#result.email", unless = "#result == null")
+    })
     @Override
     public UserVo saveUser(UserVo userVo) {
         User user = userMapper.toEntity(userVo);

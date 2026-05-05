@@ -17,7 +17,7 @@ import java.util.List;
 
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/backend/aquarkData")
+@RequestMapping("/aquarkData")
 @ApiControllerTag(name = "AquarkData", description = "Backend API endpoints - Aquark data queries")
 public class AquarkDataController {
     private final IAquarkDataService aquarkDataService;
