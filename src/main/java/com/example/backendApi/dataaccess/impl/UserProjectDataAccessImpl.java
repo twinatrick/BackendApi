@@ -19,6 +19,11 @@ public class UserProjectDataAccessImpl implements IUserProjectDataAccess {
     public boolean existsByUserIdAndProjectId(UUID userId, UUID projectId) {
         return userProjectRepository.existsByUserIdAndProjectId(userId, projectId);
     }
+    
+    @Override
+    public boolean existsByProjectId(UUID projectId) {
+        return userProjectRepository.existsByProjectId(projectId);
+    }
 
     @Override
     public UserProject save(UserProject userProject) {
@@ -28,6 +33,11 @@ public class UserProjectDataAccessImpl implements IUserProjectDataAccess {
     @Override
     public void deleteByProjectId(UUID projectId) {
         userProjectRepository.deleteByProjectId(projectId);
+    }
+    
+    @Override
+    public void deleteByUserIdAndProjectId(UUID userId, UUID projectId) {
+        userProjectRepository.deleteByUserIdAndProjectId(userId, projectId);
     }
     
     @Override

@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 @Getter
 @Setter
@@ -20,4 +21,14 @@ public class SkillVo {
     private String updatedBy;
     private Date createdTime;
     private Date updatedTime;
+    
+    /**
+     * 管理者模式使用：要綁定的使用者 ID 陣列
+     */
+    private List<String> userIds;
+    
+    /**
+     * 管理者模式使用：預設技能等級 ID
+     */
+    private String skillLevelId;
 }

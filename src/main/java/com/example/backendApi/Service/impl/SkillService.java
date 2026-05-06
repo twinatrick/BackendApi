@@ -4,6 +4,7 @@ import com.example.backendApi.Dto.Vo.dto.common.PageResult;
 import com.example.backendApi.Dto.Vo.dto.search.SkillLevelSearchQuery;
 import com.example.backendApi.Dto.Vo.dto.search.SkillSearchQuery;
 import com.example.backendApi.Dto.Vo.CurrentUserSkillVo;
+import com.example.backendApi.Dto.Vo.PersonalSkillRequest;
 import com.example.backendApi.Dto.Vo.SkillLevelVo;
 import com.example.backendApi.Dto.Vo.SkillVo;
 import com.example.backendApi.Entity.Project;
@@ -49,6 +50,7 @@ public class SkillService implements ISkillService {
     private final SkillMapper skillMapper;
     private final User currentUser;
 
+    @Transactional
     @Override
     public SkillVo addSkill(SkillVo skillVo) {
         Skill skill = skillMapper.toEntity(skillVo);
@@ -62,9 +64,17 @@ public class SkillService implements ISkillService {
             throw new IllegalArgumentException("Name already exists");
         }
 
-        return skillMapper.toVo(skillDataAccess.save(skill));
+        Skill savedSkill = skillDataAccess.save(skill);
+        
+        // 處理使用者綁定（如果提供了 userIds）
+        if (skillVo.getUserIds() != null && !skillVo.getUserIds().isEmpty()) {
+            bindUsersToSkill(savedSkill.getId(), skillVo.getUserIds(), skillVo.getSkillLevelId());
+        }
+        
+        return skillMapper.toVo(savedSkill);
     }
 
+    @Transactional
     @Override
     public void updateSkill(SkillVo skillVo) {
         Skill skill = skillMapper.toEntity(skillVo);
@@ -74,6 +84,67 @@ public class SkillService implements ISkillService {
             throw new IllegalArgumentException("Name must not be null");
         }
         skillDataAccess.save(skill);
+        
+        // 處理使用者重新綁定（如果提供了 userIds）
+        if (skillVo.getUserIds() != null) {
+            // 先刪除現有綁定
+            List<UserSkill> existingBindings = userSkillDataAccess.findBySkillId(skill.getId());
+            existingBindings.forEach(userSkill -> 
+                userSkillDataAccess.deleteByUserIdAndSkillId(userSkill.getUser().getId(), skill.getId())
+            );
+            
+            // 重新綁定（如果 userIds 不為空）
+            if (!skillVo.getUserIds().isEmpty()) {
+                bindUsersToSkill(skill.getId(), skillVo.getUserIds(), skillVo.getSkillLevelId());
+            }
+        }
+    }
+    
+    /**
+     * 綁定多個使用者到技能
+     * 
+     * @param skillId 技能 ID
+     * @param userIds 使用者 ID 列表
+     * @param skillLevelId 技能等級 ID（可選）
+     */
+    private void bindUsersToSkill(UUID skillId, List<String> userIds, String skillLevelId) {
+        Skill skill = skillDataAccess.findById(skillId)
+                .orElseThrow(() -> new IllegalArgumentException("Skill not found"));
+        
+        // 取得技能等級（如果提供）
+        SkillLevel skillLevel = null;
+        if (skillLevelId != null && !skillLevelId.isBlank()) {
+            UUID levelId = UUID.fromString(skillLevelId);
+            skillLevel = skillLevelDataAccess.findById(levelId)
+                    .orElseThrow(() -> new IllegalArgumentException("Skill level not found"));
+            
+            // 驗證技能等級是否屬於該技能
+            if (!skillLevel.getSkill().getId().equals(skillId)) {
+                throw new IllegalArgumentException("Skill level does not belong to this skill");
+            }
+        } else {
+            // 如果沒有提供技能等級，使用該技能的第一個等級
+            List<SkillLevel> levels = skillLevelDataAccess.findBySkillIdOrderByLevelValueAsc(skillId);
+            if (!levels.isEmpty()) {
+                skillLevel = levels.get(0);
+            }
+        }
+        
+        // 綁定每個使用者
+        for (String userIdStr : userIds) {
+            UUID userId = UUID.fromString(userIdStr);
+            User user = userDataAccess.findById(userId)
+                    .orElseThrow(() -> new IllegalArgumentException("User not found: " + userIdStr));
+            
+            // 檢查是否已存在綁定
+            if (!userSkillDataAccess.existsByUserIdAndSkillId(userId, skillId)) {
+                UserSkill userSkill = new UserSkill();
+                userSkill.setUser(user);
+                userSkill.setSkill(skill);
+                userSkill.setSkillLevel(skillLevel);
+                userSkillDataAccess.save(userSkill);
+            }
+        }
     }
 
     @Override
@@ -98,11 +169,13 @@ public class SkillService implements ISkillService {
             throw new IllegalArgumentException("Skill level value already exists");
         }
 
+
         SkillLevel skillLevel = new SkillLevel();
         skillLevel.setSkill(skill);
         skillLevel.setLevelValue(skillLevelVo.getLevelValue());
         skillLevel.setTitle(skillLevelVo.getTitle());
         skillLevel.setDescription(skillLevelVo.getDescription());
+        skillLevel.setUserSkills(new ArrayList<>());
         return mapSkillLevelVo(skillLevelDataAccess.save(skillLevel));
     }
 
@@ -430,5 +503,136 @@ public class SkillService implements ISkillService {
 
     private UUID mapUuid(String id) {
         return id == null || id.isBlank() ? null : UUID.fromString(id);
+    }
+    
+    @Transactional
+    @Override
+    public SkillVo addPersonalSkill(PersonalSkillRequest request) {
+        // 驗證輸入
+        if (request.getName() == null || request.getName().trim().isEmpty()) {
+            throw new IllegalArgumentException("Name must not be null");
+        }
+        
+        // 檢查名稱是否已存在
+        Skill existingSkill = new Skill();
+        existingSkill.setName(request.getName());
+        Example<Skill> example = Example.of(existingSkill);
+        if (skillDataAccess.exists(example)) {
+            throw new IllegalArgumentException("Name already exists");
+        }
+        
+        // 建立技能
+        Skill skill = new Skill();
+        skill.setName(request.getName());
+        skill.setDescription(request.getDescription());
+        Skill savedSkill = skillDataAccess.save(skill);
+        
+        // 自動綁定當前使用者
+        UserSkill userSkill = new UserSkill();
+        userSkill.setUser(currentUser);
+        userSkill.setSkill(savedSkill);
+        
+        // 如果提供了技能等級，綁定該等級
+        if (request.getSkillLevelId() != null && !request.getSkillLevelId().trim().isEmpty()) {
+            UUID skillLevelId = UUID.fromString(request.getSkillLevelId());
+            SkillLevel skillLevel = skillLevelDataAccess.findById(skillLevelId)
+                    .orElseThrow(() -> new IllegalArgumentException("Skill level not found"));
+            
+            // 驗證技能等級屬於該技能
+            if (!skillLevel.getSkill().getId().equals(savedSkill.getId())) {
+                throw new IllegalArgumentException("Skill level does not belong to skill");
+            }
+            
+            userSkill.setSkillLevel(skillLevel);
+        } else {
+            // 如果沒提供等級，使用該技能的第一個等級（如果有的話）
+            List<SkillLevel> levels = skillLevelDataAccess.findBySkillIdOrderByLevelValueAsc(savedSkill.getId());
+            if (!levels.isEmpty()) {
+                userSkill.setSkillLevel(levels.get(0));
+            } else {
+                throw new IllegalArgumentException("Skill must have at least one level");
+            }
+        }
+        
+        userSkillDataAccess.save(userSkill);
+        
+        return skillMapper.toVo(savedSkill);
+    }
+    
+    @Transactional
+    @Override
+    public void updatePersonalSkill(UUID skillId, PersonalSkillRequest request) {
+        // 驗證輸入
+        if (skillId == null) {
+            throw new IllegalArgumentException("Skill ID must not be null");
+        }
+        if (request.getName() == null || request.getName().trim().isEmpty()) {
+            throw new IllegalArgumentException("Name must not be null");
+        }
+        
+        // 查找技能
+        Skill skill = skillDataAccess.findById(skillId)
+                .orElseThrow(() -> new IllegalArgumentException("Skill not found"));
+        
+        // 驗證是否為擁有者（檢查是否有綁定關係）
+        if (!userSkillDataAccess.existsByUserIdAndSkillId(currentUser.getId(), skillId)) {
+            throw new IllegalArgumentException("You are not the owner of this skill");
+        }
+        
+        // 更新技能資訊
+        skill.setName(request.getName());
+        skill.setDescription(request.getDescription());
+        skillDataAccess.save(skill);
+        
+        // 如果提供了新的技能等級，更新綁定的等級
+        if (request.getSkillLevelId() != null && !request.getSkillLevelId().trim().isEmpty()) {
+            UUID skillLevelId = UUID.fromString(request.getSkillLevelId());
+            SkillLevel skillLevel = skillLevelDataAccess.findById(skillLevelId)
+                    .orElseThrow(() -> new IllegalArgumentException("Skill level not found"));
+            
+            // 驗證技能等級屬於該技能
+            if (!skillLevel.getSkill().getId().equals(skillId)) {
+                throw new IllegalArgumentException("Skill level does not belong to skill");
+            }
+            
+            // 更新 UserSkill 的等級
+            List<UserSkill> userSkills = userSkillDataAccess.findByUserIdAndSkillId(currentUser.getId(), skillId);
+            if (!userSkills.isEmpty()) {
+                UserSkill userSkill = userSkills.get(0);
+                userSkill.setSkillLevel(skillLevel);
+                userSkillDataAccess.save(userSkill);
+            }
+        }
+    }
+    
+    @Transactional
+    @Override
+    public void deletePersonalSkill(UUID skillId) {
+        // 驗證輸入
+        if (skillId == null) {
+            throw new IllegalArgumentException("Skill ID must not be null");
+        }
+        
+        // 查找技能
+        Skill skill = skillDataAccess.findById(skillId)
+                .orElseThrow(() -> new IllegalArgumentException("Skill not found"));
+        
+        // 驗證是否為擁有者
+        if (!userSkillDataAccess.existsByUserIdAndSkillId(currentUser.getId(), skillId)) {
+            throw new IllegalArgumentException("You are not the owner of this skill");
+        }
+        
+        // 刪除當前使用者與技能的綁定
+        userSkillDataAccess.deleteByUserIdAndSkillId(currentUser.getId(), skillId);
+        
+        // 檢查是否還有其他使用者綁定此技能或專案綁定此技能
+        boolean hasOtherBindings = userSkillDataAccess.existsBySkillId(skillId) || 
+                                    projectSkillDataAccess.existsBySkillId(skillId);
+        
+        // 如果沒有其他綁定，刪除技能本身及其等級
+        if (!hasOtherBindings) {
+            skillLevelDataAccess.deleteBySkillId(skillId);
+            skillDataAccess.delete(skill);
+        }
     }
 }

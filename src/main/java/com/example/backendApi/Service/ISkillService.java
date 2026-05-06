@@ -4,10 +4,12 @@ import com.example.backendApi.Dto.Vo.dto.common.PageResult;
 import com.example.backendApi.Dto.Vo.dto.search.SkillLevelSearchQuery;
 import com.example.backendApi.Dto.Vo.dto.search.SkillSearchQuery;
 import com.example.backendApi.Dto.Vo.CurrentUserSkillVo;
+import com.example.backendApi.Dto.Vo.PersonalSkillRequest;
 import com.example.backendApi.Dto.Vo.SkillVo;
 import com.example.backendApi.Dto.Vo.SkillLevelVo;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface ISkillService {
     SkillVo addSkill(SkillVo skillVo);
@@ -60,4 +62,27 @@ public interface ISkillService {
      * @return 分頁結果
      */
     PageResult<SkillLevelVo> searchSkillLevels(SkillLevelSearchQuery query);
+    
+    /**
+     * 新增個人技能（自動綁定當前使用者）
+     *
+     * @param request 個人技能請求
+     * @return 新增的技能 VO
+     */
+    SkillVo addPersonalSkill(PersonalSkillRequest request);
+    
+    /**
+     * 修改個人技能（僅限擁有者）
+     *
+     * @param skillId 技能 ID
+     * @param request 個人技能請求
+     */
+    void updatePersonalSkill(UUID skillId, PersonalSkillRequest request);
+    
+    /**
+     * 刪除個人技能（僅限擁有者）
+     *
+     * @param skillId 技能 ID
+     */
+    void deletePersonalSkill(UUID skillId);
 }

@@ -9,6 +9,8 @@ public interface ProjectSkillRepository extends JpaRepository<ProjectSkill, UUID
     boolean existsByProjectIdAndSkillId(UUID projectId, UUID skillId);
 
     boolean existsBySkillLevelId(UUID skillLevelId);
+    
+    boolean existsBySkillId(UUID skillId);
 
     void deleteByProjectId(UUID projectId);
 

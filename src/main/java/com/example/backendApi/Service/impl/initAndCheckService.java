@@ -1,12 +1,10 @@
 package com.example.backendApi.Service.impl;
 
-import com.example.backendApi.Service.IAlertCheckLimitService;
-import com.example.backendApi.Service.IFunctionService;
-import com.example.backendApi.Service.IInitAndCheckService;
-import com.example.backendApi.Service.IRoleService;
-import com.example.backendApi.Dto.Vo.FunctionVo;
 import com.example.backendApi.Dto.Vo.AlertCheckLimitVo;
+import com.example.backendApi.Dto.Vo.FunctionVo;
 import com.example.backendApi.Dto.Vo.RoleOutVo;
+import com.example.backendApi.Dto.Vo.UserVo;
+import com.example.backendApi.Service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +16,9 @@ import java.util.List;
 public class initAndCheckService implements IInitAndCheckService {
     @Autowired
     private IRoleService roleService;
+
+    @Autowired
+    private IUserService userService;
 
     @Autowired
     private IAlertCheckLimitService alertCheckLimitService;
@@ -40,15 +41,38 @@ public class initAndCheckService implements IInitAndCheckService {
     @Override
     public void checkRole() {
         List<RoleOutVo> roleList = roleService.getRole();
-        if (roleList.isEmpty()) {
+        RoleOutVo role = new RoleOutVo();
+        if (!roleList.isEmpty()) {
             // 初始化角色
-            RoleOutVo role = new RoleOutVo();
+            if (roleService.getRoleByName("admin") == null) {
+                role.setName("admin");
+                roleService.addRole(role);
+            }
+            if (roleService.getRoleByName("user") == null) {
+                role = new RoleOutVo();
+                role.setName("user");
+                roleService.addRole(role);
+            }
+        }else {
             role.setName("admin");
             roleService.addRole(role);
             role = new RoleOutVo();
             role.setName("user");
             roleService.addRole(role);
         }
+        var user = userService.getUserByEmail("admin").stream().findFirst().orElseGet(() -> {
+            userService.createUser(new UserVo() {{
+                setEmail("admin");
+                setPassword("admin");
+            }});
+            return userService.getUserByEmail("admin").getFirst();
+        });
+        role = roleService.getRoleByName("admin");
+        if (role != null) {
+            roleService.roleBindUser(role.getId().toString(), List.of(user.getId()));
+        }
+
+
     }
 
     @Override
@@ -104,6 +128,8 @@ public class initAndCheckService implements IInitAndCheckService {
         allFunctionList.add(new ArrayList<>( List.of("DataView", "AquarkData", "View")));
         allFunctionList.add(new ArrayList<>( List.of("DataView", "AquarkDataAvg", "View")));
         allFunctionList.add(new ArrayList<>( List.of("System", "LimitSetting", "View")));
+        allFunctionList.add(new ArrayList<>( List.of("System", "SkillManagement", "View")));
+        allFunctionList.add(new ArrayList<>( List.of("System", "ProjectManagement", "View")));
 
 
         for (List<String> functionListStr : allFunctionList) {

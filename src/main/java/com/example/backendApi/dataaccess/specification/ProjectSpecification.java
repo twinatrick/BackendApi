@@ -7,6 +7,7 @@ import org.springframework.data.jpa.domain.Specification;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Project 查詢規格建構器
@@ -48,14 +49,14 @@ public class ProjectSpecification {
     /**
      * 建立當前使用者專案查詢規格（需要透過 UserProject 關聯查詢）
      */
-    public static Specification<Project> buildCurrentUserSpecification(String currentUserId, ProjectSearchQuery query) {
+    public static Specification<Project> buildCurrentUserSpecification(UUID currentUserId, ProjectSearchQuery query) {
         return (root, criteriaQuery, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
             
             // 加入使用者專案關聯條件
-            if (currentUserId != null && !currentUserId.trim().isEmpty()) {
+            if (currentUserId != null) {
                 predicates.add(criteriaBuilder.equal(
-                    root.join("userProjects").get("user").get("id").as(String.class), 
+                    root.join("userProjects").get("user").get("id"), 
                     currentUserId
                 ));
             }

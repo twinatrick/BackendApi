@@ -3,8 +3,10 @@ package com.example.backendApi.Service;
 import com.example.backendApi.Dto.Vo.AlertCheckLimitVo;
 import com.example.backendApi.Dto.Vo.FunctionVo;
 import com.example.backendApi.Dto.Vo.RoleOutVo;
+import com.example.backendApi.Dto.Vo.UserVo;
 import com.example.backendApi.Service.impl.initAndCheckService;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -37,6 +39,9 @@ class initAndCheckServiceTest {
     @Mock
     private IFunctionService functionService;
 
+    @Mock
+    private IUserService userService;
+
     @InjectMocks
     private initAndCheckService initAndCheckService;
 
@@ -44,6 +49,7 @@ class initAndCheckServiceTest {
     private RoleOutVo userRole;
     private FunctionVo testFunction;
     private AlertCheckLimitVo testLimit;
+    private UserVo testUser;
 
     @BeforeEach
     void setUp() {
@@ -56,6 +62,12 @@ class initAndCheckServiceTest {
         userRole.setId(UUID.randomUUID());
         userRole.setName("user");
 
+        // 設置測試用使用者
+        testUser = new UserVo();
+        testUser.setId(UUID.randomUUID().toString());
+        testUser.setEmail("admin");
+        testUser.setPassword("admin");
+
         // 設置測試用功能
         testFunction = new FunctionVo();
         testFunction.setId(UUID.randomUUID().toString());
@@ -67,10 +79,14 @@ class initAndCheckServiceTest {
     }
 
     @Test
-    void testInitAndCheck_應該調用所有初始化方法() {
+    @DisplayName("應該調用所有初始化方法")
+    void testInitAndCheck_shouldCallAllInitializationMethods() {
         // Arrange
         when(roleService.getRole()).thenReturn(Collections.emptyList());
         when(roleService.addRole(any(RoleOutVo.class))).thenReturn(adminRole, userRole);
+        when(userService.getUserByEmail("admin")).thenReturn(List.of(testUser));
+        when(roleService.getRoleByName("admin")).thenReturn(adminRole);
+        doNothing().when(roleService).roleBindUser(anyString(), anyList());
         when(alertCheckLimitService.getLimit()).thenReturn(Collections.emptyList());
         when(alertCheckLimitService.insertLimit(anyString(), anyString(), anyDouble())).thenReturn(testLimit);
         when(functionService.getFunction()).thenReturn(Collections.emptyList());
@@ -81,7 +97,6 @@ class initAndCheckServiceTest {
         FunctionVo createdFunction = new FunctionVo();
         createdFunction.setId(UUID.randomUUID().toString());
         when(functionService.addFunction(any(FunctionVo.class))).thenReturn(createdFunction);
-        when(roleService.getRoleByName("admin")).thenReturn(adminRole);
         doNothing().when(roleService).roleBindFunction(anyString(), anyList());
 
         // Act
@@ -94,10 +109,14 @@ class initAndCheckServiceTest {
     }
 
     @Test
-    void testCheckRole_當角色列表為空_應該初始化角色() {
+    @DisplayName("當角色列表為空時應該初始化角色")
+    void testCheckRole_shouldInitializeRoles_whenRoleListIsEmpty() {
         // Arrange
         when(roleService.getRole()).thenReturn(Collections.emptyList());
         when(roleService.addRole(any(RoleOutVo.class))).thenReturn(adminRole, userRole);
+        when(userService.getUserByEmail("admin")).thenReturn(List.of(testUser));
+        when(roleService.getRoleByName("admin")).thenReturn(adminRole);
+        doNothing().when(roleService).roleBindUser(anyString(), anyList());
 
         // Act
         initAndCheckService.checkRole();
@@ -108,9 +127,14 @@ class initAndCheckServiceTest {
     }
 
     @Test
-    void testCheckRole_當角色列表存在_不應該初始化角色() {
+    @DisplayName("當角色列表存在時不應該初始化角色")
+    void testCheckRole_shouldNotInitializeRoles_whenRoleListExists() {
         // Arrange
         when(roleService.getRole()).thenReturn(List.of(adminRole, userRole));
+        when(roleService.getRoleByName("admin")).thenReturn(adminRole);
+        when(roleService.getRoleByName("user")).thenReturn(userRole);
+        when(userService.getUserByEmail("admin")).thenReturn(List.of(testUser));
+        doNothing().when(roleService).roleBindUser(anyString(), anyList());
 
         // Act
         initAndCheckService.checkRole();
@@ -121,7 +145,8 @@ class initAndCheckServiceTest {
     }
 
     @Test
-    void testCheckLimit_當限制列表為空_應該初始化所有限制() {
+    @DisplayName("當限制列表為空時應該初始化所有限制")
+    void testCheckLimit_shouldInitializeAllLimits_whenLimitListIsEmpty() {
         // Arrange
         when(alertCheckLimitService.getLimit()).thenReturn(Collections.emptyList());
         when(alertCheckLimitService.insertLimit(anyString(), anyString(), anyDouble())).thenReturn(testLimit);
@@ -135,7 +160,8 @@ class initAndCheckServiceTest {
     }
 
     @Test
-    void testCheckLimit_當限制列表存在但缺少某些欄位_應該補充缺少的限制() {
+    @DisplayName("當限制列表存在但缺少某些欄位時應該補充缺少的限制")
+    void testCheckLimit_shouldAddMissingLimits_whenLimitListExistsButMissingSomeFields() {
         // Arrange
         when(alertCheckLimitService.getLimit()).thenReturn(List.of(testLimit));
         when(alertCheckLimitService.getLimit("aquark_data", "rain_d")).thenReturn(testLimit);
@@ -152,7 +178,8 @@ class initAndCheckServiceTest {
     }
 
     @Test
-    void testCheckIsExist_當三層功能都存在_應該回傳true() {
+    @DisplayName("當三層功能都存在時應該回傳true")
+    void testCheckIsExist_shouldReturnTrue_whenAllThreeLayersExist() {
         // Arrange
         FunctionVo oneLayer = new FunctionVo();
         oneLayer.setId("id1");
@@ -182,7 +209,8 @@ class initAndCheckServiceTest {
     }
 
     @Test
-    void testCheckIsExist_當第一層不存在_應該回傳false() {
+    @DisplayName("當第一層不存在時應該回傳false")
+    void testCheckIsExist_shouldReturnFalse_whenFirstLayerNotExists() {
         // Arrange
         when(functionService.getFunctionByName("System")).thenReturn(null);
 
@@ -196,7 +224,8 @@ class initAndCheckServiceTest {
     }
 
     @Test
-    void testCheckIsExist_當第二層不存在_應該回傳false() {
+    @DisplayName("當第二層不存在時應該回傳false")
+    void testCheckIsExist_shouldReturnFalse_whenSecondLayerNotExists() {
         // Arrange
         FunctionVo oneLayer = new FunctionVo();
         oneLayer.setId("id1");
@@ -215,7 +244,8 @@ class initAndCheckServiceTest {
     }
 
     @Test
-    void testCheckIsExist_當第三層不存在_應該回傳false() {
+    @DisplayName("當第三層不存在時應該回傳false")
+    void testCheckIsExist_shouldReturnFalse_whenThirdLayerNotExists() {
         // Arrange
         FunctionVo oneLayer = new FunctionVo();
         oneLayer.setId("id1");
@@ -240,7 +270,8 @@ class initAndCheckServiceTest {
     }
 
     @Test
-    void testInsertFunctionByList_當列表為空_應該立即返回() {
+    @DisplayName("當列表為空時應該立即返回")
+    void testInsertFunctionByList_shouldReturnImmediately_whenListIsEmpty() {
         // Arrange
         List<String> emptyList = Collections.emptyList();
 
@@ -253,7 +284,8 @@ class initAndCheckServiceTest {
     }
 
     @Test
-    void testInsertFunctionByList_當功能已存在_應該遞迴處理子層() {
+    @DisplayName("當功能已存在時應該遞迴處理子層")
+    void testInsertFunctionByList_shouldRecursivelyProcessChildren_whenFunctionExists() {
         // Arrange
         List<String> functionList = List.of("System", "User");
         FunctionVo existingFunction = new FunctionVo();
@@ -273,7 +305,8 @@ class initAndCheckServiceTest {
     }
 
     @Test
-    void testInsertFunctionByList_當功能不存在_應該建立並遞迴處理子層() {
+    @DisplayName("當功能不存在時應該建立並遞迴處理子層")
+    void testInsertFunctionByList_shouldCreateAndRecursivelyProcessChildren_whenFunctionNotExists() {
         // Arrange
         List<String> functionList = List.of("System", "User", "View");
         when(functionService.getFunctionByNameAndParent(anyString(), anyString())).thenReturn(null);
@@ -291,7 +324,8 @@ class initAndCheckServiceTest {
     }
 
     @Test
-    void testCheckFunctionBindDefaultRole_應該建立功能並綁定到admin角色() {
+    @DisplayName("應該建立功能並綁定到admin角色")
+    void testCheckFunctionBindDefaultRole_shouldCreateFunctionsAndBindToAdminRole() {
         // Arrange
         FunctionVo oneLayer = new FunctionVo();
         oneLayer.setId("id1");
@@ -321,7 +355,8 @@ class initAndCheckServiceTest {
     }
 
     @Test
-    void testCheckFunctionBindDefaultRole_當admin角色不存在_不應該綁定功能() {
+    @DisplayName("當admin角色不存在時不應該綁定功能")
+    void testCheckFunctionBindDefaultRole_shouldNotBindFunctions_whenAdminRoleNotExists() {
         // Arrange
         when(functionService.getFunction()).thenReturn(Collections.emptyList());
         when(functionService.getFunctionByName(anyString())).thenReturn(null);

@@ -8,8 +8,12 @@ import java.util.UUID;
 
 public interface UserProjectRepository extends JpaRepository<UserProject, UUID> {
     boolean existsByUserIdAndProjectId(UUID userId, UUID projectId);
+    
+    boolean existsByProjectId(UUID projectId);
 
     void deleteByProjectId(UUID projectId);
+    
+    void deleteByUserIdAndProjectId(UUID userId, UUID projectId);
     
     List<UserProject> findByUserId(UUID userId);
 }

@@ -79,6 +79,9 @@ public class ProjectDataAccessImpl implements IProjectDataAccess {
     
     @Override
     public Page<Project> searchCurrentUserProjects(String currentUserId, ProjectSearchQuery query) {
+        // 將字串轉換為 UUID
+        UUID userUuid = UUID.fromString(currentUserId);
+        
         // 建立排序
         Sort sort = Sort.by(
             "asc".equalsIgnoreCase(query.getNormalizedSortDir()) 
@@ -92,7 +95,7 @@ public class ProjectDataAccessImpl implements IProjectDataAccess {
         
         // 執行查詢（包含使用者過濾條件）
         return projectRepository.findAll(
-            ProjectSpecification.buildCurrentUserSpecification(currentUserId, query), 
+            ProjectSpecification.buildCurrentUserSpecification(userUuid, query), 
             pageable
         );
     }

@@ -2,12 +2,14 @@ package com.example.backendApi.Service.impl;
 
 import com.example.backendApi.Dto.Vo.dto.common.PageResult;
 import com.example.backendApi.Dto.Vo.dto.search.ProjectSearchQuery;
+import com.example.backendApi.Dto.Vo.PersonalProjectRequest;
 import com.example.backendApi.Entity.User;
 import com.example.backendApi.Entity.UserProject;
 import com.example.backendApi.Service.IProjectService;
 import com.example.backendApi.Util.SortFieldValidator;
 import com.example.backendApi.dataaccess.IProjectSkillDataAccess;
 import com.example.backendApi.dataaccess.IProjectDataAccess;
+import com.example.backendApi.dataaccess.IUserDataAccess;
 import com.example.backendApi.dataaccess.IUserProjectDataAccess;
 import com.example.backendApi.mapper.ProjectMapper;
 import com.example.backendApi.Dto.Vo.ProjectVo;
@@ -18,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * ProjectService - 專案業務邏輯服務
@@ -31,6 +34,7 @@ public class ProjectService implements IProjectService {
     private final IProjectDataAccess projectDataAccess;
     private final IProjectSkillDataAccess projectSkillDataAccess;
     private final IUserProjectDataAccess userProjectDataAccess;
+    private final IUserDataAccess userDataAccess;
     private final ProjectMapper projectMapper;
     private final User currentUser;
     /**
@@ -39,6 +43,7 @@ public class ProjectService implements IProjectService {
      * @return 保存後的專案實體
      * @throws IllegalArgumentException 當參數驗證失敗時拋出
      */
+    @Transactional
     @Override
     public ProjectVo addProject(ProjectVo projectVo) {
         Project project = projectMapper.toEntity(projectVo);
@@ -50,13 +55,21 @@ public class ProjectService implements IProjectService {
             throw new IllegalArgumentException("Name already exists");
         }
 
-        return projectMapper.toVo(projectDataAccess.save(project));
+        Project savedProject = projectDataAccess.save(project);
+        
+        // 處理使用者綁定（如果提供了 userIds）
+        if (projectVo.getUserIds() != null && !projectVo.getUserIds().isEmpty()) {
+            bindUsersToProject(savedProject.getId(), projectVo.getUserIds());
+        }
+        
+        return projectMapper.toVo(savedProject);
     }
     /**
      * 更新專案
      * @param project 要更新的專案實體
      * @throws IllegalArgumentException 當參數驗證失敗時拋出
      */
+    @Transactional
     @Override
     public void updateProject(ProjectVo projectVo) {
         Project project = projectMapper.toEntity(projectVo);
@@ -66,6 +79,43 @@ public class ProjectService implements IProjectService {
             throw new IllegalArgumentException("Name must not be null");
         }
         projectDataAccess.save(project);
+        
+        // 處理使用者重新綁定（如果提供了 userIds）
+        if (projectVo.getUserIds() != null) {
+            // 先刪除現有綁定
+            userProjectDataAccess.deleteByProjectId(project.getId());
+            
+            // 重新綁定（如果 userIds 不為空）
+            if (!projectVo.getUserIds().isEmpty()) {
+                bindUsersToProject(project.getId(), projectVo.getUserIds());
+            }
+        }
+    }
+    
+    /**
+     * 綁定多個使用者到專案
+     * 
+     * @param projectId 專案 ID
+     * @param userIds 使用者 ID 列表
+     */
+    private void bindUsersToProject(UUID projectId, List<String> userIds) {
+        Project project = projectDataAccess.findById(projectId)
+                .orElseThrow(() -> new IllegalArgumentException("Project not found"));
+        
+        // 綁定每個使用者
+        for (String userIdStr : userIds) {
+            UUID userId = UUID.fromString(userIdStr);
+            User user = userDataAccess.findById(userId)
+                    .orElseThrow(() -> new IllegalArgumentException("User not found: " + userIdStr));
+            
+            // 檢查是否已存在綁定
+            if (!userProjectDataAccess.existsByUserIdAndProjectId(userId, projectId)) {
+                UserProject userProject = new UserProject();
+                userProject.setUser(user);
+                userProject.setProject(project);
+                userProjectDataAccess.save(userProject);
+            }
+        }
     }
     /**
      * 查詢所有專案
@@ -167,5 +217,89 @@ public class ProjectService implements IProjectService {
         
         // 返回分頁結果
         return PageResult.of(projectPage, projectVos);
+    }
+    
+    @Transactional
+    @Override
+    public ProjectVo addPersonalProject(PersonalProjectRequest request) {
+        // 驗證輸入
+        if (request.getName() == null || request.getName().trim().isEmpty()) {
+            throw new IllegalArgumentException("Name must not be null");
+        }
+        
+        // 檢查名稱是否已存在
+        if (!projectDataAccess.findByName(request.getName()).isEmpty()) {
+            throw new IllegalArgumentException("Name already exists");
+        }
+        
+        // 建立專案
+        Project project = new Project();
+        project.setName(request.getName());
+        project.setDescription(request.getDescription());
+        Project savedProject = projectDataAccess.save(project);
+        
+        // 自動綁定當前使用者
+        UserProject userProject = new UserProject();
+        userProject.setUser(currentUser);
+        userProject.setProject(savedProject);
+        userProjectDataAccess.save(userProject);
+        
+        return projectMapper.toVo(savedProject);
+    }
+    
+    @Transactional
+    @Override
+    public void updatePersonalProject(UUID projectId, PersonalProjectRequest request) {
+        // 驗證輸入
+        if (projectId == null) {
+            throw new IllegalArgumentException("Project ID must not be null");
+        }
+        if (request.getName() == null || request.getName().trim().isEmpty()) {
+            throw new IllegalArgumentException("Name must not be null");
+        }
+        
+        // 查找專案
+        Project project = projectDataAccess.findById(projectId)
+                .orElseThrow(() -> new IllegalArgumentException("Project not found"));
+        
+        // 驗證是否為擁有者
+        if (!userProjectDataAccess.existsByUserIdAndProjectId(currentUser.getId(), projectId)) {
+            throw new IllegalArgumentException("You are not the owner of this project");
+        }
+        
+        // 更新專案資訊
+        project.setName(request.getName());
+        project.setDescription(request.getDescription());
+        projectDataAccess.save(project);
+    }
+    
+    @Transactional
+    @Override
+    public void deletePersonalProject(UUID projectId) {
+        // 驗證輸入
+        if (projectId == null) {
+            throw new IllegalArgumentException("Project ID must not be null");
+        }
+        
+        // 查找專案
+        Project project = projectDataAccess.findById(projectId)
+                .orElseThrow(() -> new IllegalArgumentException("Project not found"));
+        
+        // 驗證是否為擁有者
+        if (!userProjectDataAccess.existsByUserIdAndProjectId(currentUser.getId(), projectId)) {
+            throw new IllegalArgumentException("You are not the owner of this project");
+        }
+        
+        // 刪除當前使用者與專案的綁定
+        userProjectDataAccess.deleteByUserIdAndProjectId(currentUser.getId(), projectId);
+        
+        // 檢查是否還有其他使用者綁定此專案
+        boolean hasOtherBindings = userProjectDataAccess.existsByProjectId(projectId);
+        
+        // 如果沒有其他綁定，刪除專案本身及其技能綁定
+        if (!hasOtherBindings) {
+            projectSkillDataAccess.deleteByProjectId(projectId);
+            projectDataAccess.delete(project);
+        }
     }
 }

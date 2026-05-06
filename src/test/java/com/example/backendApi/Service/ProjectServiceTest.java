@@ -2,6 +2,7 @@ package com.example.backendApi.Service;
 
 import com.example.backendApi.Dto.Vo.dto.common.PageResult;
 import com.example.backendApi.Dto.Vo.dto.search.ProjectSearchQuery;
+import com.example.backendApi.Dto.Vo.PersonalProjectRequest;
 import com.example.backendApi.Dto.Vo.ProjectVo;
 import com.example.backendApi.Entity.Project;
 import com.example.backendApi.Entity.User;
@@ -9,6 +10,7 @@ import com.example.backendApi.Entity.UserProject;
 import com.example.backendApi.Service.impl.ProjectService;
 import com.example.backendApi.dataaccess.IProjectDataAccess;
 import com.example.backendApi.dataaccess.IProjectSkillDataAccess;
+import com.example.backendApi.dataaccess.IUserDataAccess;
 import com.example.backendApi.dataaccess.IUserProjectDataAccess;
 import com.example.backendApi.exception.AppException;
 import com.example.backendApi.mapper.ProjectMapper;
@@ -29,8 +31,8 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
+
 
 @ExtendWith(MockitoExtension.class)
 class ProjectServiceTest {
@@ -41,6 +43,8 @@ class ProjectServiceTest {
     private IProjectSkillDataAccess projectSkillDataAccess;
     @Mock
     private IUserProjectDataAccess userProjectDataAccess;
+    @Mock
+    private IUserDataAccess userDataAccess;
     @Mock
     private ProjectMapper projectMapper;
 
@@ -253,5 +257,360 @@ class ProjectServiceTest {
         assertNotNull(result);
         assertEquals(0, result.getContent().size());
         assertEquals(0L, result.getTotalElements());
+    }
+    
+    // Personal Project Tests
+    
+    @Test
+    void addPersonalProject_should_whenValid() {
+        // Arrange
+        PersonalProjectRequest request = new PersonalProjectRequest();
+        request.setName("Personal Project");
+        request.setDescription("Personal Description");
+        
+        when(projectDataAccess.findByName("Personal Project")).thenReturn(Collections.emptyList());
+        when(projectDataAccess.save(any(Project.class))).thenReturn(testProject);
+        when(projectMapper.toVo(testProject)).thenReturn(testProjectVo);
+        
+        // Act
+        ProjectVo result = projectService.addPersonalProject(request);
+        
+        // Assert
+        assertNotNull(result);
+        verify(projectDataAccess).save(any(Project.class));
+        verify(userProjectDataAccess).save(any(UserProject.class));
+    }
+    
+    @Test
+    void addPersonalProject_shouldThrow_whenNameIsNull() {
+        // Arrange
+        PersonalProjectRequest request = new PersonalProjectRequest();
+        request.setName(null);
+        request.setDescription("Description");
+        
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> projectService.addPersonalProject(request));
+        assertEquals("Name must not be null", exception.getMessage());
+    }
+    
+    @Test
+    void addPersonalProject_shouldThrow_whenNameIsEmpty() {
+        // Arrange
+        PersonalProjectRequest request = new PersonalProjectRequest();
+        request.setName("   ");
+        request.setDescription("Description");
+        
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> projectService.addPersonalProject(request));
+        assertEquals("Name must not be null", exception.getMessage());
+    }
+    
+    @Test
+    void addPersonalProject_shouldThrow_whenNameExists() {
+        // Arrange
+        PersonalProjectRequest request = new PersonalProjectRequest();
+        request.setName("Existing Project");
+        request.setDescription("Description");
+        
+        when(projectDataAccess.findByName("Existing Project")).thenReturn(List.of(new Project()));
+        
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> projectService.addPersonalProject(request));
+        assertEquals("Name already exists", exception.getMessage());
+    }
+    
+    @Test
+    void updatePersonalProject_should_whenValid() {
+        // Arrange
+        UUID projectId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        when(currentUser.getId()).thenReturn(userId);
+        
+        PersonalProjectRequest request = new PersonalProjectRequest();
+        request.setName("Updated Project");
+        request.setDescription("Updated Description");
+        
+        when(projectDataAccess.findById(projectId)).thenReturn(Optional.of(testProject));
+        when(userProjectDataAccess.existsByUserIdAndProjectId(userId, projectId)).thenReturn(true);
+        
+        // Act
+        projectService.updatePersonalProject(projectId, request);
+        
+        // Assert
+        verify(projectDataAccess).save(testProject);
+        assertEquals("Updated Project", testProject.getName());
+        assertEquals("Updated Description", testProject.getDescription());
+    }
+    
+    @Test
+    void updatePersonalProject_shouldThrow_whenProjectIdIsNull() {
+        // Arrange
+        PersonalProjectRequest request = new PersonalProjectRequest();
+        request.setName("Updated Project");
+        
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> projectService.updatePersonalProject(null, request));
+        assertEquals("Project ID must not be null", exception.getMessage());
+    }
+    
+    @Test
+    void updatePersonalProject_shouldThrow_whenProjectNotFound() {
+        // Arrange
+        UUID projectId = UUID.randomUUID();
+        PersonalProjectRequest request = new PersonalProjectRequest();
+        request.setName("Updated Project");
+        
+        when(projectDataAccess.findById(projectId)).thenReturn(Optional.empty());
+        
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> projectService.updatePersonalProject(projectId, request));
+        assertEquals("Project not found", exception.getMessage());
+    }
+    
+    @Test
+    void updatePersonalProject_shouldThrow_whenNotOwner() {
+        // Arrange
+        UUID projectId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        when(currentUser.getId()).thenReturn(userId);
+        
+        PersonalProjectRequest request = new PersonalProjectRequest();
+        request.setName("Updated Project");
+        
+        when(projectDataAccess.findById(projectId)).thenReturn(Optional.of(testProject));
+        when(userProjectDataAccess.existsByUserIdAndProjectId(userId, projectId)).thenReturn(false);
+        
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> projectService.updatePersonalProject(projectId, request));
+        assertEquals("You are not the owner of this project", exception.getMessage());
+    }
+    
+    @Test
+    void deletePersonalProject_should_whenValidAndHasOtherBindings() {
+        // Arrange
+        UUID projectId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        when(currentUser.getId()).thenReturn(userId);
+        
+        when(projectDataAccess.findById(projectId)).thenReturn(Optional.of(testProject));
+        when(userProjectDataAccess.existsByUserIdAndProjectId(userId, projectId)).thenReturn(true);
+        when(userProjectDataAccess.existsByProjectId(projectId)).thenReturn(true);
+        
+        // Act
+        projectService.deletePersonalProject(projectId);
+        
+        // Assert
+        verify(userProjectDataAccess).deleteByUserIdAndProjectId(userId, projectId);
+        verify(projectDataAccess, never()).delete(any(Project.class));
+        verify(projectSkillDataAccess, never()).deleteByProjectId(projectId);
+    }
+    
+    @Test
+    void deletePersonalProject_should_whenValidAndNoOtherBindings() {
+        // Arrange
+        UUID projectId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        when(currentUser.getId()).thenReturn(userId);
+        
+        when(projectDataAccess.findById(projectId)).thenReturn(Optional.of(testProject));
+        when(userProjectDataAccess.existsByUserIdAndProjectId(userId, projectId)).thenReturn(true);
+        when(userProjectDataAccess.existsByProjectId(projectId)).thenReturn(false);
+        
+        // Act
+        projectService.deletePersonalProject(projectId);
+        
+        // Assert
+        verify(userProjectDataAccess).deleteByUserIdAndProjectId(userId, projectId);
+        verify(projectSkillDataAccess).deleteByProjectId(projectId);
+        verify(projectDataAccess).delete(testProject);
+    }
+    
+    // ========== 管理者介面測試 ==========
+    
+    @Test
+    void addProject_shouldBindUsers_whenUserIdsProvided() {
+        // Arrange
+        UUID userId1 = UUID.randomUUID();
+        UUID userId2 = UUID.randomUUID();
+        User user1 = new User();
+        user1.setId(userId1);
+        User user2 = new User();
+        user2.setId(userId2);
+        
+        Project newProject = new Project();
+        newProject.setName("Java Project");
+        newProject.setDescription("Java Project Description");
+        
+        ProjectVo projectVo = new ProjectVo();
+        projectVo.setName("Java Project");
+        projectVo.setDescription("Java Project Description");
+        projectVo.setUserIds(List.of(userId1.toString(), userId2.toString()));
+        
+        when(projectMapper.toEntity(projectVo)).thenReturn(newProject);
+        when(projectDataAccess.findByName("Java Project")).thenReturn(Collections.emptyList());
+        when(projectDataAccess.save(newProject)).thenReturn(testProject);
+        when(projectDataAccess.findById(testProject.getId())).thenReturn(Optional.of(testProject));
+        when(userDataAccess.findById(userId1)).thenReturn(Optional.of(user1));
+        when(userDataAccess.findById(userId2)).thenReturn(Optional.of(user2));
+        when(userProjectDataAccess.existsByUserIdAndProjectId(userId1, testProject.getId())).thenReturn(false);
+        when(userProjectDataAccess.existsByUserIdAndProjectId(userId2, testProject.getId())).thenReturn(false);
+        when(projectMapper.toVo(testProject)).thenReturn(projectVo);
+        
+        // Act
+        ProjectVo result = projectService.addProject(projectVo);
+        
+        // Assert
+        assertNotNull(result);
+        verify(userProjectDataAccess, times(2)).save(any(UserProject.class));
+    }
+    
+    @Test
+    void addProject_shouldThrow_whenInvalidUserId() {
+        // Arrange
+        UUID invalidUserId = UUID.randomUUID();
+        
+        Project newProject = new Project();
+        newProject.setName("Java Project");
+        newProject.setDescription("Java Project Description");
+        
+        ProjectVo projectVo = new ProjectVo();
+        projectVo.setName("Java Project");
+        projectVo.setDescription("Java Project Description");
+        projectVo.setUserIds(List.of(invalidUserId.toString()));
+        
+        when(projectMapper.toEntity(projectVo)).thenReturn(newProject);
+        when(projectDataAccess.findByName("Java Project")).thenReturn(Collections.emptyList());
+        when(projectDataAccess.save(newProject)).thenReturn(testProject);
+        when(projectDataAccess.findById(testProject.getId())).thenReturn(Optional.of(testProject));
+        when(userDataAccess.findById(invalidUserId)).thenReturn(Optional.empty());
+        
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                projectService.addProject(projectVo)
+        );
+        assertTrue(exception.getMessage().contains("User not found"));
+    }
+    
+    @Test
+    void addProject_shouldNotBindUsers_whenUserIdsNull() {
+        // Arrange
+        Project newProject = new Project();
+        newProject.setName("Java Project");
+        newProject.setDescription("Java Project Description");
+        
+        ProjectVo projectVo = new ProjectVo();
+        projectVo.setName("Java Project");
+        projectVo.setDescription("Java Project Description");
+        projectVo.setUserIds(null);
+        
+        when(projectMapper.toEntity(projectVo)).thenReturn(newProject);
+        when(projectDataAccess.findByName("Java Project")).thenReturn(Collections.emptyList());
+        when(projectDataAccess.save(newProject)).thenReturn(testProject);
+        when(projectMapper.toVo(testProject)).thenReturn(projectVo);
+        
+        // Act
+        ProjectVo result = projectService.addProject(projectVo);
+        
+        // Assert
+        assertNotNull(result);
+        verify(userProjectDataAccess, never()).save(any(UserProject.class));
+    }
+    
+    @Test
+    void addProject_shouldNotBindUsers_whenUserIdsEmpty() {
+        // Arrange
+        Project newProject = new Project();
+        newProject.setName("Java Project");
+        newProject.setDescription("Java Project Description");
+        
+        ProjectVo projectVo = new ProjectVo();
+        projectVo.setName("Java Project");
+        projectVo.setDescription("Java Project Description");
+        projectVo.setUserIds(List.of());
+        
+        when(projectMapper.toEntity(projectVo)).thenReturn(newProject);
+        when(projectDataAccess.findByName("Java Project")).thenReturn(Collections.emptyList());
+        when(projectDataAccess.save(newProject)).thenReturn(testProject);
+        when(projectMapper.toVo(testProject)).thenReturn(projectVo);
+        
+        // Act
+        ProjectVo result = projectService.addProject(projectVo);
+        
+        // Assert
+        assertNotNull(result);
+        verify(userProjectDataAccess, never()).save(any(UserProject.class));
+    }
+    
+    @Test
+    void updateProject_shouldRebindUsers_whenUserIdsProvided() {
+        // Arrange
+        UUID userId1 = UUID.randomUUID();
+        UUID userId2 = UUID.randomUUID();
+        User user1 = new User();
+        user1.setId(userId1);
+        User user2 = new User();
+        user2.setId(userId2);
+        
+        ProjectVo projectVo = new ProjectVo();
+        projectVo.setId(testId);
+        projectVo.setName("Updated Project");
+        projectVo.setDescription("Updated Description");
+        projectVo.setUserIds(List.of(userId2.toString()));
+        
+        when(projectMapper.toEntity(projectVo)).thenReturn(testProject);
+        when(projectDataAccess.findById(testId)).thenReturn(Optional.of(testProject));
+        when(userDataAccess.findById(userId2)).thenReturn(Optional.of(user2));
+        when(userProjectDataAccess.existsByUserIdAndProjectId(userId2, testId)).thenReturn(false);
+        
+        // Act
+        projectService.updateProject(projectVo);
+        
+        // Assert
+        verify(userProjectDataAccess).deleteByProjectId(testId);
+        verify(userProjectDataAccess).save(any(UserProject.class));
+    }
+    
+    @Test
+    void updateProject_shouldRemoveAllBindings_whenEmptyUserIds() {
+        // Arrange
+        ProjectVo projectVo = new ProjectVo();
+        projectVo.setId(testId);
+        projectVo.setName("Updated Project");
+        projectVo.setDescription("Updated Description");
+        projectVo.setUserIds(List.of());
+        
+        when(projectMapper.toEntity(projectVo)).thenReturn(testProject);
+        
+        // Act
+        projectService.updateProject(projectVo);
+        
+        // Assert
+        verify(userProjectDataAccess).deleteByProjectId(testId);
+        verify(userProjectDataAccess, never()).save(any(UserProject.class));
+    }
+    
+    @Test
+    void updateProject_shouldNotRebind_whenUserIdsNull() {
+        // Arrange
+        ProjectVo projectVo = new ProjectVo();
+        projectVo.setId(testId);
+        projectVo.setName("Updated Project");
+        projectVo.setDescription("Updated Description");
+        projectVo.setUserIds(null);
+        
+        when(projectMapper.toEntity(projectVo)).thenReturn(testProject);
+        
+        // Act
+        projectService.updateProject(projectVo);
+        
+        // Assert
+        verify(userProjectDataAccess, never()).deleteByProjectId(any());
+        verify(userProjectDataAccess, never()).save(any(UserProject.class));
     }
 }

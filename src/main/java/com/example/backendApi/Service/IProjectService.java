@@ -2,9 +2,11 @@ package com.example.backendApi.Service;
 
 import com.example.backendApi.Dto.Vo.dto.common.PageResult;
 import com.example.backendApi.Dto.Vo.dto.search.ProjectSearchQuery;
+import com.example.backendApi.Dto.Vo.PersonalProjectRequest;
 import com.example.backendApi.Dto.Vo.ProjectVo;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface IProjectService {
     ProjectVo addProject(ProjectVo projectVo);
@@ -37,4 +39,27 @@ public interface IProjectService {
      * @return 分頁結果
      */
     PageResult<ProjectVo> searchCurrentUserProjects(ProjectSearchQuery query);
+    
+    /**
+     * 新增個人專案（自動綁定當前使用者）
+     *
+     * @param request 個人專案請求
+     * @return 新增的專案 VO
+     */
+    ProjectVo addPersonalProject(PersonalProjectRequest request);
+    
+    /**
+     * 修改個人專案（僅限擁有者）
+     *
+     * @param projectId 專案 ID
+     * @param request 個人專案請求
+     */
+    void updatePersonalProject(UUID projectId, PersonalProjectRequest request);
+    
+    /**
+     * 刪除個人專案（僅限擁有者）
+     *
+     * @param projectId 專案 ID
+     */
+    void deletePersonalProject(UUID projectId);
 }

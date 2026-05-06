@@ -114,8 +114,10 @@ public class UserService implements IUserService {
         User u = userDataAccess.findByEmail(userVo.getEmail()).stream().findFirst().orElseThrow(
                 () -> new IllegalArgumentException("User not found")
         );
-
-        u.setPassword(BCrypt.hashpw(userVo.getPassword(), BCrypt.gensalt()));
+        u.setDisabled(userVo.isDisabled());
+        if (userVo.getPassword() != null && !userVo.getPassword().startsWith("$2a$") && !userVo.getPassword().startsWith("$2b$") && !userVo.getPassword().startsWith("$2y$")) {
+            u.setPassword(BCrypt.hashpw(userVo.getPassword(), BCrypt.gensalt()));
+        }
         userDataAccess.save(u);
         roleService.userUnbindAllRole(u.getId().toString());
         roleService.userBindRole(u.getId().toString(), userVo.getRoleArr());

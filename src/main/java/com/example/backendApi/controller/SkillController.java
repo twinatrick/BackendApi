@@ -8,6 +8,7 @@ import com.example.backendApi.annotation.openapi.ApiControllerTag;
 import com.example.backendApi.annotation.openapi.ApiOperationBadRequest;
 import com.example.backendApi.annotation.openapi.ApiOperationOk;
 import com.example.backendApi.Dto.Vo.CurrentUserSkillVo;
+import com.example.backendApi.Dto.Vo.PersonalSkillRequest;
 import com.example.backendApi.Dto.Vo.ResponseType;
 import com.example.backendApi.Dto.Vo.SkillLevelVo;
 import com.example.backendApi.Dto.Vo.SkillVo;
@@ -15,6 +16,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/skill")
@@ -104,5 +106,28 @@ public class SkillController {
     @Operation(summary = "搜尋技能等級（分頁）", description = "支援 skillId、levelValue、title、description、createdBy 查詢條件，預設按 createdTime 降序排序")
     public ResponseType<PageResult<SkillLevelVo>> searchSkillLevels(@RequestBody SkillLevelSearchQuery query) {
         return ResponseType.Success(skillService.searchSkillLevels(query), "技能等級查詢成功");
+    }
+    
+    @PostMapping("/personal/add")
+    @ApiOperationBadRequest(summary = "新增個人技能", description = "建立技能並自動綁定當前使用者")
+    @Operation(summary = "新增個人技能", description = "一般使用者新增技能，會自動綁定到當前登入使用者")
+    public ResponseType<SkillVo> addPersonalSkill(@RequestBody PersonalSkillRequest request) {
+        return ResponseType.Success(skillService.addPersonalSkill(request), "個人技能新增成功");
+    }
+    
+    @PostMapping("/personal/update")
+    @ApiOperationBadRequest(summary = "修改個人技能", description = "修改技能資訊（僅限擁有者）")
+    @Operation(summary = "修改個人技能", description = "只有技能的擁有者可以修改")
+    public ResponseType<String> updatePersonalSkill(@RequestParam String skillId, @RequestBody PersonalSkillRequest request) {
+        skillService.updatePersonalSkill(UUID.fromString(skillId), request);
+        return ResponseType.Success("個人技能修改成功");
+    }
+    
+    @PostMapping("/personal/delete")
+    @ApiOperationBadRequest(summary = "刪除個人技能", description = "刪除技能（僅限擁有者）")
+    @Operation(summary = "刪除個人技能", description = "只有技能的擁有者可以刪除")
+    public ResponseType<String> deletePersonalSkill(@RequestParam String skillId) {
+        skillService.deletePersonalSkill(UUID.fromString(skillId));
+        return ResponseType.Success("個人技能刪除成功");
     }
 }

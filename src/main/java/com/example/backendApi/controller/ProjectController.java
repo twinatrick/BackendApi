@@ -2,6 +2,7 @@ package com.example.backendApi.controller;
 
 import com.example.backendApi.Dto.Vo.dto.common.PageResult;
 import com.example.backendApi.Dto.Vo.dto.search.ProjectSearchQuery;
+import com.example.backendApi.Dto.Vo.PersonalProjectRequest;
 import com.example.backendApi.Service.IProjectService;
 import com.example.backendApi.Service.ISkillService;
 import com.example.backendApi.annotation.openapi.ApiControllerTag;
@@ -14,6 +15,7 @@ import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/project")
@@ -79,5 +81,28 @@ public class ProjectController {
     public ResponseType<PageResult<ProjectVo>> searchCurrentUserProjects(@Valid @RequestBody ProjectSearchQuery query) {
         PageResult<ProjectVo> result = projectService.searchCurrentUserProjects(query);
         return ResponseType.Success(result, "Current user projects fetched successfully");
+    }
+    
+    @PostMapping("/personal/add")
+    @ApiOperationBadRequest(summary = "Add personal project", description = "新增個人專案，自動綁定當前使用者")
+    public ResponseType<ProjectVo> addPersonalProject(@Valid @RequestBody PersonalProjectRequest request) {
+        ProjectVo projectVo = projectService.addPersonalProject(request);
+        return ResponseType.Success(projectVo, "Personal project added successfully");
+    }
+    
+    @PutMapping("/personal/update/{projectId}")
+    @ApiOperationBadRequest(summary = "Update personal project", description = "修改個人專案，僅限擁有者")
+    public ResponseType<String> updatePersonalProject(
+            @PathVariable UUID projectId,
+            @Valid @RequestBody PersonalProjectRequest request) {
+        projectService.updatePersonalProject(projectId, request);
+        return ResponseType.Success("Personal project updated successfully");
+    }
+    
+    @DeleteMapping("/personal/delete/{projectId}")
+    @ApiOperationBadRequest(summary = "Delete personal project", description = "刪除個人專案，僅限擁有者")
+    public ResponseType<String> deletePersonalProject(@PathVariable UUID projectId) {
+        projectService.deletePersonalProject(projectId);
+        return ResponseType.Success("Personal project deleted successfully");
     }
 }

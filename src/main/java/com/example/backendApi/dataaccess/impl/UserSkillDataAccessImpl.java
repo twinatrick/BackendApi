@@ -24,6 +24,11 @@ public class UserSkillDataAccessImpl implements IUserSkillDataAccess {
     public boolean existsBySkillLevelId(UUID skillLevelId) {
         return userSkillRepository.existsBySkillLevelId(skillLevelId);
     }
+    
+    @Override
+    public boolean existsBySkillId(UUID skillId) {
+        return userSkillRepository.existsBySkillId(skillId);
+    }
 
     @Override
     public UserSkill save(UserSkill userSkill) {
@@ -36,7 +41,22 @@ public class UserSkillDataAccessImpl implements IUserSkillDataAccess {
     }
     
     @Override
+    public void deleteByUserIdAndSkillId(UUID userId, UUID skillId) {
+        userSkillRepository.deleteByUserIdAndSkillId(userId, skillId);
+    }
+    
+    @Override
     public List<UserSkill> findByUserId(UUID userId) {
         return userSkillRepository.findByUserId(userId);
+    }
+    
+    @Override
+    public List<UserSkill> findBySkillId(UUID skillId) {
+        return userSkillRepository.findBySkillId(skillId);
+    }
+    
+    @Override
+    public List<UserSkill> findByUserIdAndSkillId(UUID userId, UUID skillId) {
+        return userSkillRepository.findByUserIdAndSkillId(userId, skillId);
     }
 }

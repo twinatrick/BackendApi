@@ -5,10 +5,12 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 @Getter
-@Setter@NoArgsConstructor
+@Setter
+@NoArgsConstructor
 public class ProjectVo {
     private UUID id;
     //skill Name
@@ -19,4 +21,9 @@ public class ProjectVo {
     private String updatedBy;
     private Date createdTime;
     private Date updatedTime;
+    
+    /**
+     * 管理者模式使用：要綁定的使用者 ID 陣列
+     */
+    private List<String> userIds;
 }

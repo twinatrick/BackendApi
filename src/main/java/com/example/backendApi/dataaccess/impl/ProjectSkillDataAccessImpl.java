@@ -23,6 +23,11 @@ public class ProjectSkillDataAccessImpl implements IProjectSkillDataAccess {
     public boolean existsBySkillLevelId(UUID skillLevelId) {
         return projectSkillRepository.existsBySkillLevelId(skillLevelId);
     }
+    
+    @Override
+    public boolean existsBySkillId(UUID skillId) {
+        return projectSkillRepository.existsBySkillId(skillId);
+    }
 
     @Override
     public ProjectSkill save(ProjectSkill projectSkill) {
