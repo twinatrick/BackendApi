@@ -47,6 +47,11 @@ public class UserDataAccessImpl implements IUserDataAccess {
     }
 
     @Override
+    public boolean existsById(UUID key) {
+        return userRepository.existsById(key);
+    }
+
+    @Override
     public List<User> findAllById(List<UUID> keys) {
         return userRepository.findAllById(keys);
     }

@@ -8,6 +8,7 @@ import com.example.backendApi.annotation.openapi.ApiControllerTag;
 import com.example.backendApi.annotation.openapi.ApiOperationBadRequest;
 import com.example.backendApi.annotation.openapi.ApiOperationOk;
 import com.example.backendApi.Dto.Vo.CurrentUserSkillVo;
+import com.example.backendApi.Dto.Vo.PersonalSkillLevelRequest;
 import com.example.backendApi.Dto.Vo.PersonalSkillRequest;
 import com.example.backendApi.Dto.Vo.ResponseType;
 import com.example.backendApi.Dto.Vo.SkillLevelVo;
@@ -88,15 +89,15 @@ public class SkillController {
     }
     
     @GetMapping("/current")
-    @ApiOperationOk(summary = "取得當前使用者技能", description = "返回當前使用者所有技能（合併 USER 直接綁定與 PROJECT 專案技能）")
-    @Operation(summary = "取得當前使用者技能", description = "合併 USER（直接綁定）和 PROJECT（專案技能）兩個來源，每筆標記 sourceType")
+    @ApiOperationOk(summary = "取得當前使用者技能", description = "返回當前使用者所有技能（合併 USER 直接綁定與 PROJECT 專案技能）。管理者指派技能可查看但視為唯讀。")
+    @Operation(summary = "取得當前使用者技能", description = "合併 USER（直接綁定）和 PROJECT（專案技能）兩個來源，每筆標記 sourceType。管理者指派技能可查看但不可透過個人 API 修改；可依權限進行綁定關聯。")
     public ResponseType<List<CurrentUserSkillVo>> getCurrentUserSkills() {
         return ResponseType.Success(skillService.getCurrentUserSkills(), "當前使用者技能查詢成功");
     }
     
     @PostMapping("/current/search")
-    @ApiOperationBadRequest(summary = "搜尋當前使用者技能", description = "支援分頁與條件查詢的當前使用者技能搜尋")
-    @Operation(summary = "搜尋當前使用者技能（分頁）", description = "在合併後的技能列表中搜尋，支援 name、description、createdBy 查詢條件")
+    @ApiOperationBadRequest(summary = "搜尋當前使用者技能", description = "支援分頁與條件查詢的當前使用者技能搜尋。管理者指派技能可查詢但視為唯讀。")
+    @Operation(summary = "搜尋當前使用者技能（分頁）", description = "在合併後的技能列表中搜尋，支援 name、description、createdBy 查詢條件。管理者指派技能可查詢但不可透過個人 API 修改；可依權限進行綁定關聯。")
     public ResponseType<PageResult<CurrentUserSkillVo>> searchCurrentUserSkills(@RequestBody SkillSearchQuery query) {
         return ResponseType.Success(skillService.searchCurrentUserSkills(query), "當前使用者技能查詢成功");
     }
@@ -109,25 +110,33 @@ public class SkillController {
     }
     
     @PostMapping("/personal/add")
-    @ApiOperationBadRequest(summary = "新增個人技能", description = "建立技能並自動綁定當前使用者")
-    @Operation(summary = "新增個人技能", description = "一般使用者新增技能，會自動綁定到當前登入使用者")
+    @ApiOperationBadRequest(summary = "新增個人技能", description = "建立技能並自動綁定當前使用者。使用者自行新增的技能可由本人後續修改/刪除。")
+    @Operation(summary = "新增個人技能", description = "一般使用者新增技能，會自動綁定到當前登入使用者。此路徑建立的技能視為使用者自有技能，可由本人後續修改或刪除。")
     public ResponseType<SkillVo> addPersonalSkill(@RequestBody PersonalSkillRequest request) {
         return ResponseType.Success(skillService.addPersonalSkill(request), "個人技能新增成功");
     }
     
     @PostMapping("/personal/update")
-    @ApiOperationBadRequest(summary = "修改個人技能", description = "修改技能資訊（僅限擁有者）")
-    @Operation(summary = "修改個人技能", description = "只有技能的擁有者可以修改")
+    @ApiOperationBadRequest(summary = "修改個人技能", description = "修改技能主資料（僅限擁有者）。管理者指派技能為唯讀，不能透過此 API 修改內容。")
+    @Operation(summary = "修改個人技能", description = "只有技能的擁有者可以修改技能主資料。管理者指派給使用者的技能視為唯讀，不可透過個人修改 API 變更 name/description 等內容。")
     public ResponseType<String> updatePersonalSkill(@RequestParam String skillId, @RequestBody PersonalSkillRequest request) {
         skillService.updatePersonalSkill(UUID.fromString(skillId), request);
         return ResponseType.Success("個人技能修改成功");
     }
+
+    @PostMapping("/personal/update-level")
+    @ApiOperationBadRequest(summary = "修改個人技能綁定等級", description = "僅修改當前使用者與技能的等級綁定。管理者指派技能雖不可改主資料，但可透過此 API 修改綁定。僅接受既有 skillLevelId。")
+    @Operation(summary = "修改個人技能綁定等級", description = "更新 user-skill 關聯上的 skill level，不會修改技能主資料。")
+    public ResponseType<String> updatePersonalSkillLevel(@RequestParam String skillId, @RequestBody PersonalSkillLevelRequest request) {
+        skillService.updatePersonalSkillLevel(UUID.fromString(skillId), UUID.fromString(request.getSkillLevelId()));
+        return ResponseType.Success("個人技能綁定等級修改成功");
+    }
     
     @PostMapping("/personal/delete")
-    @ApiOperationBadRequest(summary = "刪除個人技能", description = "刪除技能（僅限擁有者）")
-    @Operation(summary = "刪除個人技能", description = "只有技能的擁有者可以刪除")
+    @ApiOperationBadRequest(summary = "解除個人技能綁定", description = "解除當前使用者與技能的綁定關係。此操作不會刪除技能主資料與技能等級。")
+    @Operation(summary = "解除個人技能綁定", description = "移除 user-skill 綁定。管理者指派技能雖不可修改主資料，仍可解除個人綁定。")
     public ResponseType<String> deletePersonalSkill(@RequestParam String skillId) {
         skillService.deletePersonalSkill(UUID.fromString(skillId));
-        return ResponseType.Success("個人技能刪除成功");
+        return ResponseType.Success("個人技能綁定解除成功");
     }
 }

@@ -62,4 +62,30 @@ public interface IProjectService {
      * @param projectId 專案 ID
      */
     void deletePersonalProject(UUID projectId);
+
+    /**
+     * 綁定技能到個人可操作的專案（每個技能僅能綁定一個等級）
+     *
+     * @param projectId 專案 ID
+     * @param skillId 技能 ID
+     * @param skillLevelId 技能等級 ID
+     */
+    void bindPersonalProjectSkill(UUID projectId, UUID skillId, UUID skillLevelId);
+
+    /**
+     * 更新個人可操作專案中的技能等級綁定
+     *
+     * @param projectId 專案 ID
+     * @param skillId 技能 ID
+     * @param skillLevelId 技能等級 ID
+     */
+    void updatePersonalProjectSkillLevel(UUID projectId, UUID skillId, UUID skillLevelId);
+
+    /**
+     * 解除個人可操作專案中的技能綁定
+     *
+     * @param projectId 專案 ID
+     * @param skillId 技能 ID
+     */
+    void unbindPersonalProjectSkill(UUID projectId, UUID skillId);
 }

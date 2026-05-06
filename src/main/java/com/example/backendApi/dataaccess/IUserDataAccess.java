@@ -45,6 +45,14 @@ public interface IUserDataAccess {
     Optional<User> findById(UUID key);
 
     /**
+     * Check if a user exists by their key.
+     *
+     * @param key the user UUID
+     * @return true if user exists, false otherwise
+     */
+    boolean existsById(UUID key);
+
+    /**
      * Find all users by their keys.
      *
      * @param keys list of user UUIDs

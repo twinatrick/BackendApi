@@ -12,6 +12,7 @@ import com.example.backendApi.Service.impl.SkillService;
 import com.example.backendApi.dataaccess.*;
 import com.example.backendApi.exception.AppException;
 import com.example.backendApi.mapper.SkillMapper;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -52,6 +53,8 @@ class SkillServiceTest {
     private SkillMapper skillMapper;
     @Mock
     private User currentUser;
+    @Mock
+    private EntityManager entityManager;
 
     @InjectMocks
     private SkillService skillService;
@@ -1238,6 +1241,49 @@ class SkillServiceTest {
         );
         assertEquals("You are not the owner of this skill", exception.getMessage());
     }
+
+    @Test
+    void updatePersonalSkill_shouldThrow_whenAssignedByAdminReadOnly() {
+        PersonalSkillRequest request = new PersonalSkillRequest();
+        request.setName("Java Updated");
+        request.setDescription("Updated Description");
+
+        testSkill.setCreatedBy(UUID.randomUUID().toString());
+
+        when(currentUser.getId()).thenReturn(testUserId);
+        when(skillDataAccess.findById(testSkillId)).thenReturn(Optional.of(testSkill));
+        when(userSkillDataAccess.existsByUserIdAndSkillId(testUserId, testSkillId)).thenReturn(true);
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                skillService.updatePersonalSkill(testSkillId, request)
+        );
+        assertEquals("Skill assigned by admin is read-only", exception.getMessage());
+    }
+
+    @Test
+    void updatePersonalSkillLevel_shouldUpdateBinding_whenValid() {
+        UserSkill userSkill = new UserSkill();
+        userSkill.setUser(currentUser);
+        userSkill.setSkill(testSkill);
+        userSkill.setSkillLevel(testSkillLevel);
+
+        SkillLevel newLevel = new SkillLevel();
+        newLevel.setId(UUID.randomUUID());
+        newLevel.setSkill(testSkill);
+        newLevel.setLevelValue(2);
+        newLevel.setTitle("Intermediate");
+
+        when(currentUser.getId()).thenReturn(testUserId);
+        when(skillDataAccess.findById(testSkillId)).thenReturn(Optional.of(testSkill));
+        when(userSkillDataAccess.existsByUserIdAndSkillId(testUserId, testSkillId)).thenReturn(true);
+        when(skillLevelDataAccess.findById(newLevel.getId())).thenReturn(Optional.of(newLevel));
+        when(userSkillDataAccess.findByUserIdAndSkillId(testUserId, testSkillId)).thenReturn(List.of(userSkill));
+
+        skillService.updatePersonalSkillLevel(testSkillId, newLevel.getId());
+
+        verify(userSkillDataAccess).save(userSkill);
+        assertEquals(newLevel, userSkill.getSkillLevel());
+    }
     
     @Test
     void updatePersonalSkill_shouldThrow_whenSkillNotFound() {
@@ -1255,21 +1301,19 @@ class SkillServiceTest {
     }
     
     @Test
-    void deletePersonalSkill_shouldDelete_whenOwner() {
+    void deletePersonalSkill_shouldOnlyUnbind_whenOwner() {
         // Arrange
         when(currentUser.getId()).thenReturn(testUserId);
         when(skillDataAccess.findById(testSkillId)).thenReturn(Optional.of(testSkill));
         when(userSkillDataAccess.existsByUserIdAndSkillId(testUserId, testSkillId)).thenReturn(true);
-        when(userSkillDataAccess.existsBySkillId(testSkillId)).thenReturn(false);
-        when(projectSkillDataAccess.existsBySkillId(testSkillId)).thenReturn(false);
         
         // Act
         skillService.deletePersonalSkill(testSkillId);
         
         // Assert
         verify(userSkillDataAccess).deleteByUserIdAndSkillId(testUserId, testSkillId);
-        verify(skillLevelDataAccess).deleteBySkillId(testSkillId);
-        verify(skillDataAccess).delete(testSkill);
+        verify(skillLevelDataAccess, never()).deleteBySkillId(any());
+        verify(skillDataAccess, never()).delete(any());
     }
     
     @Test
@@ -1324,8 +1368,10 @@ class SkillServiceTest {
         when(skillDataAccess.exists(any())).thenReturn(false);
         when(skillDataAccess.save(newSkill)).thenReturn(testSkill);
         when(skillDataAccess.findById(testSkill.getId())).thenReturn(Optional.of(testSkill));
-        when(userDataAccess.findById(userId1)).thenReturn(Optional.of(user1));
-        when(userDataAccess.findById(userId2)).thenReturn(Optional.of(user2));
+        when(userDataAccess.existsById(userId1)).thenReturn(true);
+        when(userDataAccess.existsById(userId2)).thenReturn(true);
+        when(entityManager.getReference(User.class, userId1)).thenReturn(user1);
+        when(entityManager.getReference(User.class, userId2)).thenReturn(user2);
         when(skillLevelDataAccess.findById(testSkillLevel.getId())).thenReturn(Optional.of(testSkillLevel));
         when(userSkillDataAccess.existsByUserIdAndSkillId(userId1, testSkill.getId())).thenReturn(false);
         when(userSkillDataAccess.existsByUserIdAndSkillId(userId2, testSkill.getId())).thenReturn(false);
@@ -1360,7 +1406,8 @@ class SkillServiceTest {
         when(skillDataAccess.exists(any())).thenReturn(false);
         when(skillDataAccess.save(newSkill)).thenReturn(testSkill);
         when(skillDataAccess.findById(testSkill.getId())).thenReturn(Optional.of(testSkill));
-        when(userDataAccess.findById(userId)).thenReturn(Optional.of(user));
+        when(userDataAccess.existsById(userId)).thenReturn(true);
+        when(entityManager.getReference(User.class, userId)).thenReturn(user);
         when(skillLevelDataAccess.findBySkillIdOrderByLevelValueAsc(testSkill.getId())).thenReturn(List.of(testSkillLevel));
         when(userSkillDataAccess.existsByUserIdAndSkillId(userId, testSkill.getId())).thenReturn(false);
         when(skillMapper.toVo(testSkill)).thenReturn(skillVo);
@@ -1391,7 +1438,7 @@ class SkillServiceTest {
         when(skillDataAccess.exists(any())).thenReturn(false);
         when(skillDataAccess.save(newSkill)).thenReturn(testSkill);
         when(skillDataAccess.findById(testSkill.getId())).thenReturn(Optional.of(testSkill));
-        when(userDataAccess.findById(invalidUserId)).thenReturn(Optional.empty());
+        when(userDataAccess.existsById(invalidUserId)).thenReturn(false);
         when(skillLevelDataAccess.findBySkillIdOrderByLevelValueAsc(testSkill.getId())).thenReturn(List.of(testSkillLevel));
         
         // Act & Assert
@@ -1454,7 +1501,8 @@ class SkillServiceTest {
         when(skillMapper.toEntity(skillVo)).thenReturn(testSkill);
         when(userSkillDataAccess.findBySkillId(testSkillId)).thenReturn(List.of(existingBinding));
         when(skillDataAccess.findById(testSkillId)).thenReturn(Optional.of(testSkill));
-        when(userDataAccess.findById(userId2)).thenReturn(Optional.of(user2));
+        when(userDataAccess.existsById(userId2)).thenReturn(true);
+        when(entityManager.getReference(User.class, userId2)).thenReturn(user2);
         when(skillLevelDataAccess.findById(testSkillLevel.getId())).thenReturn(Optional.of(testSkillLevel));
         when(userSkillDataAccess.existsByUserIdAndSkillId(userId2, testSkillId)).thenReturn(false);
         

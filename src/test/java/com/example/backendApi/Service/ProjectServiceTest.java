@@ -5,15 +5,22 @@ import com.example.backendApi.Dto.Vo.dto.search.ProjectSearchQuery;
 import com.example.backendApi.Dto.Vo.PersonalProjectRequest;
 import com.example.backendApi.Dto.Vo.ProjectVo;
 import com.example.backendApi.Entity.Project;
+import com.example.backendApi.Entity.ProjectSkill;
+import com.example.backendApi.Entity.Skill;
+import com.example.backendApi.Entity.SkillLevel;
 import com.example.backendApi.Entity.User;
 import com.example.backendApi.Entity.UserProject;
+import com.example.backendApi.Entity.UserSkill;
 import com.example.backendApi.Service.impl.ProjectService;
 import com.example.backendApi.dataaccess.IProjectDataAccess;
 import com.example.backendApi.dataaccess.IProjectSkillDataAccess;
+import com.example.backendApi.dataaccess.ISkillLevelDataAccess;
 import com.example.backendApi.dataaccess.IUserDataAccess;
 import com.example.backendApi.dataaccess.IUserProjectDataAccess;
+import com.example.backendApi.dataaccess.IUserSkillDataAccess;
 import com.example.backendApi.exception.AppException;
 import com.example.backendApi.mapper.ProjectMapper;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -46,6 +53,10 @@ class ProjectServiceTest {
     @Mock
     private IUserDataAccess userDataAccess;
     @Mock
+    private IUserSkillDataAccess userSkillDataAccess;
+    @Mock
+    private ISkillLevelDataAccess skillLevelDataAccess;
+    @Mock
     private ProjectMapper projectMapper;
 
     @InjectMocks
@@ -53,6 +64,8 @@ class ProjectServiceTest {
 
     @Mock
     private User currentUser;
+    @Mock
+    private EntityManager entityManager;
 
     private Project testProject;
     private ProjectVo testProjectVo;
@@ -456,8 +469,10 @@ class ProjectServiceTest {
         when(projectDataAccess.findByName("Java Project")).thenReturn(Collections.emptyList());
         when(projectDataAccess.save(newProject)).thenReturn(testProject);
         when(projectDataAccess.findById(testProject.getId())).thenReturn(Optional.of(testProject));
-        when(userDataAccess.findById(userId1)).thenReturn(Optional.of(user1));
-        when(userDataAccess.findById(userId2)).thenReturn(Optional.of(user2));
+        when(userDataAccess.existsById(userId1)).thenReturn(true);
+        when(userDataAccess.existsById(userId2)).thenReturn(true);
+        when(entityManager.getReference(User.class, userId1)).thenReturn(user1);
+        when(entityManager.getReference(User.class, userId2)).thenReturn(user2);
         when(userProjectDataAccess.existsByUserIdAndProjectId(userId1, testProject.getId())).thenReturn(false);
         when(userProjectDataAccess.existsByUserIdAndProjectId(userId2, testProject.getId())).thenReturn(false);
         when(projectMapper.toVo(testProject)).thenReturn(projectVo);
@@ -488,7 +503,7 @@ class ProjectServiceTest {
         when(projectDataAccess.findByName("Java Project")).thenReturn(Collections.emptyList());
         when(projectDataAccess.save(newProject)).thenReturn(testProject);
         when(projectDataAccess.findById(testProject.getId())).thenReturn(Optional.of(testProject));
-        when(userDataAccess.findById(invalidUserId)).thenReturn(Optional.empty());
+        when(userDataAccess.existsById(invalidUserId)).thenReturn(false);
         
         // Act & Assert
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
@@ -565,7 +580,8 @@ class ProjectServiceTest {
         
         when(projectMapper.toEntity(projectVo)).thenReturn(testProject);
         when(projectDataAccess.findById(testId)).thenReturn(Optional.of(testProject));
-        when(userDataAccess.findById(userId2)).thenReturn(Optional.of(user2));
+        when(userDataAccess.existsById(userId2)).thenReturn(true);
+        when(entityManager.getReference(User.class, userId2)).thenReturn(user2);
         when(userProjectDataAccess.existsByUserIdAndProjectId(userId2, testId)).thenReturn(false);
         
         // Act
@@ -612,5 +628,117 @@ class ProjectServiceTest {
         // Assert
         verify(userProjectDataAccess, never()).deleteByProjectId(any());
         verify(userProjectDataAccess, never()).save(any(UserProject.class));
+    }
+
+    @Test
+    void updatePersonalProject_shouldThrow_whenAssignedByAdminReadOnly() {
+        UUID projectId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        when(currentUser.getId()).thenReturn(userId);
+
+        testProject.setCreatedBy(UUID.randomUUID().toString());
+        PersonalProjectRequest request = new PersonalProjectRequest();
+        request.setName("Updated Project");
+
+        when(projectDataAccess.findById(projectId)).thenReturn(Optional.of(testProject));
+        when(userProjectDataAccess.existsByUserIdAndProjectId(userId, projectId)).thenReturn(true);
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> projectService.updatePersonalProject(projectId, request));
+        assertEquals("Project assigned by admin is read-only", exception.getMessage());
+    }
+
+    @Test
+    void bindPersonalProjectSkill_shouldBind_whenVisibleAndAllowed() {
+        UUID projectId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        UUID skillId = UUID.randomUUID();
+        UUID levelId = UUID.randomUUID();
+
+        when(currentUser.getId()).thenReturn(userId);
+        when(userProjectDataAccess.existsByUserIdAndProjectId(userId, projectId)).thenReturn(true);
+
+        UserSkill userSkill = new UserSkill();
+        Skill visibleSkill = new Skill();
+        visibleSkill.setId(skillId);
+        userSkill.setSkill(visibleSkill);
+        when(userSkillDataAccess.findByUserId(userId)).thenReturn(List.of(userSkill));
+        when(userProjectDataAccess.findByUserId(userId)).thenReturn(List.of());
+
+        when(projectSkillDataAccess.existsByProjectIdAndSkillId(projectId, skillId)).thenReturn(false);
+        when(projectDataAccess.findById(projectId)).thenReturn(Optional.of(testProject));
+
+        SkillLevel level = new SkillLevel();
+        level.setId(levelId);
+        level.setSkill(visibleSkill);
+        when(skillLevelDataAccess.findById(levelId)).thenReturn(Optional.of(level));
+
+        projectService.bindPersonalProjectSkill(projectId, skillId, levelId);
+
+        verify(projectSkillDataAccess).save(any(ProjectSkill.class));
+    }
+
+    @Test
+    void bindPersonalProjectSkill_shouldThrow_whenSkillNotVisible() {
+        UUID projectId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        UUID skillId = UUID.randomUUID();
+        UUID levelId = UUID.randomUUID();
+
+        when(currentUser.getId()).thenReturn(userId);
+        when(userProjectDataAccess.existsByUserIdAndProjectId(userId, projectId)).thenReturn(true);
+        when(userSkillDataAccess.findByUserId(userId)).thenReturn(List.of());
+        when(userProjectDataAccess.findByUserId(userId)).thenReturn(List.of());
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> projectService.bindPersonalProjectSkill(projectId, skillId, levelId));
+        assertEquals("Skill is not visible to current user", exception.getMessage());
+    }
+
+    @Test
+    void updatePersonalProjectSkillLevel_shouldUpdate_whenBindingExists() {
+        UUID projectId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        UUID skillId = UUID.randomUUID();
+        UUID levelId = UUID.randomUUID();
+
+        when(currentUser.getId()).thenReturn(userId);
+        when(userProjectDataAccess.existsByUserIdAndProjectId(userId, projectId)).thenReturn(true);
+
+        UserSkill userSkill = new UserSkill();
+        Skill skill = new Skill();
+        skill.setId(skillId);
+        userSkill.setSkill(skill);
+        when(userSkillDataAccess.findByUserId(userId)).thenReturn(List.of(userSkill));
+        when(userProjectDataAccess.findByUserId(userId)).thenReturn(List.of());
+
+        ProjectSkill projectSkill = new ProjectSkill();
+        projectSkill.setSkill(skill);
+        when(projectSkillDataAccess.findByProjectIdAndSkillId(projectId, skillId)).thenReturn(Optional.of(projectSkill));
+
+        SkillLevel level = new SkillLevel();
+        level.setId(levelId);
+        level.setSkill(skill);
+        when(skillLevelDataAccess.findById(levelId)).thenReturn(Optional.of(level));
+
+        projectService.updatePersonalProjectSkillLevel(projectId, skillId, levelId);
+
+        verify(projectSkillDataAccess).save(projectSkill);
+        assertEquals(level, projectSkill.getSkillLevel());
+    }
+
+    @Test
+    void unbindPersonalProjectSkill_shouldDelete_whenBindingExists() {
+        UUID projectId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        UUID skillId = UUID.randomUUID();
+
+        when(currentUser.getId()).thenReturn(userId);
+        when(userProjectDataAccess.existsByUserIdAndProjectId(userId, projectId)).thenReturn(true);
+        when(projectSkillDataAccess.existsByProjectIdAndSkillId(projectId, skillId)).thenReturn(true);
+
+        projectService.unbindPersonalProjectSkill(projectId, skillId);
+
+        verify(projectSkillDataAccess).deleteByProjectIdAndSkillId(projectId, skillId);
     }
 }

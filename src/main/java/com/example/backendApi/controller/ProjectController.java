@@ -2,6 +2,8 @@ package com.example.backendApi.controller;
 
 import com.example.backendApi.Dto.Vo.dto.common.PageResult;
 import com.example.backendApi.Dto.Vo.dto.search.ProjectSearchQuery;
+import com.example.backendApi.Dto.Vo.PersonalProjectSkillBindRequest;
+import com.example.backendApi.Dto.Vo.PersonalProjectSkillLevelRequest;
 import com.example.backendApi.Dto.Vo.PersonalProjectRequest;
 import com.example.backendApi.Service.IProjectService;
 import com.example.backendApi.Service.ISkillService;
@@ -56,7 +58,7 @@ public class ProjectController {
     }
 
     @PostMapping("/bindSkill")
-    @ApiOperationBadRequest(summary = "Bind project skill", description = "Binds a skill level to a project.")
+    @ApiOperationBadRequest(summary = "Bind project skill", description = "Binds a skill level to a project. This operation manages binding relation only and does not modify skill content. Admin-assigned skills can still be bound by authorized users.")
     public ResponseType<String> bindProjectSkill(@RequestBody ProjectSkillBindRequest body) {
         skillService.bindProjectSkill(body.getProjectId(), body.getSkillId(), body.getSkillLevelId());
         return ResponseType.Success("Project skill bound successfully");
@@ -104,5 +106,37 @@ public class ProjectController {
     public ResponseType<String> deletePersonalProject(@PathVariable UUID projectId) {
         projectService.deletePersonalProject(projectId);
         return ResponseType.Success("Personal project deleted successfully");
+    }
+
+    @PostMapping("/personal/{projectId}/skill/bind")
+    @ApiOperationBadRequest(summary = "Bind personal project skill", description = "綁定技能到可操作的個人專案。管理員指定專案雖不可修改主資料，但可修改綁定關係。每個專案技能綁定只能選擇一個等級。")
+    public ResponseType<String> bindPersonalProjectSkill(
+            @PathVariable UUID projectId,
+            @Valid @RequestBody PersonalProjectSkillBindRequest request) {
+        projectService.bindPersonalProjectSkill(
+                projectId,
+                UUID.fromString(request.getSkillId()),
+                UUID.fromString(request.getSkillLevelId())
+        );
+        return ResponseType.Success("Personal project skill bound successfully");
+    }
+
+    @PutMapping("/personal/{projectId}/skill/{skillId}/level")
+    @ApiOperationBadRequest(summary = "Update personal project skill level", description = "更新個人可操作專案中某技能的等級綁定。僅接受既有等級 ID。")
+    public ResponseType<String> updatePersonalProjectSkillLevel(
+            @PathVariable UUID projectId,
+            @PathVariable UUID skillId,
+            @Valid @RequestBody PersonalProjectSkillLevelRequest request) {
+        projectService.updatePersonalProjectSkillLevel(projectId, skillId, UUID.fromString(request.getSkillLevelId()));
+        return ResponseType.Success("Personal project skill level updated successfully");
+    }
+
+    @DeleteMapping("/personal/{projectId}/skill/{skillId}")
+    @ApiOperationBadRequest(summary = "Unbind personal project skill", description = "解除個人可操作專案中的技能綁定。")
+    public ResponseType<String> unbindPersonalProjectSkill(
+            @PathVariable UUID projectId,
+            @PathVariable UUID skillId) {
+        projectService.unbindPersonalProjectSkill(projectId, skillId);
+        return ResponseType.Success("Personal project skill unbound successfully");
     }
 }

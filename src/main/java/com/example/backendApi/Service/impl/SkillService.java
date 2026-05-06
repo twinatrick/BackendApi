@@ -24,6 +24,7 @@ import com.example.backendApi.dataaccess.IUserDataAccess;
 import com.example.backendApi.dataaccess.IUserProjectDataAccess;
 import com.example.backendApi.dataaccess.IUserSkillDataAccess;
 import com.example.backendApi.mapper.SkillMapper;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
@@ -48,6 +49,7 @@ public class SkillService implements ISkillService {
     private final IUserProjectDataAccess userProjectDataAccess;
     private final IProjectSkillDataAccess projectSkillDataAccess;
     private final SkillMapper skillMapper;
+    private final EntityManager entityManager;
     private final User currentUser;
 
     @Transactional
@@ -133,11 +135,17 @@ public class SkillService implements ISkillService {
         // 綁定每個使用者
         for (String userIdStr : userIds) {
             UUID userId = UUID.fromString(userIdStr);
-            User user = userDataAccess.findById(userId)
-                    .orElseThrow(() -> new IllegalArgumentException("User not found: " + userIdStr));
+            
+            // 驗證使用者是否存在
+            if (!userDataAccess.existsById(userId)) {
+                throw new IllegalArgumentException("User not found: " + userIdStr);
+            }
             
             // 檢查是否已存在綁定
             if (!userSkillDataAccess.existsByUserIdAndSkillId(userId, skillId)) {
+                // 使用 EntityManager.getReference 避免 CGLIB 代理問題
+                User user = entityManager.getReference(User.class, userId);
+                
                 UserSkill userSkill = new UserSkill();
                 userSkill.setUser(user);
                 userSkill.setSkill(skill);
@@ -578,6 +586,10 @@ public class SkillService implements ISkillService {
         if (!userSkillDataAccess.existsByUserIdAndSkillId(currentUser.getId(), skillId)) {
             throw new IllegalArgumentException("You are not the owner of this skill");
         }
+
+        if (!canEditContent(skill.getCreatedBy(), currentUser.getId())) {
+            throw new IllegalArgumentException("Skill assigned by admin is read-only");
+        }
         
         // 更新技能資訊
         skill.setName(request.getName());
@@ -604,6 +616,33 @@ public class SkillService implements ISkillService {
             }
         }
     }
+
+    @Transactional
+    @Override
+    public void updatePersonalSkillLevel(UUID skillId, UUID skillLevelId) {
+        if (skillId == null || skillLevelId == null) {
+            throw new IllegalArgumentException("Key must not be null");
+        }
+
+        Skill skill = skillDataAccess.findById(skillId)
+                .orElseThrow(() -> new IllegalArgumentException("Skill not found"));
+        if (!userSkillDataAccess.existsByUserIdAndSkillId(currentUser.getId(), skillId)) {
+            throw new IllegalArgumentException("Skill is not bind to current user");
+        }
+
+        SkillLevel skillLevel = skillLevelDataAccess.findById(skillLevelId)
+                .orElseThrow(() -> new IllegalArgumentException("Skill level not found"));
+        validateSkillLevelBelongsToSkill(skillLevel, skill);
+
+        List<UserSkill> userSkills = userSkillDataAccess.findByUserIdAndSkillId(currentUser.getId(), skillId);
+        if (userSkills.isEmpty()) {
+            throw new IllegalArgumentException("Skill is not bind to current user");
+        }
+
+        UserSkill userSkill = userSkills.get(0);
+        userSkill.setSkillLevel(skillLevel);
+        userSkillDataAccess.save(userSkill);
+    }
     
     @Transactional
     @Override
@@ -621,18 +660,15 @@ public class SkillService implements ISkillService {
         if (!userSkillDataAccess.existsByUserIdAndSkillId(currentUser.getId(), skillId)) {
             throw new IllegalArgumentException("You are not the owner of this skill");
         }
-        
+
         // 刪除當前使用者與技能的綁定
         userSkillDataAccess.deleteByUserIdAndSkillId(currentUser.getId(), skillId);
-        
-        // 檢查是否還有其他使用者綁定此技能或專案綁定此技能
-        boolean hasOtherBindings = userSkillDataAccess.existsBySkillId(skillId) || 
-                                    projectSkillDataAccess.existsBySkillId(skillId);
-        
-        // 如果沒有其他綁定，刪除技能本身及其等級
-        if (!hasOtherBindings) {
-            skillLevelDataAccess.deleteBySkillId(skillId);
-            skillDataAccess.delete(skill);
+    }
+
+    private boolean canEditContent(String createdBy, UUID currentUserId) {
+        if (createdBy == null || createdBy.isBlank()) {
+            return true;
         }
+        return createdBy.equals(currentUserId.toString());
     }
 }

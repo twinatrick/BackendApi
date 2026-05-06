@@ -6,6 +6,7 @@ import com.example.backendApi.Entity.ProjectSkill;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Component
@@ -35,8 +36,18 @@ public class ProjectSkillDataAccessImpl implements IProjectSkillDataAccess {
     }
 
     @Override
+    public Optional<ProjectSkill> findByProjectIdAndSkillId(UUID projectId, UUID skillId) {
+        return projectSkillRepository.findByProjectIdAndSkillId(projectId, skillId);
+    }
+
+    @Override
     public void deleteByProjectId(UUID projectId) {
         projectSkillRepository.deleteByProjectId(projectId);
+    }
+
+    @Override
+    public void deleteByProjectIdAndSkillId(UUID projectId, UUID skillId) {
+        projectSkillRepository.deleteByProjectIdAndSkillId(projectId, skillId);
     }
 
     @Override

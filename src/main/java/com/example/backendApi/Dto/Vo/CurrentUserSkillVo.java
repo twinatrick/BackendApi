@@ -38,7 +38,7 @@ public class CurrentUserSkillVo {
     @Schema(description = "更新時間")
     private Date updatedTime;
     
-    @Schema(description = "來源類型：USER（直接綁定）或 PROJECT（專案技能）")
+    @Schema(description = "來源類型：USER（直接綁定）或 PROJECT（專案技能）。管理者指派到使用者的技能屬於 USER 來源但視為唯讀（不可透過個人技能 API 修改內容）；可依權限進行綁定關聯。")
     private String sourceType;
     
     @Schema(description = "專案ID（當 sourceType 為 PROJECT 時有值）")

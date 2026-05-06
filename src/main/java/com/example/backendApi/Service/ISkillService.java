@@ -78,6 +78,14 @@ public interface ISkillService {
      * @param request 個人技能請求
      */
     void updatePersonalSkill(UUID skillId, PersonalSkillRequest request);
+
+    /**
+     * 修改個人技能綁定的等級（僅修改綁定，不修改技能主資料）
+     *
+     * @param skillId 技能 ID
+     * @param skillLevelId 技能等級 ID
+     */
+    void updatePersonalSkillLevel(UUID skillId, UUID skillLevelId);
     
     /**
      * 刪除個人技能（僅限擁有者）

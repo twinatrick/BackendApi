@@ -45,7 +45,7 @@ public class UserController {
     }
 
     @PostMapping("/bindSkill")
-    @ApiOperationBadRequest(summary = "Bind user skill", description = "Binds a skill level to a user.")
+    @ApiOperationBadRequest(summary = "Bind user skill", description = "Binds a skill level to a user. This operation manages binding relation only and does not modify skill content. Admin-assigned skills can still be bound by authorized users.")
     public ResponseType<String> bindUserSkill(@RequestBody UserSkillBindRequest body) {
         skillService.bindUserSkill(body.getUserId(), body.getSkillId(), body.getSkillLevelId());
         return ResponseType.Success("User skill bound successfully");
