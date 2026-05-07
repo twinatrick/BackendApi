@@ -11,6 +11,7 @@ import com.example.backendApi.annotation.openapi.ApiControllerTag;
 import com.example.backendApi.annotation.openapi.ApiOperationBadRequest;
 import com.example.backendApi.annotation.openapi.ApiOperationOk;
 import com.example.backendApi.Dto.Vo.ProjectSkillBindRequest;
+import com.example.backendApi.Dto.Vo.ProjectSkillVo;
 import com.example.backendApi.Dto.Vo.ProjectVo;
 import com.example.backendApi.Dto.Vo.ResponseType;
 import jakarta.validation.Valid;
@@ -64,6 +65,13 @@ public class ProjectController {
         return ResponseType.Success("Project skill bound successfully");
     }
     
+    @GetMapping("/{projectId}/skills")
+    @ApiOperationOk(summary = "Get project skills", description = "獲取指定專案綁定的所有技能與等級詳細資訊")
+    public ResponseType<List<ProjectSkillVo>> getProjectSkills(@PathVariable UUID projectId) {
+        List<ProjectSkillVo> skills = projectService.getProjectSkills(projectId);
+        return ResponseType.Success(skills, "Project skills fetched successfully");
+    }
+    
     @PostMapping("/search")
     @ApiOperationOk(summary = "Search projects with pagination", description = "搜尋專案並回傳分頁結果，支援多種查詢條件與排序")
     public ResponseType<PageResult<ProjectVo>> searchProjects(@Valid @RequestBody ProjectSearchQuery query) {
@@ -106,6 +114,13 @@ public class ProjectController {
     public ResponseType<String> deletePersonalProject(@PathVariable UUID projectId) {
         projectService.deletePersonalProject(projectId);
         return ResponseType.Success("Personal project deleted successfully");
+    }
+
+    @GetMapping("/personal/{projectId}/skills")
+    @ApiOperationOk(summary = "Get personal project skills", description = "獲取個人專屬的專案綁定的所有技能與等級詳細資訊，會驗證當前使用者權限")
+    public ResponseType<List<ProjectSkillVo>> getPersonalProjectSkills(@PathVariable UUID projectId) {
+        List<ProjectSkillVo> skills = projectService.getPersonalProjectSkills(projectId);
+        return ResponseType.Success(skills, "Personal project skills fetched successfully");
     }
 
     @PostMapping("/personal/{projectId}/skill/bind")

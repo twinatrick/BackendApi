@@ -2,6 +2,7 @@ package com.example.backendApi.dataaccess;
 
 import com.example.backendApi.Entity.ProjectSkill;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -15,6 +16,8 @@ public interface IProjectSkillDataAccess {
     ProjectSkill save(ProjectSkill projectSkill);
 
     Optional<ProjectSkill> findByProjectIdAndSkillId(UUID projectId, UUID skillId);
+
+    List<ProjectSkill> findByProjectId(UUID projectId);
 
     void deleteByProjectId(UUID projectId);
 

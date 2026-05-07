@@ -3,6 +3,7 @@ package com.example.backendApi.Service;
 import com.example.backendApi.Dto.Vo.dto.common.PageResult;
 import com.example.backendApi.Dto.Vo.dto.search.ProjectSearchQuery;
 import com.example.backendApi.Dto.Vo.PersonalProjectRequest;
+import com.example.backendApi.Dto.Vo.ProjectSkillVo;
 import com.example.backendApi.Dto.Vo.ProjectVo;
 
 import java.util.List;
@@ -39,6 +40,22 @@ public interface IProjectService {
      * @return 分頁結果
      */
     PageResult<ProjectVo> searchCurrentUserProjects(ProjectSearchQuery query);
+
+    /**
+     * 獲取專案綁定的所有技能資訊
+     * 
+     * @param projectId 專案 ID
+     * @return 技能資訊列表
+     */
+    List<ProjectSkillVo> getProjectSkills(UUID projectId);
+
+    /**
+     * 獲取個人專案綁定的所有技能資訊
+     *
+     * @param projectId 專案 ID
+     * @return 技能資訊列表
+     */
+    List<ProjectSkillVo> getPersonalProjectSkills(UUID projectId);
     
     /**
      * 新增個人專案（自動綁定當前使用者）

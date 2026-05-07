@@ -3,6 +3,7 @@ package com.example.backendApi.Service.impl;
 import com.example.backendApi.Dto.Vo.dto.common.PageResult;
 import com.example.backendApi.Dto.Vo.dto.search.ProjectSearchQuery;
 import com.example.backendApi.Dto.Vo.PersonalProjectRequest;
+import com.example.backendApi.Dto.Vo.ProjectSkillVo;
 import com.example.backendApi.Entity.ProjectSkill;
 import com.example.backendApi.Entity.Skill;
 import com.example.backendApi.Entity.SkillLevel;
@@ -236,6 +237,52 @@ public class ProjectService implements IProjectService {
         return PageResult.of(projectPage, projectVos);
     }
     
+    @Override
+    public List<ProjectSkillVo> getProjectSkills(UUID projectId) {
+        if (projectId == null) {
+            throw new IllegalArgumentException("Project ID must not be null");
+        }
+
+        if (!projectDataAccess.existsById(projectId)) {
+            throw new IllegalArgumentException("Project not found");
+        }
+
+        List<ProjectSkill> projectSkills = projectSkillDataAccess.findByProjectId(projectId);
+        
+        return projectSkills.stream().map(ps -> {
+            ProjectSkillVo vo = new ProjectSkillVo();
+            vo.setProjectId(ps.getProject().getId());
+            vo.setSkillId(ps.getSkill().getId());
+            vo.setSkillName(ps.getSkill().getName());
+            vo.setSkillDescription(ps.getSkill().getDescription());
+            
+            SkillLevel level = ps.getSkillLevel();
+            if (level != null) {
+                vo.setSkillLevelId(level.getId());
+                vo.setLevelValue(level.getLevelValue());
+                vo.setLevelTitle(level.getTitle());
+                vo.setLevelDescription(level.getDescription());
+            }
+            return vo;
+        }).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<ProjectSkillVo> getPersonalProjectSkills(UUID projectId) {
+        if (projectId == null) {
+            throw new IllegalArgumentException("Project ID must not be null");
+        }
+        
+        UUID currentUserId = requireCurrentUserId();
+        
+        // 驗證是否為可見專案
+        if (!userProjectDataAccess.existsByUserIdAndProjectId(currentUserId, projectId)) {
+            throw new IllegalArgumentException("You do not have access to this project");
+        }
+
+        return getProjectSkills(projectId);
+    }
+
     @Transactional
     @Override
     public ProjectVo addPersonalProject(PersonalProjectRequest request) {

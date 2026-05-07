@@ -3,6 +3,7 @@ package com.example.backendApi.Repository;
 import com.example.backendApi.Entity.ProjectSkill;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -14,6 +15,8 @@ public interface ProjectSkillRepository extends JpaRepository<ProjectSkill, UUID
     boolean existsBySkillId(UUID skillId);
 
     Optional<ProjectSkill> findByProjectIdAndSkillId(UUID projectId, UUID skillId);
+
+    List<ProjectSkill> findByProjectId(UUID projectId);
 
     void deleteByProjectId(UUID projectId);
 
