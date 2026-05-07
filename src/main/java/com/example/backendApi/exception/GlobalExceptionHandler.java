@@ -18,7 +18,13 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ResponseType<?>> handleIllegalArgument(IllegalArgumentException ex) {
-        ResponseType<?> response = ResponseType.Fail("VALIDATION_ERROR", "Invalid request", HttpStatus.BAD_REQUEST.value());
+        String message = ex.getMessage() == null ? "Invalid request" : ex.getMessage();
+        if ("Name already exists".equals(message)) {
+            ResponseType<?> response = ResponseType.Fail("DUPLICATE_NAME", message, HttpStatus.CONFLICT.value());
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+        }
+
+        ResponseType<?> response = ResponseType.Fail("VALIDATION_ERROR", message, HttpStatus.BAD_REQUEST.value());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 

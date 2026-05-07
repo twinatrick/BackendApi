@@ -277,9 +277,16 @@ class ProjectServiceTest {
     @Test
     void addPersonalProject_should_whenValid() {
         // Arrange
+        UUID userId = UUID.randomUUID();
+        User user = new User();
+        user.setId(userId);
+
         PersonalProjectRequest request = new PersonalProjectRequest();
         request.setName("Personal Project");
         request.setDescription("Personal Description");
+
+        when(currentUser.getId()).thenReturn(userId);
+        when(entityManager.getReference(User.class, userId)).thenReturn(user);
         
         when(projectDataAccess.findByName("Personal Project")).thenReturn(Collections.emptyList());
         when(projectDataAccess.save(any(Project.class))).thenReturn(testProject);

@@ -537,30 +537,31 @@ public class SkillService implements ISkillService {
         
         // 自動綁定當前使用者
         UserSkill userSkill = new UserSkill();
-        userSkill.setUser(currentUser);
+        UUID currentUserId = requireCurrentUserId();
+        userSkill.setUser(entityManager.getReference(User.class, currentUserId));
         userSkill.setSkill(savedSkill);
-        
-        // 如果提供了技能等級，綁定該等級
+
+        SkillLevel bindingLevel;
         if (request.getSkillLevelId() != null && !request.getSkillLevelId().trim().isEmpty()) {
             UUID skillLevelId = UUID.fromString(request.getSkillLevelId());
             SkillLevel skillLevel = skillLevelDataAccess.findById(skillLevelId)
                     .orElseThrow(() -> new IllegalArgumentException("Skill level not found"));
-            
-            // 驗證技能等級屬於該技能
+
             if (!skillLevel.getSkill().getId().equals(savedSkill.getId())) {
                 throw new IllegalArgumentException("Skill level does not belong to skill");
             }
-            
-            userSkill.setSkillLevel(skillLevel);
+            bindingLevel = skillLevel;
+        } else if (hasManualSkillLevelInput(request)) {
+            bindingLevel = createManualSkillLevel(savedSkill, request);
         } else {
-            // 如果沒提供等級，使用該技能的第一個等級（如果有的話）
             List<SkillLevel> levels = skillLevelDataAccess.findBySkillIdOrderByLevelValueAsc(savedSkill.getId());
-            if (!levels.isEmpty()) {
-                userSkill.setSkillLevel(levels.get(0));
-            } else {
-                throw new IllegalArgumentException("Skill must have at least one level");
+            if (levels.isEmpty()) {
+                throw new IllegalArgumentException("Skill level data is required");
             }
+            bindingLevel = levels.get(0);
         }
+
+        userSkill.setSkillLevel(bindingLevel);
         
         userSkillDataAccess.save(userSkill);
         
@@ -670,5 +671,34 @@ public class SkillService implements ISkillService {
             return true;
         }
         return createdBy.equals(currentUserId.toString());
+    }
+
+    private UUID requireCurrentUserId() {
+        if (currentUser == null || currentUser.getId() == null) {
+            throw new IllegalStateException("Current user not found");
+        }
+        return currentUser.getId();
+    }
+
+    private boolean hasManualSkillLevelInput(PersonalSkillRequest request) {
+        return request.getSkillLevelValue() != null
+                || (request.getSkillLevelTitle() != null && !request.getSkillLevelTitle().isBlank())
+                || (request.getSkillLevelDescription() != null && !request.getSkillLevelDescription().isBlank());
+    }
+
+    private SkillLevel createManualSkillLevel(Skill skill, PersonalSkillRequest request) {
+        if (request.getSkillLevelValue() == null || request.getSkillLevelValue() < 1) {
+            throw new IllegalArgumentException("Skill level value must be greater than 0");
+        }
+        if (request.getSkillLevelTitle() == null || request.getSkillLevelTitle().isBlank()) {
+            throw new IllegalArgumentException("Skill level title must not be null");
+        }
+
+        SkillLevel skillLevel = new SkillLevel();
+        skillLevel.setSkill(skill);
+        skillLevel.setLevelValue(request.getSkillLevelValue());
+        skillLevel.setTitle(request.getSkillLevelTitle());
+        skillLevel.setDescription(request.getSkillLevelDescription());
+        return skillLevelDataAccess.save(skillLevel);
     }
 }

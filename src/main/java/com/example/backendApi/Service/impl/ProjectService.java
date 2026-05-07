@@ -257,7 +257,8 @@ public class ProjectService implements IProjectService {
         
         // 自動綁定當前使用者
         UserProject userProject = new UserProject();
-        userProject.setUser(currentUser);
+        UUID currentUserId = requireCurrentUserId();
+        userProject.setUser(entityManager.getReference(User.class, currentUserId));
         userProject.setProject(savedProject);
         userProjectDataAccess.save(userProject);
         

@@ -110,8 +110,8 @@ public class SkillController {
     }
     
     @PostMapping("/personal/add")
-    @ApiOperationBadRequest(summary = "新增個人技能", description = "建立技能並自動綁定當前使用者。使用者自行新增的技能可由本人後續修改/刪除。")
-    @Operation(summary = "新增個人技能", description = "一般使用者新增技能，會自動綁定到當前登入使用者。此路徑建立的技能視為使用者自有技能，可由本人後續修改或刪除。")
+    @ApiOperationBadRequest(summary = "新增個人技能", description = "建立技能並自動綁定當前使用者。可使用既有 skillLevelId 或手動填寫 skillLevelValue/skillLevelTitle/skillLevelDescription 建立等級。")
+    @Operation(summary = "新增個人技能", description = "一般使用者新增技能，會自動綁定到當前登入使用者。若未提供 skillLevelId，可手動填寫等級值、標題與描述建立第一個技能等級。")
     public ResponseType<SkillVo> addPersonalSkill(@RequestBody PersonalSkillRequest request) {
         return ResponseType.Success(skillService.addPersonalSkill(request), "個人技能新增成功");
     }

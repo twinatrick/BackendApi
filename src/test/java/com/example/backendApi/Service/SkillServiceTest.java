@@ -1130,6 +1130,61 @@ class SkillServiceTest {
         verify(skillDataAccess).save(any(Skill.class));
         verify(userSkillDataAccess).save(any(UserSkill.class));
     }
+
+    @Test
+    void addPersonalSkill_shouldCreateLevelFromManualInput_whenNoSkillLevelId() {
+        UUID userId = UUID.randomUUID();
+        User user = new User();
+        user.setId(userId);
+
+        PersonalSkillRequest request = new PersonalSkillRequest();
+        request.setName("Java");
+        request.setDescription("Java Programming");
+        request.setSkillLevelValue(1);
+        request.setSkillLevelTitle("Beginner");
+        request.setSkillLevelDescription("Basic");
+
+        SkillLevel createdLevel = new SkillLevel();
+        createdLevel.setId(UUID.randomUUID());
+        createdLevel.setSkill(testSkill);
+        createdLevel.setLevelValue(1);
+        createdLevel.setTitle("Beginner");
+
+        when(currentUser.getId()).thenReturn(userId);
+        when(entityManager.getReference(User.class, userId)).thenReturn(user);
+        when(skillDataAccess.exists(any())).thenReturn(false);
+        when(skillDataAccess.save(any(Skill.class))).thenReturn(testSkill);
+        when(skillLevelDataAccess.save(any(SkillLevel.class))).thenReturn(createdLevel);
+        when(skillMapper.toVo(testSkill)).thenReturn(testSkillVo);
+
+        SkillVo result = skillService.addPersonalSkill(request);
+
+        assertNotNull(result);
+        verify(skillLevelDataAccess).save(any(SkillLevel.class));
+        verify(userSkillDataAccess).save(argThat(userSkill -> userSkill.getSkillLevel().equals(createdLevel)));
+    }
+
+    @Test
+    void addPersonalSkill_shouldThrow_whenNoSkillLevelDataProvided() {
+        UUID userId = UUID.randomUUID();
+        User user = new User();
+        user.setId(userId);
+
+        PersonalSkillRequest request = new PersonalSkillRequest();
+        request.setName("Java");
+        request.setDescription("Java Programming");
+
+        when(currentUser.getId()).thenReturn(userId);
+        when(entityManager.getReference(User.class, userId)).thenReturn(user);
+        when(skillDataAccess.exists(any())).thenReturn(false);
+        when(skillDataAccess.save(any(Skill.class))).thenReturn(testSkill);
+        when(skillLevelDataAccess.findBySkillIdOrderByLevelValueAsc(testSkill.getId())).thenReturn(List.of());
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                skillService.addPersonalSkill(request)
+        );
+        assertEquals("Skill level data is required", exception.getMessage());
+    }
     
     @Test
     void addPersonalSkill_shouldThrow_whenNameNull() {
@@ -1167,6 +1222,7 @@ class SkillServiceTest {
         request.setSkillLevelId(testSkillLevel.getId().toString());
         
         when(currentUser.getId()).thenReturn(testUserId);
+        when(entityManager.getReference(User.class, testUserId)).thenReturn(currentUser);
         when(skillDataAccess.exists(any())).thenReturn(false);
         when(skillDataAccess.save(any(Skill.class))).thenReturn(testSkill);
         when(skillLevelDataAccess.findById(testSkillLevel.getId())).thenReturn(Optional.of(testSkillLevel));
@@ -1190,6 +1246,7 @@ class SkillServiceTest {
         request.setSkillLevelId(testSkillLevel.getId().toString());
         
         when(currentUser.getId()).thenReturn(testUserId);
+        when(entityManager.getReference(User.class, testUserId)).thenReturn(currentUser);
         when(skillDataAccess.exists(any())).thenReturn(false);
         when(skillDataAccess.save(any(Skill.class))).thenReturn(testSkill);
         when(skillLevelDataAccess.findById(testSkillLevel.getId())).thenReturn(Optional.of(testSkillLevel));
