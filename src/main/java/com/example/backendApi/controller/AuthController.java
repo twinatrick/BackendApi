@@ -8,7 +8,7 @@ import com.example.backendApi.annotation.openapi.ApiOperationAuth;
 import com.example.backendApi.annotation.openapi.ApiOperationBadRequest;
 import com.example.backendApi.annotation.Ingnore;
 import com.example.backendApi.exception.AppException;
-import com.example.backendApi.fillter.JwtAuthenticationToken;
+import com.example.backendApi.filter.JwtAuthenticationToken;
 import com.example.backendApi.Dto.Vo.LoginRequest;
 import com.example.backendApi.Dto.Vo.ResponseType;
 import com.example.backendApi.Dto.Vo.RoleOutVo;

@@ -1,4 +1,4 @@
-package com.example.backendApi.fillter;
+package com.example.backendApi.filter;
 
 import org.jose4j.jws.JsonWebSignature;
 import org.jose4j.jwt.JwtClaims;
