@@ -1,6 +1,6 @@
 # Java 21 Spring Boot 常見技術 實作方法
 
-通用後端範例專案，整合使用者/角色/權限、專案/技能管理、資料查詢與告警設定等常見後端需求，並提供 REST API、WebSocket 與 Kafka Consumer。
+通用後端範例專案，整合使用者/角色/權限、專案/技能管理、資料查詢與告警設定等常見後端需求，並提供 REST API、WebSocket 與 Kafka Consumer，且已實作註解式角色權限控管機制。
 
 ## 技術棧
 

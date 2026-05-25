@@ -6,6 +6,7 @@ import com.example.backendApi.Dto.Vo.dto.common.PageResult;
 import com.example.backendApi.Dto.Vo.dto.search.UserSearchQuery;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface IUserService {
     UserVo createUser(UserVo user);
@@ -29,6 +30,8 @@ public interface IUserService {
     List<UserVo> getAllUsersVo();
 
     void bindUserProject(String userId, String projectId);
+
+    void rebindUserProjects(UUID userId, List<UUID> projectIds);
     
     /**
      * 分頁搜尋使用者

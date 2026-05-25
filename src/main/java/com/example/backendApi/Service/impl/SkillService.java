@@ -32,8 +32,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -261,11 +265,68 @@ public class SkillService implements ISkillService {
             throw new IllegalArgumentException("Skill already bind to user");
         }
 
-        UserSkill userSkill = new UserSkill();
-        userSkill.setUser(user);
-        userSkill.setSkill(skill);
-        userSkill.setSkillLevel(skillLevel);
-        userSkillDataAccess.save(userSkill);
+        Map<UUID, UUID> target = new LinkedHashMap<>();
+        userSkillDataAccess.findByUserId(userUuid).forEach(item -> {
+            UUID existingSkillId = item.getSkill().getId();
+            UUID existingLevelId = item.getSkillLevel() == null ? null : item.getSkillLevel().getId();
+            target.put(existingSkillId, existingLevelId);
+        });
+        target.put(skillUuid, skillLevelUuid);
+
+        rebindUserSkills(userUuid, target);
+    }
+
+    @Transactional
+    @Override
+    public void rebindUserSkills(UUID userId, Map<UUID, UUID> skillLevelMapping) {
+        if (userId == null) {
+            throw new IllegalArgumentException("Key must not be null");
+        }
+
+        User user = userDataAccess.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        Map<UUID, UUID> targetMap = normalizeSkillLevelMapping(skillLevelMapping);
+        validateSkillLevelMapping(targetMap);
+
+        List<UserSkill> existingBindings = userSkillDataAccess.findByUserId(userId);
+        Map<UUID, UserSkill> existingMap = new HashMap<>();
+        for (UserSkill existing : existingBindings) {
+            existingMap.put(existing.getSkill().getId(), existing);
+        }
+
+        for (Map.Entry<UUID, UserSkill> existingEntry : existingMap.entrySet()) {
+            if (!targetMap.containsKey(existingEntry.getKey())) {
+                userSkillDataAccess.deleteByUserIdAndSkillId(userId, existingEntry.getKey());
+            }
+        }
+
+        for (Map.Entry<UUID, UUID> targetEntry : targetMap.entrySet()) {
+            UUID targetSkillId = targetEntry.getKey();
+            UUID targetLevelId = targetEntry.getValue();
+            UserSkill existingBinding = existingMap.get(targetSkillId);
+
+            if (existingBinding == null) {
+                UserSkill newBinding = new UserSkill();
+                newBinding.setUser(user);
+                newBinding.setSkill(skillDataAccess.findById(targetSkillId)
+                        .orElseThrow(() -> new IllegalArgumentException("Skill not found")));
+                newBinding.setSkillLevel(skillLevelDataAccess.findById(targetLevelId)
+                        .orElseThrow(() -> new IllegalArgumentException("Skill level not found")));
+                userSkillDataAccess.save(newBinding);
+                continue;
+            }
+
+            UUID existingLevelId = existingBinding.getSkillLevel() == null
+                    ? null
+                    : existingBinding.getSkillLevel().getId();
+            if (!Objects.equals(existingLevelId, targetLevelId)) {
+                SkillLevel level = skillLevelDataAccess.findById(targetLevelId)
+                        .orElseThrow(() -> new IllegalArgumentException("Skill level not found"));
+                existingBinding.setSkillLevel(level);
+                userSkillDataAccess.save(existingBinding);
+            }
+        }
     }
 
     @Override
@@ -289,11 +350,67 @@ public class SkillService implements ISkillService {
             throw new IllegalArgumentException("Skill already bind to project");
         }
 
-        ProjectSkill projectSkill = new ProjectSkill();
-        projectSkill.setProject(project);
-        projectSkill.setSkill(skill);
-        projectSkill.setSkillLevel(skillLevel);
-        projectSkillDataAccess.save(projectSkill);
+        Map<UUID, UUID> target = new LinkedHashMap<>();
+        projectSkillDataAccess.findByProjectId(projectUuid).forEach(item -> {
+            UUID existingSkillId = item.getSkill().getId();
+            UUID existingLevelId = item.getSkillLevel() == null ? null : item.getSkillLevel().getId();
+            target.put(existingSkillId, existingLevelId);
+        });
+        target.put(skillUuid, skillLevelUuid);
+
+        rebindProjectSkills(projectUuid, target);
+    }
+
+    @Transactional
+    public void rebindProjectSkills(UUID projectId, Map<UUID, UUID> skillLevelMapping) {
+        if (projectId == null) {
+            throw new IllegalArgumentException("Key must not be null");
+        }
+
+        Project project = projectDataAccess.findById(projectId)
+                .orElseThrow(() -> new IllegalArgumentException("Project not found"));
+
+        Map<UUID, UUID> targetMap = normalizeSkillLevelMapping(skillLevelMapping);
+        validateSkillLevelMapping(targetMap);
+
+        List<ProjectSkill> existingBindings = projectSkillDataAccess.findByProjectId(projectId);
+        Map<UUID, ProjectSkill> existingMap = new HashMap<>();
+        for (ProjectSkill existing : existingBindings) {
+            existingMap.put(existing.getSkill().getId(), existing);
+        }
+
+        for (Map.Entry<UUID, ProjectSkill> existingEntry : existingMap.entrySet()) {
+            if (!targetMap.containsKey(existingEntry.getKey())) {
+                projectSkillDataAccess.deleteByProjectIdAndSkillId(projectId, existingEntry.getKey());
+            }
+        }
+
+        for (Map.Entry<UUID, UUID> targetEntry : targetMap.entrySet()) {
+            UUID targetSkillId = targetEntry.getKey();
+            UUID targetLevelId = targetEntry.getValue();
+            ProjectSkill existingBinding = existingMap.get(targetSkillId);
+
+            if (existingBinding == null) {
+                ProjectSkill newBinding = new ProjectSkill();
+                newBinding.setProject(project);
+                newBinding.setSkill(skillDataAccess.findById(targetSkillId)
+                        .orElseThrow(() -> new IllegalArgumentException("Skill not found")));
+                newBinding.setSkillLevel(skillLevelDataAccess.findById(targetLevelId)
+                        .orElseThrow(() -> new IllegalArgumentException("Skill level not found")));
+                projectSkillDataAccess.save(newBinding);
+                continue;
+            }
+
+            UUID existingLevelId = existingBinding.getSkillLevel() == null
+                    ? null
+                    : existingBinding.getSkillLevel().getId();
+            if (!Objects.equals(existingLevelId, targetLevelId)) {
+                SkillLevel level = skillLevelDataAccess.findById(targetLevelId)
+                        .orElseThrow(() -> new IllegalArgumentException("Skill level not found"));
+                existingBinding.setSkillLevel(level);
+                projectSkillDataAccess.save(existingBinding);
+            }
+        }
     }
 
     @Transactional
@@ -511,6 +628,30 @@ public class SkillService implements ISkillService {
 
     private UUID mapUuid(String id) {
         return id == null || id.isBlank() ? null : UUID.fromString(id);
+    }
+
+    private Map<UUID, UUID> normalizeSkillLevelMapping(Map<UUID, UUID> skillLevelMapping) {
+        if (skillLevelMapping == null || skillLevelMapping.isEmpty()) {
+            return Map.of();
+        }
+        Map<UUID, UUID> normalized = new LinkedHashMap<>();
+        for (Map.Entry<UUID, UUID> entry : skillLevelMapping.entrySet()) {
+            if (entry.getKey() == null || entry.getValue() == null) {
+                throw new IllegalArgumentException("Key must not be null");
+            }
+            normalized.put(entry.getKey(), entry.getValue());
+        }
+        return normalized;
+    }
+
+    private void validateSkillLevelMapping(Map<UUID, UUID> targetMap) {
+        for (Map.Entry<UUID, UUID> entry : targetMap.entrySet()) {
+            Skill skill = skillDataAccess.findById(entry.getKey())
+                    .orElseThrow(() -> new IllegalArgumentException("Skill not found"));
+            SkillLevel skillLevel = skillLevelDataAccess.findById(entry.getValue())
+                    .orElseThrow(() -> new IllegalArgumentException("Skill level not found"));
+            validateSkillLevelBelongsToSkill(skillLevel, skill);
+        }
     }
     
     @Transactional

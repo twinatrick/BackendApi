@@ -25,8 +25,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.mindrot.jbcrypt.BCrypt;
 
@@ -163,20 +169,69 @@ public class UserService implements IUserService {
         if (userUuid == null || projectUuid == null) {
             throw new IllegalArgumentException("Key must not be null");
         }
-        User user = userDataAccess.findById(userUuid).orElseThrow(
-                () -> new IllegalArgumentException("User not found")
-        );
-        Project project = projectDataAccess.findById(projectUuid).orElseThrow(
-                () -> new IllegalArgumentException("Project not found")
-        );
         if (userProjectDataAccess.existsByUserIdAndProjectId(userUuid, projectUuid)) {
             throw new IllegalArgumentException("Project already bind to user");
         }
 
-        UserProject userProject = new UserProject();
-        userProject.setUser(user);
-        userProject.setProject(project);
-        userProjectDataAccess.save(userProject);
+        Set<UUID> targetProjectIds = new HashSet<>();
+        List<UserProject> existingUserProjects = userProjectDataAccess.findByUserId(userUuid);
+        if (existingUserProjects != null) {
+            existingUserProjects.stream()
+                    .map(UserProject::getProject)
+                    .map(Project::getId)
+                    .forEach(targetProjectIds::add);
+        }
+        targetProjectIds.add(projectUuid);
+
+        rebindUserProjects(userUuid, List.copyOf(targetProjectIds));
+    }
+
+    @Override
+    public void rebindUserProjects(UUID userId, List<UUID> projectIds) {
+        if (userId == null) {
+            throw new IllegalArgumentException("Key must not be null");
+        }
+
+        User user = userDataAccess.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        Set<UUID> targetProjectIds = projectIds == null
+                ? Set.of()
+                : projectIds.stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        Map<UUID, Project> targetProjects = new HashMap<>();
+        for (UUID projectId : targetProjectIds) {
+            Project project = projectDataAccess.findById(projectId)
+                    .orElseThrow(() -> new IllegalArgumentException("Project not found"));
+            targetProjects.put(projectId, project);
+        }
+
+        List<UserProject> existingBindings = userProjectDataAccess.findByUserId(userId);
+        if (existingBindings == null) {
+            existingBindings = List.of();
+        }
+        Set<UUID> existingProjectIds = existingBindings.stream()
+                .map(UserProject::getProject)
+                .map(Project::getId)
+                .collect(Collectors.toSet());
+
+        for (UUID existingProjectId : existingProjectIds) {
+            if (!targetProjectIds.contains(existingProjectId)) {
+                userProjectDataAccess.deleteByUserIdAndProjectId(userId, existingProjectId);
+            }
+        }
+
+        for (UUID targetProjectId : targetProjectIds) {
+            if (!existingProjectIds.contains(targetProjectId)) {
+                Project project = targetProjects.get(targetProjectId);
+                UserProject userProject = new UserProject();
+                userProject.setUser(user);
+                userProject.setProject(project);
+                userProjectDataAccess.save(userProject);
+            }
+        }
     }
 
     private UUID mapUuid(String id) {

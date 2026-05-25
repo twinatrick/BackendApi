@@ -9,6 +9,7 @@ import com.example.backendApi.Dto.Vo.SkillVo;
 import com.example.backendApi.Dto.Vo.SkillLevelVo;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public interface ISkillService {
@@ -29,6 +30,8 @@ public interface ISkillService {
     void bindUserSkill(String userId, String skillId, String skillLevelId);
 
     void bindProjectSkill(String projectId, String skillId, String skillLevelId);
+
+    void rebindUserSkills(UUID userId, Map<UUID, UUID> skillLevelMapping);
 
     void deleteSkill(SkillVo skillVo);
     

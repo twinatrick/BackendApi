@@ -7,6 +7,7 @@ import com.example.backendApi.Dto.Vo.PersonalProjectSkillLevelRequest;
 import com.example.backendApi.Dto.Vo.PersonalProjectRequest;
 import com.example.backendApi.Service.IProjectService;
 import com.example.backendApi.Service.ISkillService;
+import com.example.backendApi.annotation.RequireRole;
 import com.example.backendApi.annotation.openapi.ApiControllerTag;
 import com.example.backendApi.annotation.openapi.ApiOperationBadRequest;
 import com.example.backendApi.annotation.openapi.ApiOperationOk;
@@ -59,6 +60,8 @@ public class ProjectController {
     }
 
     @PostMapping("/bindSkill")
+    @Deprecated
+    @RequireRole({"admin"})
     @ApiOperationBadRequest(summary = "Bind project skill", description = "Binds a skill level to a project. This operation manages binding relation only and does not modify skill content. Admin-assigned skills can still be bound by authorized users.")
     public ResponseType<String> bindProjectSkill(@RequestBody ProjectSkillBindRequest body) {
         skillService.bindProjectSkill(body.getProjectId(), body.getSkillId(), body.getSkillLevelId());

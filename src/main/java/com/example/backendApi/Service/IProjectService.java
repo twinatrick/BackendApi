@@ -7,6 +7,7 @@ import com.example.backendApi.Dto.Vo.ProjectSkillVo;
 import com.example.backendApi.Dto.Vo.ProjectVo;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public interface IProjectService {
@@ -105,4 +106,8 @@ public interface IProjectService {
      * @param skillId 技能 ID
      */
     void unbindPersonalProjectSkill(UUID projectId, UUID skillId);
+
+    void rebindProjectSkills(UUID projectId, Map<UUID, UUID> skillLevelMapping);
+
+    void rebindPersonalProjectSkills(UUID projectId, Map<UUID, UUID> skillLevelMapping);
 }

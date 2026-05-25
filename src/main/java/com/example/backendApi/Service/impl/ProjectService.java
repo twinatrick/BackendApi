@@ -27,6 +27,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -432,6 +435,70 @@ public class ProjectService implements IProjectService {
         projectSkillDataAccess.deleteByProjectIdAndSkillId(projectId, skillId);
     }
 
+    @Transactional
+    @Override
+    public void rebindProjectSkills(UUID projectId, Map<UUID, UUID> skillLevelMapping) {
+        if (projectId == null) {
+            throw new IllegalArgumentException("Key must not be null");
+        }
+
+        Project project = projectDataAccess.findById(projectId)
+                .orElseThrow(() -> new IllegalArgumentException("Project not found"));
+
+        Map<UUID, UUID> targetMap = normalizeSkillLevelMapping(skillLevelMapping);
+        validateProjectSkillLevelMapping(targetMap);
+
+        Map<UUID, ProjectSkill> existingMap = projectSkillDataAccess.findByProjectId(projectId).stream()
+                .collect(Collectors.toMap(ps -> ps.getSkill().getId(), ps -> ps));
+
+        for (UUID existingSkillId : existingMap.keySet()) {
+            if (!targetMap.containsKey(existingSkillId)) {
+                projectSkillDataAccess.deleteByProjectIdAndSkillId(projectId, existingSkillId);
+            }
+        }
+
+        for (Map.Entry<UUID, UUID> entry : targetMap.entrySet()) {
+            UUID skillId = entry.getKey();
+            UUID levelId = entry.getValue();
+            ProjectSkill existing = existingMap.get(skillId);
+
+            if (existing == null) {
+                ProjectSkill projectSkill = new ProjectSkill();
+                projectSkill.setProject(project);
+                projectSkill.setSkill(entityManager.getReference(Skill.class, skillId));
+                projectSkill.setSkillLevel(skillLevelDataAccess.findById(levelId)
+                        .orElseThrow(() -> new IllegalArgumentException("Skill level not found")));
+                projectSkillDataAccess.save(projectSkill);
+                continue;
+            }
+
+            UUID currentLevelId = existing.getSkillLevel() == null ? null : existing.getSkillLevel().getId();
+            if (!Objects.equals(currentLevelId, levelId)) {
+                existing.setSkillLevel(skillLevelDataAccess.findById(levelId)
+                        .orElseThrow(() -> new IllegalArgumentException("Skill level not found")));
+                projectSkillDataAccess.save(existing);
+            }
+        }
+    }
+
+    @Transactional
+    @Override
+    public void rebindPersonalProjectSkills(UUID projectId, Map<UUID, UUID> skillLevelMapping) {
+        UUID currentUserId = requireCurrentUserId();
+        if (projectId == null) {
+            throw new IllegalArgumentException("Key must not be null");
+        }
+
+        ensureCanManageProjectBinding(projectId, currentUserId);
+
+        Map<UUID, UUID> targetMap = normalizeSkillLevelMapping(skillLevelMapping);
+        for (UUID skillId : targetMap.keySet()) {
+            ensureSkillVisibleToCurrentUser(skillId, currentUserId);
+        }
+
+        rebindProjectSkills(projectId, targetMap);
+    }
+
     private UUID requireCurrentUserId() {
         if (currentUser == null || currentUser.getId() == null) {
             throw new IllegalStateException("Current user not found");
@@ -482,5 +549,32 @@ public class ProjectService implements IProjectService {
             return true;
         }
         return createdBy.equals(currentUserId.toString());
+    }
+
+    private Map<UUID, UUID> normalizeSkillLevelMapping(Map<UUID, UUID> skillLevelMapping) {
+        if (skillLevelMapping == null || skillLevelMapping.isEmpty()) {
+            return Map.of();
+        }
+
+        Map<UUID, UUID> normalized = new LinkedHashMap<>();
+        for (Map.Entry<UUID, UUID> entry : skillLevelMapping.entrySet()) {
+            if (entry.getKey() == null || entry.getValue() == null) {
+                throw new IllegalArgumentException("Key must not be null");
+            }
+            normalized.put(entry.getKey(), entry.getValue());
+        }
+        return normalized;
+    }
+
+    private void validateProjectSkillLevelMapping(Map<UUID, UUID> mapping) {
+        for (Map.Entry<UUID, UUID> entry : mapping.entrySet()) {
+            UUID skillId = entry.getKey();
+            UUID levelId = entry.getValue();
+            SkillLevel level = skillLevelDataAccess.findById(levelId)
+                    .orElseThrow(() -> new IllegalArgumentException("Skill level not found"));
+            if (!level.getSkill().getId().equals(skillId)) {
+                throw new IllegalArgumentException("Skill level does not belong to skill");
+            }
+        }
     }
 }
