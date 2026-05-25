@@ -37,6 +37,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ResponseType<?>> handleException(Exception ex) {
         ResponseType<?> response = ResponseType.Fail("INTERNAL_ERROR", "Internal server error", HttpStatus.INTERNAL_SERVER_ERROR.value());
+        ex.printStackTrace(); // Log the exception for debugging
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
 }

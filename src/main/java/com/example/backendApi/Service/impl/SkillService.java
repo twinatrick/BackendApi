@@ -34,6 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -136,9 +137,13 @@ public class SkillService implements ISkillService {
             }
         }
         
+        Set<UUID> targetUserIds = userIds.stream()
+                .map(UUID::fromString)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+
         // 綁定每個使用者
-        for (String userIdStr : userIds) {
-            UUID userId = UUID.fromString(userIdStr);
+        for (UUID userId : targetUserIds) {
+            String userIdStr = userId.toString();
             
             // 驗證使用者是否存在
             if (!userDataAccess.existsById(userId)) {
@@ -245,6 +250,7 @@ public class SkillService implements ISkillService {
     }
 
     @Override
+    @Transactional
     public void bindUserSkill(String userId, String skillId, String skillLevelId) {
         UUID userUuid = mapUuid(userId);
         UUID skillUuid = mapUuid(skillId);
@@ -330,6 +336,7 @@ public class SkillService implements ISkillService {
     }
 
     @Override
+    @Transactional
     public void bindProjectSkill(String projectId, String skillId, String skillLevelId) {
         UUID projectUuid = mapUuid(projectId);
         UUID skillUuid = mapUuid(skillId);
@@ -420,11 +427,16 @@ public class SkillService implements ISkillService {
         if (skill.getId() == null) {
             throw new IllegalArgumentException("Key must not be null");
         }
-        skill = skillDataAccess.findById(skill.getId()).orElseThrow(() -> new IllegalArgumentException("Skill not found"));
-        userSkillDataAccess.deleteBySkillId(skill.getId());
-        projectSkillDataAccess.deleteBySkillId(skill.getId());
-        skillLevelDataAccess.deleteBySkillId(skill.getId());
-        skillDataAccess.delete(skill);
+        UUID skillId = skill.getId();
+        skillDataAccess.findById(skillId).orElseThrow(() -> new IllegalArgumentException("Skill not found"));
+
+        projectSkillDataAccess.deleteBySkillId(skillId);
+        entityManager.flush();
+        userSkillDataAccess.deleteBySkillId(skillId);
+        entityManager.flush();
+        skillLevelDataAccess.deleteBySkillId(skillId);
+        entityManager.flush();
+        skillDataAccess.deleteById(skillId);
     }
     
     @Override

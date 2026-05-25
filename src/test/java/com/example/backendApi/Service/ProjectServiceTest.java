@@ -118,7 +118,7 @@ class ProjectServiceTest {
 
         verify(projectSkillDataAccess).deleteByProjectId(projectId);
         verify(userProjectDataAccess).deleteByProjectId(projectId);
-        verify(projectDataAccess).delete(existing);
+        verify(projectDataAccess).deleteById(projectId);
     }
 
     @Test
@@ -448,7 +448,7 @@ class ProjectServiceTest {
         // Assert
         verify(userProjectDataAccess).deleteByUserIdAndProjectId(userId, projectId);
         verify(projectSkillDataAccess).deleteByProjectId(projectId);
-        verify(projectDataAccess).delete(testProject);
+        verify(projectDataAccess).deleteById(projectId);
     }
     
     // ========== 管理者介面測試 ==========

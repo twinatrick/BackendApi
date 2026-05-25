@@ -22,7 +22,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -89,6 +94,7 @@ public class RoleService implements IRoleService {
         return roleMapper.toVo(roleDataAccess.save(existing));
     }
 
+    @Transactional
     @Override
     public void deleteRole(RoleOutVo roleOutVo) {
         Role role = roleMapper.toEntity(roleOutVo);
@@ -167,32 +173,98 @@ public class RoleService implements IRoleService {
         Role role = roleDataAccess.findById(roleUuid).orElseThrow(
                 () -> new IllegalArgumentException("Role not found")
         );
-        List<UUID> userUuids = userIds.stream().map(UUID::fromString).toList();
+        Set<UUID> userUuidSet = userIds.stream()
+                .map(UUID::fromString)
+                .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
+        List<UUID> userUuids = List.copyOf(userUuidSet);
         List<User> users = userDataAccess.findAllById(userUuids);
-        userRoleDataAccess.deleteAllByUserInAndRoleIn(users, List.of(role));
-        List<UserRole> userRoles = users.stream().map(user -> {
-            UserRole userRole = new UserRole();
-            userRole.setRole(role);
-            userRole.setUser(user);
-            return userRole;
-        }).toList();
+
+        if (users.size() != userUuids.size()) {
+            throw new IllegalArgumentException("User not found");
+        }
+
+        List<UserRole> userRoles = new ArrayList<>();
+        for (User user : users) {
+            List<UserRole> existingRoles = userRoleDataAccess.findByUserId(user.getId());
+            long existingBindingCount = existingRoles.stream()
+                    .filter(existing -> existing.getRole() != null && roleUuid.equals(existing.getRole().getId()))
+                    .count();
+
+            if (existingBindingCount > 1) {
+                userRoleDataAccess.deleteByUserIdAndRoleId(user.getId(), roleUuid);
+            }
+
+            if (existingBindingCount == 0 || existingBindingCount > 1) {
+                UserRole userRole = new UserRole();
+                userRole.setRole(role);
+                userRole.setUser(user);
+                userRoles.add(userRole);
+            }
+        }
+
+        if (userRoles.isEmpty()) {
+            return;
+        }
+
         userRoleDataAccess.saveAll(userRoles);
     }
 
+    @Transactional
     @Override
     public void userBindRole(String userId, List<String> roleIds) {
         UUID userUuid = mapUuid(userId);
         if (userUuid == null) {
             throw new IllegalArgumentException("Key must not be null");
-        } else if (roleIds == null || roleIds.isEmpty()) {
-            throw new IllegalArgumentException("Role list is empty");
+        } else if (roleIds == null) {
+            throw new IllegalArgumentException("Role list is required");
         }
         User user = userDataAccess.findById(userUuid).orElseThrow(
                 () -> new IllegalArgumentException("User not found")
         );
-        List<UUID> roleUuids = roleIds.stream().map(UUID::fromString).toList();
-        List<Role> roles = roleDataAccess.findAllById(roleUuids);
-        userRoleDataAccess.deleteAllByUserInAndRoleIn(List.of(user), roles);
+
+        if (roleIds.isEmpty()) {
+            userRoleDataAccess.deleteByUserId(userUuid);
+            return;
+        }
+
+        Set<UUID> roleUuidSet = roleIds.stream()
+                .map(UUID::fromString)
+                .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
+
+        List<UserRole> existingUserRoles = userRoleDataAccess.findByUserId(userUuid);
+        if (existingUserRoles == null) {
+            existingUserRoles = List.of();
+        }
+        Map<UUID, UserRole> existingMap = new HashMap<>();
+        for (UserRole existingUserRole : existingUserRoles) {
+            UUID existingRoleId = existingUserRole.getRole().getId();
+            if (existingMap.containsKey(existingRoleId)) {
+                userRoleDataAccess.deleteByUserIdAndRoleId(userUuid, existingRoleId);
+                continue;
+            }
+            existingMap.put(existingRoleId, existingUserRole);
+        }
+
+        Set<UUID> currentRoleIds = new LinkedHashSet<>(existingMap.keySet());
+        Set<UUID> toRemove = currentRoleIds.stream()
+                .filter(currentRoleId -> !roleUuidSet.contains(currentRoleId))
+                .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
+        for (UUID roleId : toRemove) {
+            userRoleDataAccess.deleteByUserIdAndRoleId(userUuid, roleId);
+        }
+
+        Set<UUID> toAdd = roleUuidSet.stream()
+                .filter(targetRoleId -> !currentRoleIds.contains(targetRoleId))
+                .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
+        if (toAdd.isEmpty()) {
+            return;
+        }
+
+        List<Role> roles = roleDataAccess.findAllById(List.copyOf(toAdd));
+        if (roles.size() != toAdd.size()) {
+            throw new IllegalArgumentException("Role not found");
+        }
+
         List<UserRole> userRoles = roles.stream().map(role -> {
             UserRole userRole = new UserRole();
             userRole.setRole(role);

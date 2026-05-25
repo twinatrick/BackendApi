@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Implementation of IUserRoleDataAccess.
@@ -28,5 +29,20 @@ public class UserRoleDataAccessImpl implements IUserRoleDataAccess {
     @Override
     public List<UserRole> saveAll(List<UserRole> userRoles) {
         return userRoleRepository.saveAll(userRoles);
+    }
+
+    @Override
+    public List<UserRole> findByUserId(UUID userId) {
+        return userRoleRepository.findByUserId(userId);
+    }
+
+    @Override
+    public void deleteByUserId(UUID userId) {
+        userRoleRepository.deleteByUserId(userId);
+    }
+
+    @Override
+    public void deleteByUserIdAndRoleId(UUID userId, UUID roleId) {
+        userRoleRepository.deleteByUserIdAndRoleId(userId, roleId);
     }
 }

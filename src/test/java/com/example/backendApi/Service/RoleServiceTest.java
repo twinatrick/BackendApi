@@ -354,14 +354,15 @@ class RoleServiceTest {
         // Arrange
         when(roleDataAccess.findById(testRoleKey)).thenReturn(Optional.of(testRole));
         when(userDataAccess.findAllById(anyList())).thenReturn(List.of(testUser));
-        doNothing().when(userRoleDataAccess).deleteAllByUserInAndRoleIn(anyList(), anyList());
+        when(userRoleDataAccess.findByUserId(testUserKey)).thenReturn(List.of());
+        doNothing().when(userRoleDataAccess).deleteByUserIdAndRoleId(any(), any());
         when(userRoleDataAccess.saveAll(anyList())).thenReturn(new ArrayList<>());
 
         // Act
         roleService.roleBindUser(testRoleKey.toString(), List.of(testUserKey.toString()));
 
         // Assert
-        verify(userRoleDataAccess, times(1)).deleteAllByUserInAndRoleIn(anyList(), anyList());
+        verify(userRoleDataAccess, never()).deleteByUserIdAndRoleId(any(), any());
         verify(userRoleDataAccess, times(1)).saveAll(anyList());
     }
 
@@ -370,16 +371,64 @@ class RoleServiceTest {
     void testUserBindRole() {
         // Arrange
         when(userDataAccess.findById(testUserKey)).thenReturn(Optional.of(testUser));
+        when(userRoleDataAccess.findByUserId(testUserKey)).thenReturn(List.of());
         when(roleDataAccess.findAllById(anyList())).thenReturn(List.of(testRole));
-        doNothing().when(userRoleDataAccess).deleteAllByUserInAndRoleIn(anyList(), anyList());
+        doNothing().when(userRoleDataAccess).deleteByUserIdAndRoleId(any(), any());
         when(userRoleDataAccess.saveAll(anyList())).thenReturn(new ArrayList<>());
 
         // Act
         roleService.userBindRole(testUserKey.toString(), List.of(testRoleKey.toString()));
 
         // Assert
-        verify(userRoleDataAccess, times(1)).deleteAllByUserInAndRoleIn(anyList(), anyList());
+        verify(userRoleDataAccess, never()).deleteByUserIdAndRoleId(any(), any());
         verify(userRoleDataAccess, times(1)).saveAll(anyList());
+    }
+
+    @Test
+    @DisplayName("Should update user roles by delta")
+    void testUserBindRole_DeltaSync() {
+        UUID oldRoleId = UUID.randomUUID();
+        UUID newRoleId = UUID.randomUUID();
+
+        Role oldRole = new Role();
+        oldRole.setId(oldRoleId);
+        Role newRole = new Role();
+        newRole.setId(newRoleId);
+
+        UserRole existing = new UserRole();
+        existing.setUser(testUser);
+        existing.setRole(oldRole);
+
+        when(userDataAccess.findById(testUserKey)).thenReturn(Optional.of(testUser));
+        when(userRoleDataAccess.findByUserId(testUserKey)).thenReturn(List.of(existing));
+        when(roleDataAccess.findAllById(List.of(newRoleId))).thenReturn(List.of(newRole));
+        doNothing().when(userRoleDataAccess).deleteByUserIdAndRoleId(testUserKey, oldRoleId);
+        when(userRoleDataAccess.saveAll(anyList())).thenReturn(List.of());
+
+        roleService.userBindRole(testUserKey.toString(), List.of(newRoleId.toString()));
+
+        verify(userRoleDataAccess).deleteByUserIdAndRoleId(testUserKey, oldRoleId);
+        verify(userRoleDataAccess).saveAll(anyList());
+    }
+
+    @Test
+    @DisplayName("Should clear all roles when target role list is empty")
+    void testUserBindRole_ClearAllWhenEmpty() {
+        when(userDataAccess.findById(testUserKey)).thenReturn(Optional.of(testUser));
+        doNothing().when(userRoleDataAccess).deleteByUserId(testUserKey);
+
+        roleService.userBindRole(testUserKey.toString(), List.of());
+
+        verify(userRoleDataAccess).deleteByUserId(testUserKey);
+        verify(userRoleDataAccess, never()).saveAll(anyList());
+    }
+
+    @Test
+    @DisplayName("Should reject null role list in userBindRole")
+    void testUserBindRole_NullRoleList() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> roleService.userBindRole(testUserKey.toString(), null));
+        assertEquals("Role list is required", exception.getMessage());
     }
 
     @Test

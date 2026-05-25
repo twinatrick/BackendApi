@@ -66,6 +66,7 @@ public class FunctionService implements IFunctionService {
     }
 
     @Override
+    @Transactional
     public void deleteFunction(FunctionVo functionVo) {
         Function function = functionMapper.toEntity(functionVo);
         if (function.getId() == null) {

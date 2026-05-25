@@ -242,7 +242,6 @@ class UserServiceTest {
         List<User> existingUsers = List.of(testUser);
         when(userDataAccess.findByEmail("test@example.com")).thenReturn(existingUsers);
         doNothing().when(userDataAccess).save(any(User.class));
-        doNothing().when(roleService).userUnbindAllRole(anyString());
         doNothing().when(roleService).userBindRole(anyString(), anyList());
 
         // Act
@@ -251,8 +250,22 @@ class UserServiceTest {
         // Assert
         verify(userDataAccess, times(1)).findByEmail("test@example.com");
         verify(userDataAccess, times(1)).save(testUser);
-        verify(roleService, times(1)).userUnbindAllRole(anyString());
         verify(roleService, times(1)).userBindRole(anyString(), anyList());
+    }
+
+    @Test
+    @DisplayName("Should throw exception when role list is null in saveUserWithRole")
+    void testSaveUserWithRole_RoleListNull() {
+        // Arrange
+        UserVo userVo = new UserVo();
+        userVo.setEmail("test@example.com");
+        userVo.setPassword("password");
+        userVo.setRoleArr(null);
+
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> userService.saveUserWithRole(userVo));
+        assertEquals("Role list is required", exception.getMessage());
     }
 
     @Test

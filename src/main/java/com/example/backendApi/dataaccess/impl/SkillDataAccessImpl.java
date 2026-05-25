@@ -50,6 +50,11 @@ public class SkillDataAccessImpl implements ISkillDataAccess {
     public void delete(Skill skill) {
         skillRepository.delete(skill);
     }
+
+    @Override
+    public void deleteById(UUID skillId) {
+        skillRepository.deleteByIdHard(skillId);
+    }
     
     @Override
     public Page<Skill> searchSkills(SkillSearchQuery query) {

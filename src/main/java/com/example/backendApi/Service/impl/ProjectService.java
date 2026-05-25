@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.LinkedHashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -116,10 +117,14 @@ public class ProjectService implements IProjectService {
     private void bindUsersToProject(UUID projectId, List<String> userIds) {
         Project project = projectDataAccess.findById(projectId)
                 .orElseThrow(() -> new IllegalArgumentException("Project not found"));
+
+        Set<UUID> targetUserIds = userIds.stream()
+                .map(UUID::fromString)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
         
         // 綁定每個使用者
-        for (String userIdStr : userIds) {
-            UUID userId = UUID.fromString(userIdStr);
+        for (UUID userId : targetUserIds) {
+            String userIdStr = userId.toString();
             
             // 驗證使用者是否存在
             if (!userDataAccess.existsById(userId)) {
@@ -163,8 +168,10 @@ public class ProjectService implements IProjectService {
             .orElseThrow(() -> new IllegalArgumentException("Project not found"));
         
         projectSkillDataAccess.deleteByProjectId(existingProject.getId());
+        entityManager.flush();
         userProjectDataAccess.deleteByProjectId(existingProject.getId());
-        projectDataAccess.delete(existingProject);
+        entityManager.flush();
+        projectDataAccess.deleteById(existingProject.getId());
     }
     
     @Override
@@ -375,7 +382,8 @@ public class ProjectService implements IProjectService {
         // 如果沒有其他綁定，刪除專案本身及其技能綁定
         if (!hasOtherBindings) {
             projectSkillDataAccess.deleteByProjectId(projectId);
-            projectDataAccess.delete(project);
+            entityManager.flush();
+            projectDataAccess.deleteById(projectId);
         }
     }
 

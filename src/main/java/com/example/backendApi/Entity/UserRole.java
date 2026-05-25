@@ -7,16 +7,19 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "user_role")
+@Table(
+        name = "user_role",
+        uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "role_id"})
+)
 @Getter
 @Setter
 @NoArgsConstructor
 public class UserRole extends BaseEntity {
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     @JsonIgnore
     @JoinColumn(name = "role_id")
     private Role role;
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     @JsonIgnore
     @JoinColumn(name = "user_id")
     private User user;

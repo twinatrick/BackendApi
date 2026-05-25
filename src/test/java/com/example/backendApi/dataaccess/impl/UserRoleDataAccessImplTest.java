@@ -167,4 +167,84 @@ class UserRoleDataAccessImplTest {
                 userRoleDataAccess.deleteAllByUserInAndRoleIn(List.of(), List.of())
         );
     }
+
+    @Test
+    @DisplayName("Should find user roles by user id")
+    void testFindByUserId() {
+        User user = new User();
+        user.setEmail("find@example.com");
+        user.setPassword("password");
+        user.setDisabled(false);
+        userRepository.save(user);
+
+        Role role = new Role();
+        role.setName("ROLE_FIND");
+        roleRepository.save(role);
+
+        UserRole userRole = new UserRole();
+        userRole.setUser(user);
+        userRole.setRole(role);
+        userRoleRepository.save(userRole);
+
+        List<UserRole> result = userRoleDataAccess.findByUserId(user.getId());
+        assertEquals(1, result.size());
+        assertEquals(user.getId(), result.get(0).getUser().getId());
+    }
+
+    @Test
+    @DisplayName("Should delete all user roles by user id")
+    void testDeleteByUserId() {
+        User user = new User();
+        user.setEmail("deleteall@example.com");
+        user.setPassword("password");
+        user.setDisabled(false);
+        userRepository.save(user);
+
+        Role role = new Role();
+        role.setName("ROLE_DEL_ALL");
+        roleRepository.save(role);
+
+        UserRole userRole = new UserRole();
+        userRole.setUser(user);
+        userRole.setRole(role);
+        userRoleRepository.save(userRole);
+
+        userRoleDataAccess.deleteByUserId(user.getId());
+
+        assertTrue(userRoleDataAccess.findByUserId(user.getId()).isEmpty());
+    }
+
+    @Test
+    @DisplayName("Should delete user role by user id and role id")
+    void testDeleteByUserIdAndRoleId() {
+        User user = new User();
+        user.setEmail("deletepair@example.com");
+        user.setPassword("password");
+        user.setDisabled(false);
+        userRepository.save(user);
+
+        Role role1 = new Role();
+        role1.setName("ROLE_DEL_PAIR_1");
+        roleRepository.save(role1);
+
+        Role role2 = new Role();
+        role2.setName("ROLE_DEL_PAIR_2");
+        roleRepository.save(role2);
+
+        UserRole ur1 = new UserRole();
+        ur1.setUser(user);
+        ur1.setRole(role1);
+        userRoleRepository.save(ur1);
+
+        UserRole ur2 = new UserRole();
+        ur2.setUser(user);
+        ur2.setRole(role2);
+        userRoleRepository.save(ur2);
+
+        userRoleDataAccess.deleteByUserIdAndRoleId(user.getId(), role1.getId());
+
+        List<UserRole> left = userRoleDataAccess.findByUserId(user.getId());
+        assertEquals(1, left.size());
+        assertEquals(role2.getId(), left.get(0).getRole().getId());
+    }
 }

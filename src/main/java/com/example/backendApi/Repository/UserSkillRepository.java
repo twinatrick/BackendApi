@@ -2,6 +2,9 @@ package com.example.backendApi.Repository;
 
 import com.example.backendApi.Entity.UserSkill;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.UUID;
@@ -13,9 +16,13 @@ public interface UserSkillRepository extends JpaRepository<UserSkill, UUID> {
     
     boolean existsBySkillId(UUID skillId);
 
-    void deleteBySkillId(UUID skillId);
+    @Modifying
+    @Query("delete from UserSkill us where us.skill.id = :skillId")
+    void deleteBySkillId(@Param("skillId") UUID skillId);
     
-    void deleteByUserIdAndSkillId(UUID userId, UUID skillId);
+    @Modifying
+    @Query("delete from UserSkill us where us.user.id = :userId and us.skill.id = :skillId")
+    void deleteByUserIdAndSkillId(@Param("userId") UUID userId, @Param("skillId") UUID skillId);
     
     List<UserSkill> findByUserId(UUID userId);
     

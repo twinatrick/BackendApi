@@ -23,6 +23,7 @@ import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -104,7 +105,11 @@ public class UserService implements IUserService {
     }
 
     @Override
+    @Transactional
     public void saveUserWithRole(UserVo userVo) {
+        if (userVo.getRoleArr() == null) {
+            throw new IllegalArgumentException("Role list is required");
+        }
         if(userVo.getId() == null|| userVo.getId().isEmpty()){
             User user = new User();
             user.setEmail(userVo.getEmail());
@@ -125,7 +130,6 @@ public class UserService implements IUserService {
             u.setPassword(BCrypt.hashpw(userVo.getPassword(), BCrypt.gensalt()));
         }
         userDataAccess.save(u);
-        roleService.userUnbindAllRole(u.getId().toString());
         roleService.userBindRole(u.getId().toString(), userVo.getRoleArr());
 
     }
@@ -163,6 +167,7 @@ public class UserService implements IUserService {
     }
 
     @Override
+    @Transactional
     public void bindUserProject(String userId, String projectId) {
         UUID userUuid = mapUuid(userId);
         UUID projectUuid = mapUuid(projectId);
@@ -187,6 +192,7 @@ public class UserService implements IUserService {
     }
 
     @Override
+    @Transactional
     public void rebindUserProjects(UUID userId, List<UUID> projectIds) {
         if (userId == null) {
             throw new IllegalArgumentException("Key must not be null");

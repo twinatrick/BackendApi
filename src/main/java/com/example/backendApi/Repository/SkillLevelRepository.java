@@ -3,6 +3,9 @@ package com.example.backendApi.Repository;
 import com.example.backendApi.Entity.SkillLevel;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.UUID;
@@ -12,5 +15,7 @@ public interface SkillLevelRepository extends JpaRepository<SkillLevel, UUID>, J
 
     boolean existsBySkillIdAndLevelValue(UUID skillId, Integer levelValue);
 
-    void deleteBySkillId(UUID skillId);
+    @Modifying
+    @Query("delete from SkillLevel sl where sl.skill.id = :skillId")
+    void deleteBySkillId(@Param("skillId") UUID skillId);
 }

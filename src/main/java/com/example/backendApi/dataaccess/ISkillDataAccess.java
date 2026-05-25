@@ -52,6 +52,13 @@ public interface ISkillDataAccess {
      * @param skill the skill to delete
      */
     void delete(Skill skill);
+
+    /**
+     * Delete a skill by id with bulk operation.
+     *
+     * @param skillId the skill id to delete
+     */
+    void deleteById(UUID skillId);
     
     /**
      * 搜尋技能（支援分頁與條件查詢）

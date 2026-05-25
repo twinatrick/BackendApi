@@ -2,6 +2,9 @@ package com.example.backendApi.Repository;
 
 import com.example.backendApi.Entity.ProjectSkill;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -18,9 +21,15 @@ public interface ProjectSkillRepository extends JpaRepository<ProjectSkill, UUID
 
     List<ProjectSkill> findByProjectId(UUID projectId);
 
-    void deleteByProjectId(UUID projectId);
+    @Modifying
+    @Query("delete from ProjectSkill ps where ps.project.id = :projectId")
+    void deleteByProjectId(@Param("projectId") UUID projectId);
 
-    void deleteByProjectIdAndSkillId(UUID projectId, UUID skillId);
+    @Modifying
+    @Query("delete from ProjectSkill ps where ps.project.id = :projectId and ps.skill.id = :skillId")
+    void deleteByProjectIdAndSkillId(@Param("projectId") UUID projectId, @Param("skillId") UUID skillId);
 
-    void deleteBySkillId(UUID skillId);
+    @Modifying
+    @Query("delete from ProjectSkill ps where ps.skill.id = :skillId")
+    void deleteBySkillId(@Param("skillId") UUID skillId);
 }

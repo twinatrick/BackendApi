@@ -54,6 +54,11 @@ public class ProjectDataAccessImpl implements IProjectDataAccess {
     public void delete(Project project) {
         projectRepository.delete(project);
     }
+
+    @Override
+    public void deleteById(UUID projectId) {
+        projectRepository.deleteByIdHard(projectId);
+    }
     
     @Override
     public boolean existsById(UUID id) {

@@ -5,6 +5,7 @@ import com.example.backendApi.Entity.User;
 import com.example.backendApi.Entity.UserRole;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Data access interface for UserRole entity operations.
@@ -29,4 +30,10 @@ public interface IUserRoleDataAccess {
      * @return list of saved user-role associations
      */
     List<UserRole> saveAll(List<UserRole> userRoles);
+
+    List<UserRole> findByUserId(UUID userId);
+
+    void deleteByUserId(UUID userId);
+
+    void deleteByUserIdAndRoleId(UUID userId, UUID roleId);
 }

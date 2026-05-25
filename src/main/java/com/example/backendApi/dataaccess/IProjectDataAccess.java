@@ -48,6 +48,8 @@ public interface IProjectDataAccess {
      * @param project 要刪除的專案實體
      */
     void delete(Project project);
+
+    void deleteById(UUID projectId);
     
     /**
      * 檢查 Project 是否存在

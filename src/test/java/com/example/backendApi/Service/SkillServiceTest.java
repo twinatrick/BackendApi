@@ -1018,7 +1018,7 @@ class SkillServiceTest {
         verify(userSkillDataAccess).deleteBySkillId(testSkillId);
         verify(projectSkillDataAccess).deleteBySkillId(testSkillId);
         verify(skillLevelDataAccess).deleteBySkillId(testSkillId);
-        verify(skillDataAccess).delete(skill);
+        verify(skillDataAccess).deleteById(testSkillId);
     }
 
     @Test

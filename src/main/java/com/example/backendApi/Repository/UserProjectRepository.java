@@ -2,6 +2,9 @@ package com.example.backendApi.Repository;
 
 import com.example.backendApi.Entity.UserProject;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.UUID;
@@ -11,9 +14,13 @@ public interface UserProjectRepository extends JpaRepository<UserProject, UUID> 
     
     boolean existsByProjectId(UUID projectId);
 
-    void deleteByProjectId(UUID projectId);
+    @Modifying
+    @Query("delete from UserProject up where up.project.id = :projectId")
+    void deleteByProjectId(@Param("projectId") UUID projectId);
     
-    void deleteByUserIdAndProjectId(UUID userId, UUID projectId);
+    @Modifying
+    @Query("delete from UserProject up where up.user.id = :userId and up.project.id = :projectId")
+    void deleteByUserIdAndProjectId(@Param("userId") UUID userId, @Param("projectId") UUID projectId);
     
     List<UserProject> findByUserId(UUID userId);
 }
