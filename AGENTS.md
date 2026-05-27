@@ -2,8 +2,8 @@
 
 ## Language
 - **必須使用繁體中文**與使用者進行溝通、撰寫說明與註解 (MUST use Traditional Chinese for communication and documentation).
-
 ## Build & Run Environment
+- **必須詢問當前使用的java路徑 並儲存到環境變數 除非.env java-now-home有 把拿到的路徑暫時用到當前環境變數**
 - **環境設定讀取優先權 (重要)**：
   - 在執行任何啟動或測試指令前，請先檢查當前專案目錄下是否存在 **`.run` 資料夾**。
   - **若存在 `.run` 目錄，必須優先讀取其中的配置檔案 (如 XML)**，並將其內嵌的環境變數、Spring Profiles 或啟動參數作為最高優先級應用於後續的執行環境中。
@@ -26,8 +26,7 @@
   - **Mockito Warning**: 測試已在 Maven Surefire 中設定 `-XX:+EnableDynamicAgentLoading` 來消除 Java 21 下的警告。
 
 ## Architecture & Code Conventions
-- **Base Package**: `com.example.backendApi` (注意大小寫)
+- **Base Package**: `com.example.BackendApi` (注意大小寫)
 - **Generators**: 專案大量使用 MapStruct 與 Lombok，Maven 已設定對應的 Annotation Processors。
 - **Package Quirks**: 請遵守現有的 Package 命名與大小寫慣例：
-  - 首字母大寫: `Aop`, `Dto`, `Entity`, `Repository`, `Service`, `Timer`, `Util`, `WebSocket`
-  - 首字母小寫: `annotation`, `config`, `controller`, `dataaccess`, `exception`, `filter`, `mapper`
+  - 首字母大寫: `Aop`, `Dto`, `Entity`, `Repository`, `Service`, `Timer`, `Util`, `WebSocket`,`Annotation`, `Config`, `Controller`, `Dataaccess`, `Exception`, `Filter`, `Mapper`

@@ -9,6 +9,9 @@ app:
   in-docker: ${APP_IN_DOCKER:false}
 
 spring:
+  threads:
+    virtual:
+      enabled: true
   data:
     redis:
       host: ${REDIS_HOST:}

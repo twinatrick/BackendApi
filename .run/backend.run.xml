@@ -1,7 +1,7 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="backend" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
     <module name="backedApi" />
-    <option name="SPRING_BOOT_MAIN_CLASS" value="com.example.backendApi.BackedApiApplication" />
+    <option name="SPRING_BOOT_MAIN_CLASS" value="BackendApi.BackedApiApplication" />
     <method v="2">
       <option name="Make" enabled="true" />
     </method>

@@ -1,0 +1,48 @@
+package com.example.BackendApi.DataAccess.impl;
+
+import com.example.BackendApi.Repository.UserRoleRepository;
+import com.example.BackendApi.DataAccess.IUserRoleDataAccess;
+import com.example.BackendApi.Entity.Role;
+import com.example.BackendApi.Entity.User;
+import com.example.BackendApi.Entity.UserRole;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+
+import java.util.List;
+import java.util.UUID;
+
+/**
+ * Implementation of IUserRoleDataAccess.
+ * Delegates to Spring Data JPA UserRoleRepository.
+ */
+@Component
+@RequiredArgsConstructor
+public class UserRoleDataAccessImpl implements IUserRoleDataAccess {
+
+    private final UserRoleRepository userRoleRepository;
+
+    @Override
+    public void deleteAllByUserInAndRoleIn(List<User> users, List<Role> roles) {
+        userRoleRepository.deleteAllByUserInAndRoleIn(users, roles);
+    }
+
+    @Override
+    public List<UserRole> saveAll(List<UserRole> userRoles) {
+        return userRoleRepository.saveAll(userRoles);
+    }
+
+    @Override
+    public List<UserRole> findByUserId(UUID userId) {
+        return userRoleRepository.findByUserId(userId);
+    }
+
+    @Override
+    public void deleteByUserId(UUID userId) {
+        userRoleRepository.deleteByUserId(userId);
+    }
+
+    @Override
+    public void deleteByUserIdAndRoleId(UUID userId, UUID roleId) {
+        userRoleRepository.deleteByUserIdAndRoleId(userId, roleId);
+    }
+}
