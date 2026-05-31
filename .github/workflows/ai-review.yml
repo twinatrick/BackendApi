@@ -7,7 +7,7 @@ on:
     types: [opened, synchronize]
 
 jobs:
-  # === 任務一：Push 報告 ===
+  # === 任務一：Push 時自動生成實作說明 (保持免費純 Git) ===
   push-summary:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
@@ -30,27 +30,28 @@ jobs:
 
           cat report.md >> $GITHUB_STEP_SUMMARY
 
-  # === 任務二：Merge Request AI 審查（修正版）===
+  # === 任務二：Merge Request AI 審查 (更換穩定的新套件) ===
   mr-ai-review:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pull-requests: write
-      issues: write
-      actions: read      # 💡 關鍵：加上這一行，允許套件讀取變數狀態以解除 403 錯誤
+      pull-requests: write # 讓 AI 可以回覆 MR
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 2
+          fetch-depth: 0 # 抓取完整歷史，利於新套件精準比對
 
       - name: Free AI Code Review
-        uses: anc95/ChatGPT-CodeReview@v1
+        # 💡 更換為結構更嚴謹的新套件
+        uses: ci-actions/ai-codereview@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # 這裡同樣帶入你設定在 Secrets 的 Groq 金鑰
           OPENAI_API_KEY: ${{ secrets.GROQ_API_KEY }}
-          OPENAI_API_BASE: "https://api.groq.com/openai/v1"
+          OPENAI_BASE_URL: "https://api.groq.com/openai/v1"
+          # 設定要使用的模型與語言
           MODEL: "llama3-70b-8192"
-          LANGUAGE: "Zh-TW"
+          LANGUAGE: "Traditional Chinese" # 繁體中文
