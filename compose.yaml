@@ -1,0 +1,187 @@
+
+services:
+  postgres:
+    image: ${POSTGRES_IMAGE:-postgres:latest}
+    container_name: ${POSTGRES_CONTAINER_NAME:-postgres_db_backend}
+    restart: ${RESTART_POLICY:-always}
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-verYs3cret}
+      POSTGRES_DB: ${POSTGRES_DB:-postgres}
+      POSTGRES_HOST_AUTH_METHOD: ${POSTGRES_HOST_AUTH_METHOD:-trust}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - my_network
+
+  redis:
+    image: ${REDIS_IMAGE:-redis:latest}
+    container_name: ${REDIS_CONTAINER_NAME:-redis_container}
+    restart: ${RESTART_POLICY:-always}
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+#    command: redis-server --requirepass redisPd
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-redisPd}
+    networks:
+      - my_network
+
+  zookeeper:
+    image: ${ZOOKEEPER_IMAGE:-confluentinc/cp-zookeeper:7.2.1}
+    container_name: ${ZOOKEEPER_CONTAINER_NAME:-zookeeper}
+    restart: ${RESTART_POLICY:-always}
+    environment:
+      ZOOKEEPER_CLIENT_PORT: ${ZOOKEEPER_CLIENT_PORT:-2181}
+      ZOOKEEPER_TICK_TIME: ${ZOOKEEPER_TICK_TIME:-2000}
+      ZOOKEEPER_SYNC_LIMIT: ${ZOOKEEPER_SYNC_LIMIT:-2}
+    ports:
+      - "${ZOOKEEPER_PORT:-2181}:2181"
+    networks:
+      - my_network
+
+  kafka:
+    image: ${KAFKA_IMAGE:-confluentinc/cp-kafka:7.2.1}
+    container_name: ${KAFKA_CONTAINER_NAME:-kafka}
+    restart: ${RESTART_POLICY:-always}
+    depends_on:
+      - zookeeper
+    ports:
+      - "${KAFKA_PORT:-9092}:9092"
+    environment:
+      KAFKA_BROKER_ID: ${KAFKA_BROKER_ID:-1}
+      KAFKA_ZOOKEEPER_CONNECT: ${KAFKA_ZOOKEEPER_CONNECT:-zookeeper:2181}
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://${KAFKA_ADVERTISED_HOST:-kafka}:9092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+#      KAFKA_BROKER_ID: 1
+#      KAFKA_ZOOKEEPER_CONNECT: localhost:2181
+#      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+#      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: ${KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR:-1}
+    networks:
+      - my_network
+
+##  backend:
+##    build: .
+##    image: ${BACKEND_IMAGE:-backendapi0212}
+##    container_name: ${BACKEND_CONTAINER_NAME:-backend_api_all}
+##    restart: ${RESTART_POLICY:-always}
+##    depends_on:
+##      - postgres
+##      - redis
+##      - kafka
+##      - zookeeper
+##      - milvus
+##    ports:
+##      - "${SERVER_PORT:-8000}:8000"
+##    environment:
+##      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/postgres
+##      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
+##      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-verYs3cret}
+##      REDIS_HOST: redis
+##      REDIS_PORT: 6379
+##      REDIS_PASSWORD: ${REDIS_PASSWORD:-redisPd}
+##      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+##      APP_IN_DOCKER: "true"
+##    networks:
+##      - my_network
+  etcd:
+    image: ${ETCD_IMAGE:-quay.io/coreos/etcd:v3.5.9}
+    container_name: ${ETCD_CONTAINER_NAME:-gary-backend-etcd}
+    restart: ${RESTART_POLICY:-always}
+    command:
+      - /usr/local/bin/etcd
+      - --advertise-client-urls
+      - http://0.0.0.0:2379
+      - --listen-client-urls
+      - http://0.0.0.0:2379
+      - --data-dir
+      - /etcd-data
+    volumes:
+      - etcd_data:/etcd-data
+    networks:
+      - my_network
+
+  minio:
+    image: ${MINIO_IMAGE:-minio/minio:latest}
+    container_name: ${MINIO_CONTAINER_NAME:-gary-backend-minio}
+    restart: ${RESTART_POLICY:-always}
+    environment:
+      MINIO_ROOT_USER: ${MINIO_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_PASSWORD:-minioadmin}
+    command: server /data --console-address ":9001"
+    ports:
+      - "${MINIO_API_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - my_network
+
+  milvus:
+    image: milvusdb/milvus:${MILVUS_VERSION:-v2.4.5}
+    container_name: ${MILVUS_CONTAINER_NAME:-gary-backend-milvus}
+    restart: ${RESTART_POLICY:-always}
+    depends_on:
+      - postgres
+      - etcd
+      - minio
+    environment:
+      MILVUS_DEPLOY_MODE: standalone
+      ETCD_ENDPOINTS: etcd:2379
+      MINIO_ADDRESS: minio:9000
+      COMMON_META_BACKEND: postgresql
+      POSTGRES_HOST: ${MILVUS_POSTGRES_HOST:-postgres}
+      POSTGRES_PORT: ${MILVUS_POSTGRES_PORT:-5432}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-verYs3cret}
+      POSTGRES_DB_NAME: ${POSTGRES_DB:-postgres}
+
+      # ========= Milvus 身份驗證設定 =========
+      # 啟用帳號密碼登入
+      # MILVUS_ENABLE_AUTH: "true"
+      # 管理員帳號與密碼
+      # MILVUS_ROOT_USER: ${MILVUS_ROOT_USER}
+      # MILVUS_ROOT_PASSWORD: ${MILVUS_ROOT_PASSWORD}
+      # 啟用 Token 驗證（選擇性）
+      MILVUS_AUTH_TOKEN: ${MILVUS_TOKEN:-milvus-default-token}
+      MILVUS_AUTH_TOKEN_ENABLED: "true"
+      MILVUS_AUTH_TOKEN_EXPIRATION: "3600" # Token 1 小時有效
+      # =====================================
+
+    ports:
+      - "${MILVUS_PORT:-19530}:19530"
+      - "${MILVUS_HEALTH_PORT:-9091}:9091"
+    volumes:
+      - milvus_data:/var/lib/milvus
+    networks:
+      - my_network
+    command: [ "milvus", "run", "standalone" ]
+
+  attu:
+    image: ${ATTU_IMAGE:-zilliz/attu:latest}
+    container_name: ${ATTU_CONTAINER_NAME:-gary-backend-attu}
+    restart: ${RESTART_POLICY:-always}
+    depends_on:
+      - milvus
+    environment:
+      # 設定要連接的 Milvus 伺服器
+      MILVUS_URL: milvus:19530
+
+      # 如果 Milvus 啟用了帳號密碼，Attu 也要設定登入資訊
+      MILVUS_USER: ${MILVUS_ROOT_USER:-root}
+      MILVUS_PASSWORD: ${MILVUS_ROOT_PASSWORD:-Milvus}
+    ports:
+      - "${ATTU_PORT:-8001}:3000"
+    networks:
+      - my_network
+volumes:
+  postgres_data:
+  milvus_data:
+  etcd_data:
+  minio_data:
+
+networks:
+  my_network:
+    driver: bridge
