@@ -8,6 +8,7 @@ import com.example.BackendApi.Dto.Vo.UserSkillRebindRequest;
 import com.example.BackendApi.Service.IProjectService;
 import com.example.BackendApi.Service.ISkillService;
 import com.example.BackendApi.Service.IUserService;
+import com.example.BackendApi.Util.SkillLevelBindingMapper;
 import com.example.BackendApi.Annotation.RequireRole;
 import com.example.BackendApi.Annotation.OpenApi.ApiControllerTag;
 import com.example.BackendApi.Annotation.OpenApi.ApiOperationBadRequest;
@@ -16,9 +17,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -52,7 +51,7 @@ public class AdminBindingController {
     @ApiOperationBadRequest(summary = "Rebind user skills", description = "Rebind all user-skill relations with level diff strategy")
     public ResponseType<String> rebindUserSkills(@RequestBody UserSkillRebindRequest request) {
         UUID userId = UUID.fromString(request.getUserId());
-        skillService.rebindUserSkills(userId, toSkillLevelMap(request.getBindings()));
+        skillService.rebindUserSkills(userId, SkillLevelBindingMapper.toSkillLevelMap(request.getBindings()));
         return ResponseType.Success("User skills rebound successfully");
     }
 
@@ -60,22 +59,7 @@ public class AdminBindingController {
     @ApiOperationBadRequest(summary = "Rebind project skills", description = "Rebind all project-skill relations with level diff strategy")
     public ResponseType<String> rebindProjectSkills(@RequestBody ProjectSkillRebindRequest request) {
         UUID projectId = UUID.fromString(request.getProjectId());
-        projectService.rebindProjectSkills(projectId, toSkillLevelMap(request.getBindings()));
+        projectService.rebindProjectSkills(projectId, SkillLevelBindingMapper.toSkillLevelMap(request.getBindings()));
         return ResponseType.Success("Project skills rebound successfully");
-    }
-
-    private Map<UUID, UUID> toSkillLevelMap(List<SkillLevelBindingItem> bindings) {
-        if (bindings == null || bindings.isEmpty()) {
-            return Map.of();
-        }
-
-        Map<UUID, UUID> map = new LinkedHashMap<>();
-        for (SkillLevelBindingItem item : bindings) {
-            if (item == null || item.getSkillId() == null || item.getSkillLevelId() == null) {
-                throw new IllegalArgumentException("Key must not be null");
-            }
-            map.put(UUID.fromString(item.getSkillId()), UUID.fromString(item.getSkillLevelId()));
-        }
-        return map;
     }
 }
