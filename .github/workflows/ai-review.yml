@@ -1,18 +1,13 @@
 name: "CI Flow: Push Summary & MR Review"
 
 on:
-  # 1. 綁定 Push 事件（產出免費說明報告）
   push:
     branches: [ "master", "main" ]
-
-  # 2. 綁定 Merge Request (Pull Request) 事件（觸發 AI 審查）
   pull_request:
     types: [opened, synchronize]
 
 jobs:
-  # ==========================================
-  # 任務一：Push 時自動生成實作說明 (100% 免費)
-  # ==========================================
+  # === 任務一：Push 報告 ===
   push-summary:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
@@ -35,9 +30,7 @@ jobs:
 
           cat report.md >> $GITHUB_STEP_SUMMARY
 
-  # ==========================================
-  # 任務二：Merge Request 時執行免費 AI Code Review
-  # ==========================================
+  # === 任務二：Merge Request AI 審查（修正版）===
   mr-ai-review:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
@@ -45,6 +38,8 @@ jobs:
       contents: read
       pull-requests: write
       issues: write
+      actions: read      # 💡 關鍵：加上這一行，允許套件讀取變數狀態以解除 403 錯誤
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -55,7 +50,6 @@ jobs:
         uses: anc95/ChatGPT-CodeReview@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # 這裡使用前面提到的 Groq 免費 API Key，記得要去 Settings 填寫
           OPENAI_API_KEY: ${{ secrets.GROQ_API_KEY }}
           OPENAI_API_BASE: "https://api.groq.com/openai/v1"
           MODEL: "llama3-70b-8192"
