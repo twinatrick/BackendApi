@@ -1,0 +1,53 @@
+name: "Git Flow Automation: Summary & Review"
+
+on:
+  # 1. 當 push 到主要分支時觸發說明
+  push:
+    branches: [ "main", "master", "develop" ]
+  # 2. 當發起或更新 PR 時觸發 AI 審查
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  # --- 任務一：Push 時自動生成實作說明 ---
+  push-summary:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Generate Commit Summary
+        run: |
+          echo "### 🚀 偵測到新的 Push！" > summary.md
+          echo "#### 📝 本次提交的修改紀錄 (Commit Logs):" >> summary.md
+          git log -1 --pretty=format:"* **作者:** %an <%ae>%n* **時間:** %ad%n* **訊息:** %s" >> summary.md
+          echo -e "\n\n#### 📂 修改的檔案清單:" >> summary.md
+          git diff-tree --no-commit-id --name-status -r HEAD >> summary.md
+          
+          # 將說明印在 GitHub Actions 的 Job Summary 網頁畫面上
+          cat summary.md >> $GITHUB_STEP_SUMMARY
+
+  # --- 任務二：Pull Request 時執行 AI Code Review ---
+  ai-code-review:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: AI Code Review
+        uses: anc95/ChatGPT-CodeReview@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }} # 記得去 Settings 放你的 API Key
+          LANGUAGE: "Zh-TW"
+          MODEL: "gpt-4o"
