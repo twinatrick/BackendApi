@@ -7,7 +7,7 @@ on:
     types: [opened, synchronize]
 
 jobs:
-  # === 任務一：Push 時自動生成實作說明 (保持免費純 Git) ===
+  # === 任務一：Push 時自動生成實作說明 ===
   push-summary:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
@@ -30,28 +30,85 @@ jobs:
 
           cat report.md >> $GITHUB_STEP_SUMMARY
 
-  # === 任務二：Merge Request AI 審查 (更換穩定的新套件) ===
+  # === 任務二：Merge Request AI 審查 ===
   mr-ai-review:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     permissions:
+      pull-requests: write
       contents: read
-      pull-requests: write # 讓 AI 可以回覆 MR
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # 抓取完整歷史，利於新套件精準比對
+          fetch-depth: 0
 
-      - name: Free AI Code Review
-        # 💡 更換為結構更嚴謹的新套件
-        uses: ci-actions/ai-codereview@v1
+      - name: Fetch base branch for diff
+        run: |
+          git fetch origin ${{ github.event.pull_request.base.ref }}
+
+      - name: Create Review Script
+        run: |
+          cat << 'EOF' > review.py
+          import os
+          import json
+          import requests
+
+          def main():
+              diff = os.environ.get('DIFF_DATA', '')
+              groq_key = os.environ.get('GROQ_API_KEY')
+              github_token = os.environ.get('GITHUB_TOKEN')
+              repo = os.environ.get('REPO')
+              pr_num = os.environ.get('PR_NUMBER')
+
+              if not diff.strip():
+                  print("沒有顯著的程式碼改動，跳過 AI 審查。")
+                  return
+
+              prompt = f"請擔任高階資深工程師，為以下的程式碼改動（Git Diff）進行 Code Review，並用繁體中文回覆。\n請先簡短總結這次 MR 實現了什麼功能，接著針對有資安風險、效能問題或潛在 Bug 的地方給予具體修改建議。\n\n```diff\n{diff}\n```"
+
+              headers = {
+                  'Authorization': f'Bearer {groq_key}',
+                  'Content-Type': 'application/json'
+              }
+              data = {
+                  'model': 'llama3-70b-8192',
+                  'messages': [{'role': 'user', 'content': prompt}],
+                  'temperature': 0.2
+              }
+          
+              print("正在發送請求給 Groq AI...")
+              response = requests.post('[https://api.groq.com/openai/v1/chat/completions](https://api.groq.com/openai/v1/chat/completions)', headers=headers, json=data)
+          
+              if response.status_code != 200:
+                  print(f"Groq API 錯誤: {response.text}")
+                  return
+          
+              ai_reply = response.json()['choices'][0]['message']['content']
+
+              gh_headers = {
+                  'Authorization': f'token {github_token}',
+                  'Accept': 'application/vnd.github.v3+json'
+              }
+              gh_data = {'body': ai_reply}
+              gh_url = f'[https://api.github.com/repos/](https://api.github.com/repos/){repo}/issues/{pr_num}/comments'
+          
+              print("正在將評論寫入 GitHub MR...")
+              gh_res = requests.post(gh_url, headers=gh_headers, json=gh_data)
+              print(f"GitHub 回傳狀態碼: {gh_res.status_code}")
+
+          if __name__ == '__main__':
+              main()
+          EOF
+
+      - name: Run AI Review
         env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # 這裡同樣帶入你設定在 Secrets 的 Groq 金鑰
-          OPENAI_API_KEY: ${{ secrets.GROQ_API_KEY }}
-          OPENAI_BASE_URL: "https://api.groq.com/openai/v1"
-          # 設定要使用的模型與語言
-          MODEL: "llama3-70b-8192"
-          LANGUAGE: "Traditional Chinese" # 繁體中文
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          DIFF_DATA=$(git diff origin/${{ github.event.pull_request.base.ref }} HEAD -- . ':(exclude)*.json' ':(exclude)*.lock' ':(exclude).github/*')
+          export DIFF_DATA
+          python3 review.py
