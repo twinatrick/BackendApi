@@ -1,104 +1,108 @@
-name: "Free AI Code Review"
+name: "CI Flow: Push Summary & MR Review"
 
 on:
+  push:
+    branches: [ "master", "main" ]
   pull_request:
     types: [opened, synchronize]
 
 jobs:
-  mr-ai-review:
+  # === 任務一：Push 時自動生成實作說明 ===
+  push-summary:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Generate Summary Report
+        run: |
+          echo "## 📊 程式碼提交自動說明報告" > report.md
+          echo "* **提交人員:** ${{ github.actor }}" >> report.md
+          echo "* **提交訊息 (實作內容):** $(git log -1 --pretty=format:'%s')" >> report.md
+          
+          echo "### 📂 本次修改的檔案清單：" >> report.md
+          echo "\`\`\`diff" >> report.md
+          git diff --name-status HEAD~1 HEAD >> report.md
+          echo "\`\`\`" >> report.md
+
+          cat report.md >> $GITHUB_STEP_SUMMARY
+
+  # === 任務二：Merge Request AI 審查 ===
+  mr-ai-review:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    # 💡 沿用你網頁上設定的 apikey 環境
+    environment: apikey
     permissions:
       pull-requests: write
       contents: read
 
     steps:
-      - name: 1. 檢出程式碼 (Checkout Code)
+      - name: Checkout Code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: 2. 獲取基礎分支歷史 (Fetch Base Branch)
+      - name: Fetch base branch for diff
         run: |
           git fetch origin ${{ github.event.pull_request.base.ref }}
 
-      - name: 3. 導出程式碼變動至實體檔案 (Generate Patch)
-        # 💡 將產出導入實體檔案，完美避開作業系統 Argument list too long 的限制
-        run: |
-          git diff origin/${{ github.event.pull_request.base.ref }} HEAD -- . ':(exclude)*.json' ':(exclude)*.lock' ':(exclude).github/*' > patch.diff
-
-      - name: 4. 建立獨立自動化審查腳本 (Create Python Script)
-        # 💡 透過標準 Linux EOF 機制建立檔案，裡面的 Python 縮排不會影響到外部的 YAML 解析
-        run: |
-          cat << 'EOF' > review.py
-          import os
-          import requests
-
-          def main():
-              # 自環境變數讀取金鑰與 PR 資訊
-              groq_key = os.environ.get('GROQ_API_KEY')
-              github_token = os.environ.get('GITHUB_TOKEN')
-              repo = os.environ.get('REPO')
-              pr_num = os.environ.get('PR_NUMBER')
-
-              # 安全檢查：確保 diff 檔案存在
-              if not os.path.exists('patch.diff'):
-                  print("找不到 patch.diff 檔案，取消審查。")
-                  return
-
-              with open('patch.diff', 'r', encoding='utf-8') as f:
-                  diff = f.read()
-
-              if not diff.strip():
-                  print("沒有偵測到顯著的程式碼改動。")
-                  return
-
-              # 安全防護：避免 diff 過大導致 Groq API 的 Token 溢位
-              if len(diff) > 40000:
-                  diff = diff[:40000] + "\n\n...(內容過長已自動截斷)..."
-
-              # 建立發送給 AI 的標準 Prompt
-              prompt = f"請擔任高階資深工程師，為以下的程式碼改動（Git Diff）進行 Code Review，並用繁體中文回覆。\n請先簡短總結這次 MR 實現了什麼功能，接著針對有資安風險、效能問題或潛在 Bug 的地方給予具體修改建議。\n\n```diff\n{diff}\n```"
-
-              # 呼叫 Groq API (使用 Llama3-70b 高階模型)
-              headers = {
-                  'Authorization': f'Bearer {groq_key}',
-                  'Content-Type': 'application/json'
-              }
-              data = {
-                  'model': 'llama3-70b-8192',
-                  'messages': [{'role': 'user', 'content': prompt}],
-                  'temperature': 0.2
-              }
-          
-              print("正在發送請求至 Groq API...")
-              response = requests.post('https://api.groq.com/openai/v1/chat/completions', headers=headers, json=data)
-          
-              if response.status_code != 200:
-                  print(f"Groq API 呼叫失敗: {response.text}")
-                  return
-          
-              ai_reply = response.json()['choices'][0]['message']['content']
-
-              # 將審查結果留言回 GitHub PR 頁面
-              gh_headers = {
-                  'Authorization': f'token {github_token}',
-                  'Accept': 'application/vnd.github.v3+json'
-              }
-              gh_url = f'https://api.github.com/repos/{repo}/issues/{pr_num}/comments'
-          
-              print("正在將 AI 評論寫入 GitHub Pull Request...")
-              gh_res = requests.post(gh_url, headers=gh_headers, json={'body': ai_reply})
-              print(f"GitHub API 回傳狀態碼: {gh_res.status_code}")
-
-          if __name__ == '__main__':
-              main()
-          EOF
-
-      - name: 5. 執行 AI 審查流程 (Execute Review)
+      - name: Run AI Review
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           REPO: ${{ github.repository }}
+          PYTHON_CODE: |
+            import os
+            import requests
+
+            def main():
+                groq_key = os.environ.get('GROQ_API_KEY')
+                github_token = os.environ.get('GITHUB_TOKEN')
+                repo = os.environ.get('REPO')
+                pr_num = os.environ.get('PR_NUMBER')
+
+                if not os.path.exists('patch.diff'):
+                    print("找不到 patch.diff")
+                    return
+
+                with open('patch.diff', 'r', encoding='utf-8') as f:
+                    diff = f.read()
+
+                if not diff.strip():
+                    print("Diff 內容為空，跳過")
+                    return
+
+                if len(diff) > 40000:
+                    diff = diff[:40000] + "\n\n...(內容過長已截斷)..."
+
+                prompt = f"請擔任高階資深工程師，為以下的程式碼改動（Git Diff）進行 Code Review，並用繁體中文回覆。\n請先簡短總結這次 MR 實現了什麼功能，接著針對有資安風險、效能問題或潛在 Bug 的地方給予具體修改建議。\n\n```diff\n{diff}\n```"
+            
+                headers = {'Authorization': f'Bearer {groq_key}', 'Content-Type': 'application/json'}
+                # 💡 修正：換上 Groq 官方最新的主力大模型 llama-3.3-70b-specdec
+                data = {'model': 'llama-3.3-70b-specdec', 'messages': [{'role': 'user', 'content': prompt}], 'temperature': 0.2}
+            
+                print("正在呼叫 Groq API...")
+                response = requests.post('https://api.groq.com/openai/v1/chat/completions', headers=headers, json=data)
+            
+                if response.status_code != 200:
+                    print(f"Groq 失敗: {response.text}")
+                    return
+
+                ai_reply = response.json()['choices'][0]['message']['content']
+            
+                print("正在留言到 GitHub...")
+                gh_headers = {'Authorization': f'token {github_token}', 'Accept': 'application/vnd.github.v3+json'}
+                gh_res = requests.post(f'https://api.github.com/repos/{repo}/issues/{pr_num}/comments', headers=gh_headers, json={'body': ai_reply})
+                print(f"GitHub 回應狀態碼: {gh_res.status_code}")
+
+            if __name__ == '__main__':
+                main()
         run: |
+          git diff origin/${{ github.event.pull_request.base.ref }} HEAD -- . ':(exclude)*.json' ':(exclude)*.lock' ':(exclude).github/*' > patch.diff
+          echo "$PYTHON_CODE" > review.py
           python3 review.py
