@@ -81,16 +81,28 @@ jobs:
                     diff = diff[:40000] + "\n\n...(內容過長已截斷)..."
 
                 prompt = f"請擔任高階資深工程師，為以下的程式碼改動（Git Diff）進行 Code Review，並用繁體中文回覆。\n請先簡短總結這次 MR 實現了什麼功能，接著針對有資安風險、效能問題或潛在 Bug 的地方給予具體修改建議。\n\n```diff\n{diff}\n```"
-            
                 headers = {'Authorization': f'Bearer {groq_key}', 'Content-Type': 'application/json'}
-                # 💡 修正：更換為最安全、絕不輕易下架的官方基礎模型 llama3-8b-8192
-                data = {'model': 'llama3-8b-8192', 'messages': [{'role': 'user', 'content': prompt}], 'temperature': 0.2}
             
-                print("正在呼叫 Groq API...")
-                response = requests.post('https://api.groq.com/openai/v1/chat/completions', headers=headers, json=data)
+                # 💡 雙模型防禦：首選 3.3 強大模型，備援 3.1 萬能模型
+                models_to_try = ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant']
+                response = None
             
-                if response.status_code != 200:
-                    print(f"Groq 失敗: {response.text}")
+                for model in models_to_try:
+                    print(f"正在嘗試呼叫 Groq API，使用模型: {model}...")
+                    data = {'model': model, 'messages': [{'role': 'user', 'content': prompt}], 'temperature': 0.2}
+                    try:
+                        res = requests.post('https://api.groq.com/openai/v1/chat/completions', headers=headers, json=data)
+                        if res.status_code == 200:
+                            response = res
+                            print(f"🎉 成功使用模型 {model} 取得回應！")
+                            break
+                        else:
+                            print(f"❌ 模型 {model} 失敗，錯誤訊息: {res.text}")
+                    except Exception as e:
+                        print(f"💥 請求引發異常: {str(e)}")
+
+                if not response:
+                    print("🚨 抱歉，所有準備的 Groq 模型皆無法使用，請檢查官方最新模型清單。")
                     return
 
                 ai_reply = response.json()['choices'][0]['message']['content']
