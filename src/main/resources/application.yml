@@ -1,0 +1,45 @@
+jwt:
+  secret:
+    use: ${JWT_SECRET_USE:secretsecretsecretsecretsecretll}
+  issuer: ${JWT_ISSUER:backedApi}
+  audience: ${JWT_AUDIENCE:backedApi}
+  expiration-minutes: ${JWT_EXPIRATION_MINUTES:60}
+
+app:
+  in-docker: ${APP_IN_DOCKER:false}
+
+spring:
+  threads:
+    virtual:
+      enabled: true
+  data:
+    redis:
+      host: ${REDIS_HOST:}
+      port: ${REDIS_PORT:6379}
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/postgres}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:verYs3cret}
+    driver-class-name: org.postgresql.Driver
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+server:
+  port: ${SERVER_PORT:8000}
+
+kafka:
+  consumer:
+    group-id: ${KAFKA_CONSUMER_GROUP_ID:myGroup}
+
+redis:
+  cache:
+    ttl-hours: ${REDIS_CACHE_TTL_HOURS:1}
+
+superuser:
+  key: ${SUPERUSER_KEY:genAdminKey}
