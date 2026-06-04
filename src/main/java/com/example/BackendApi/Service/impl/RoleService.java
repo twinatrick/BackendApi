@@ -90,7 +90,6 @@ public class RoleService implements IRoleService {
         );
         existing.setName(role.getName());
         existing.setDescription(role.getDescription());
-        existing.setPermissions(role.getPermissions());
         return roleMapper.toVo(roleDataAccess.save(existing));
     }
 
