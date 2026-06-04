@@ -1,6 +1,6 @@
 package com.example.BackendApi.Service.impl;
 
-import com.example.BackendApi.Dto.Vo.common.AlarmMessage;
+import com.example.BackendApi.Dto.Vo.Common.AlarmMessage;
 import com.example.BackendApi.Service.IKafkaConsumerService;
 import com.example.BackendApi.WebSocket.AlarmWebSocket;
 import org.slf4j.Logger;

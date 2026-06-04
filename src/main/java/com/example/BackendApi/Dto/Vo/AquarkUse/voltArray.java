@@ -1,4 +1,4 @@
-package com.example.BackendApi.Dto.Vo.aquarkUse;
+package com.example.BackendApi.Dto.Vo.AquarkUse;
 
 import lombok.Getter;
 import lombok.Setter;

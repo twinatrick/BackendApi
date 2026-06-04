@@ -6,10 +6,10 @@ import com.example.BackendApi.Annotation.OpenApi.ApiControllerTag;
 import com.example.BackendApi.Annotation.OpenApi.ApiOperationBadRequest;
 import com.example.BackendApi.Annotation.OpenApi.ApiOperationOk;
 import com.example.BackendApi.Dto.Vo.ResponseType;
-import com.example.BackendApi.Dto.Vo.aquarkUse.AquarkDataRaw;
-import com.example.BackendApi.Dto.Vo.aquarkUse.AverageAquark;
-import com.example.BackendApi.Dto.Vo.aquarkUse.CriteriaAPIFilter;
-import com.example.BackendApi.Dto.Vo.aquarkUse.TimeRange;
+import com.example.BackendApi.Dto.Vo.AquarkUse.AquarkDataRaw;
+import com.example.BackendApi.Dto.Vo.AquarkUse.AverageAquark;
+import com.example.BackendApi.Dto.Vo.AquarkUse.CriteriaAPIFilter;
+import com.example.BackendApi.Dto.Vo.AquarkUse.TimeRange;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 

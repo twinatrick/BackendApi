@@ -1,7 +1,7 @@
 package com.example.BackendApi.Controller;
 
 import com.example.BackendApi.Dto.Vo.Search.UserSearchQuery;
-import com.example.BackendApi.Dto.Vo.common.PageResult;
+import com.example.BackendApi.Dto.Vo.Common.PageResult;
 import com.example.BackendApi.Service.ISkillService;
 import com.example.BackendApi.Service.IUserService;
 import com.example.BackendApi.Annotation.RequirePermission;

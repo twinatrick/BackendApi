@@ -3,7 +3,7 @@ package com.example.BackendApi.Service;
 import com.example.BackendApi.Dto.Vo.FunctionVo;
 import com.example.BackendApi.Dto.Vo.Search.UserSearchQuery;
 import com.example.BackendApi.Dto.Vo.UserVo;
-import com.example.BackendApi.Dto.Vo.common.PageResult;
+import com.example.BackendApi.Dto.Vo.Common.PageResult;
 
 import java.util.List;
 import java.util.UUID;

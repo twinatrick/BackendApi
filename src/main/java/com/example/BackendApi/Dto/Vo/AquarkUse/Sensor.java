@@ -1,4 +1,4 @@
-package com.example.BackendApi.Dto.Vo.aquarkUse;
+package com.example.BackendApi.Dto.Vo.AquarkUse;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;

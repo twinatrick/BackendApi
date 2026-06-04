@@ -1,6 +1,6 @@
 package com.example.BackendApi.WebSocket;
 
-import com.example.BackendApi.Dto.Vo.common.AlarmMessage;
+import com.example.BackendApi.Dto.Vo.Common.AlarmMessage;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.websocket.OnClose;
 import jakarta.websocket.OnOpen;

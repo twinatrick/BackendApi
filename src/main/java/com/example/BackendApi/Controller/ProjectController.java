@@ -1,7 +1,7 @@
 package com.example.BackendApi.Controller;
 
 import com.example.BackendApi.Dto.Vo.Search.ProjectSearchQuery;
-import com.example.BackendApi.Dto.Vo.common.PageResult;
+import com.example.BackendApi.Dto.Vo.Common.PageResult;
 import com.example.BackendApi.Dto.Vo.PersonalProjectSkillBindRequest;
 import com.example.BackendApi.Dto.Vo.PersonalProjectSkillLevelRequest;
 import com.example.BackendApi.Dto.Vo.PersonalProjectRequest;
