@@ -1,7 +1,7 @@
 package com.example.BackendApi.Service.impl;
 
 import com.example.BackendApi.Dto.Vo.Search.RoleSearchQuery;
-import com.example.BackendApi.Dto.Vo.common.PageResult;
+import com.example.BackendApi.Dto.Vo.Common.PageResult;
 import com.example.BackendApi.Service.IRoleService;
 import com.example.BackendApi.Util.SortFieldValidator;
 import com.example.BackendApi.DataAccess.*;
@@ -90,7 +90,6 @@ public class RoleService implements IRoleService {
         );
         existing.setName(role.getName());
         existing.setDescription(role.getDescription());
-        existing.setPermissions(role.getPermissions());
         return roleMapper.toVo(roleDataAccess.save(existing));
     }
 

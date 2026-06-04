@@ -193,7 +193,7 @@ DataAccess 層將資料存取邏輯從 Service 中分離，便於測試與替換
 
 ## 後續規劃
 
-- [ ] **CI/CD 管線**: 整合 GitHub Actions，自動化測試、建置、部署
+- [x] **CI/CD 管線**: 整合 GitHub Actions，自動化測試、建置、部署
 - [ ] **監控與日誌**: 引入 Micrometer + Prometheus + Grafana，集中化日誌管理
 - [ ] **效能優化**: 資料庫查詢優化、連線池調整、虛擬執行緒應用
 - [ ] **API 版本管理**: 引入 URI/Header 版本控制，向後相容

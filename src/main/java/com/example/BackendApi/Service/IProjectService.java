@@ -4,7 +4,7 @@ import com.example.BackendApi.Dto.Vo.PersonalProjectRequest;
 import com.example.BackendApi.Dto.Vo.ProjectSkillVo;
 import com.example.BackendApi.Dto.Vo.ProjectVo;
 import com.example.BackendApi.Dto.Vo.Search.ProjectSearchQuery;
-import com.example.BackendApi.Dto.Vo.common.PageResult;
+import com.example.BackendApi.Dto.Vo.Common.PageResult;
 
 import java.util.List;
 import java.util.Map;

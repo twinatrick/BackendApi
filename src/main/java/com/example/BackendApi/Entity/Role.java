@@ -25,8 +25,7 @@ public class Role extends BaseEntity {
     private String name;
     @Column(name = "description")
     private String description;
-    @Column(name = "permissions")
-    private String permissions;
+
     @JsonIgnore
     @OneToMany(mappedBy = "role", fetch = FetchType.EAGER,cascade = CascadeType.ALL)
     private List<UserRole> userRoles =new ArrayList<>();

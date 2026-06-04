@@ -1,4 +1,4 @@
-package com.example.BackendApi.Dto.Vo.common;
+package com.example.BackendApi.Dto.Vo.Common;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;

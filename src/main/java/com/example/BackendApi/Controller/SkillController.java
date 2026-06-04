@@ -2,7 +2,7 @@ package com.example.BackendApi.Controller;
 
 import com.example.BackendApi.Dto.Vo.Search.SkillLevelSearchQuery;
 import com.example.BackendApi.Dto.Vo.Search.SkillSearchQuery;
-import com.example.BackendApi.Dto.Vo.common.PageResult;
+import com.example.BackendApi.Dto.Vo.Common.PageResult;
 import com.example.BackendApi.Service.ISkillService;
 import com.example.BackendApi.Annotation.OpenApi.ApiControllerTag;
 import com.example.BackendApi.Annotation.OpenApi.ApiOperationBadRequest;

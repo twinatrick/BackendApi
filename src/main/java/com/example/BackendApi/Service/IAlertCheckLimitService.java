@@ -2,7 +2,7 @@ package com.example.BackendApi.Service;
 
 import com.example.BackendApi.Dto.Vo.AlertCheckLimitVo;
 import com.example.BackendApi.Dto.Vo.Search.AlertCheckLimitSearchQuery;
-import com.example.BackendApi.Dto.Vo.common.PageResult;
+import com.example.BackendApi.Dto.Vo.Common.PageResult;
 
 import java.util.List;
 

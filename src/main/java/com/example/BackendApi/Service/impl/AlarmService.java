@@ -1,6 +1,6 @@
 package com.example.BackendApi.Service.impl;
 
-import com.example.BackendApi.Dto.Vo.common.AlarmMessage;
+import com.example.BackendApi.Dto.Vo.Common.AlarmMessage;
 import com.example.BackendApi.Service.IAlarmPublisher;
 import com.example.BackendApi.Service.IAlarmService;
 import org.springframework.beans.factory.annotation.Autowired;

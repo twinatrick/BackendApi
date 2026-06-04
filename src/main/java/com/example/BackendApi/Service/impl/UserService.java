@@ -1,7 +1,7 @@
 package com.example.BackendApi.Service.impl;
 
 import com.example.BackendApi.Dto.Vo.Search.UserSearchQuery;
-import com.example.BackendApi.Dto.Vo.common.PageResult;
+import com.example.BackendApi.Dto.Vo.Common.PageResult;
 import com.example.BackendApi.Service.IRoleService;
 import com.example.BackendApi.Service.IUserService;
 import com.example.BackendApi.Util.SortFieldValidator;
