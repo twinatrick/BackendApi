@@ -1,8 +1,8 @@
 package com.example.BackendApi.Service;
 
-import com.example.BackendApi.Dto.Vo.aquarkUse.AquarkDataRaw;
-import com.example.BackendApi.Dto.Vo.aquarkUse.AverageAquark;
-import com.example.BackendApi.Dto.Vo.aquarkUse.CriteriaAPIFilter;
+import com.example.BackendApi.Dto.Vo.AquarkUse.AquarkDataRaw;
+import com.example.BackendApi.Dto.Vo.AquarkUse.AverageAquark;
+import com.example.BackendApi.Dto.Vo.AquarkUse.CriteriaAPIFilter;
 
 import java.util.Date;
 import java.util.List;

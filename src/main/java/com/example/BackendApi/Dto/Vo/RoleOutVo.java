@@ -14,7 +14,6 @@ public class RoleOutVo {
     private UUID id;
     private String name;
     private String description;
-    private String permissions;
     private String createdBy;
     private String updatedBy;
     private Date createdTime;

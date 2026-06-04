@@ -4,7 +4,7 @@ import com.example.BackendApi.Dto.Vo.RoleOutVo;
 import com.example.BackendApi.Dto.Vo.FunctionVo;
 import com.example.BackendApi.Dto.Vo.UserVo;
 import com.example.BackendApi.Dto.Vo.Search.RoleSearchQuery;
-import com.example.BackendApi.Dto.Vo.common.PageResult;
+import com.example.BackendApi.Dto.Vo.Common.PageResult;
 
 import java.util.List;
 

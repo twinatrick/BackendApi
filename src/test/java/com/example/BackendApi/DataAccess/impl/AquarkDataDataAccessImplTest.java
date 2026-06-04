@@ -2,7 +2,7 @@ package com.example.BackendApi.DataAccess.impl;
 
 import com.example.BackendApi.Repository.AquarkDataRepository;
 import com.example.BackendApi.DataAccess.IAquarkDataDataAccess;
-import com.example.BackendApi.Dto.Vo.aquarkUse.CriteriaAPIFilter;
+import com.example.BackendApi.Dto.Vo.AquarkUse.CriteriaAPIFilter;
 import com.example.BackendApi.Entity.AquarkData;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;

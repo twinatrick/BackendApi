@@ -6,7 +6,7 @@ import com.example.BackendApi.Dto.Vo.Search.SkillLevelSearchQuery;
 import com.example.BackendApi.Dto.Vo.Search.SkillSearchQuery;
 import com.example.BackendApi.Dto.Vo.SkillLevelVo;
 import com.example.BackendApi.Dto.Vo.SkillVo;
-import com.example.BackendApi.Dto.Vo.common.PageResult;
+import com.example.BackendApi.Dto.Vo.Common.PageResult;
 import com.example.BackendApi.Entity.*;
 import com.example.BackendApi.Service.impl.SkillService;
 import com.example.BackendApi.DataAccess.*;

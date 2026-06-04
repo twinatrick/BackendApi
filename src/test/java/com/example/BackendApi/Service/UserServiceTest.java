@@ -5,7 +5,7 @@ import com.example.BackendApi.DataAccess.IProjectDataAccess;
 import com.example.BackendApi.DataAccess.IUserDataAccess;
 import com.example.BackendApi.DataAccess.IUserProjectDataAccess;
 import com.example.BackendApi.Dto.Vo.Search.UserSearchQuery;
-import com.example.BackendApi.Dto.Vo.common.PageResult;
+import com.example.BackendApi.Dto.Vo.Common.PageResult;
 import com.example.BackendApi.Service.impl.UserService;
 import com.example.BackendApi.Exception.AppException;
 import com.example.BackendApi.Mapper.FunctionMapper;

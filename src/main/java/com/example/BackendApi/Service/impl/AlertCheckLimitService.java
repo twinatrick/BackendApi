@@ -1,7 +1,7 @@
 package com.example.BackendApi.Service.impl;
 
 import com.example.BackendApi.Dto.Vo.Search.AlertCheckLimitSearchQuery;
-import com.example.BackendApi.Dto.Vo.common.PageResult;
+import com.example.BackendApi.Dto.Vo.Common.PageResult;
 import com.example.BackendApi.Service.IAlertCheckLimitService;
 import com.example.BackendApi.Util.SortFieldValidator;
 import com.example.BackendApi.DataAccess.IAlertCheckLimitDataAccess;

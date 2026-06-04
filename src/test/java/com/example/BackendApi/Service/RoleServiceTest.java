@@ -1,7 +1,7 @@
 package com.example.BackendApi.Service;
 
 import com.example.BackendApi.Dto.Vo.Search.RoleSearchQuery;
-import com.example.BackendApi.Dto.Vo.common.PageResult;
+import com.example.BackendApi.Dto.Vo.Common.PageResult;
 import com.example.BackendApi.Entity.*;
 import com.example.BackendApi.Service.impl.RoleService;
 import com.example.BackendApi.DataAccess.*;
@@ -104,7 +104,6 @@ class RoleServiceTest {
             role.setId(vo.getId());
             role.setName(vo.getName());
             role.setDescription(vo.getDescription());
-            role.setPermissions(vo.getPermissions());
             return role;
         });
         when(roleMapper.toVo(any(Role.class))).thenAnswer(invocation -> {
@@ -113,7 +112,6 @@ class RoleServiceTest {
             vo.setId(role.getId());
             vo.setName(role.getName());
             vo.setDescription(role.getDescription());
-            vo.setPermissions(role.getPermissions());
             return vo;
         });
         when(functionMapper.toVo(any(Function.class))).thenAnswer(invocation -> {

@@ -1,6 +1,6 @@
 package com.example.BackendApi.DataAccess;
 
-import com.example.BackendApi.Dto.Vo.aquarkUse.CriteriaAPIFilter;
+import com.example.BackendApi.Dto.Vo.AquarkUse.CriteriaAPIFilter;
 import com.example.BackendApi.Entity.AquarkData;
 
 import java.util.Date;

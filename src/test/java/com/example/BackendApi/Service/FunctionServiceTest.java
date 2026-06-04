@@ -1,7 +1,7 @@
 package com.example.BackendApi.Service;
 
 import com.example.BackendApi.Dto.Vo.Search.FunctionSearchQuery;
-import com.example.BackendApi.Dto.Vo.common.PageResult;
+import com.example.BackendApi.Dto.Vo.Common.PageResult;
 import com.example.BackendApi.Service.impl.FunctionService;
 import com.example.BackendApi.DataAccess.IFunctionDataAccess;
 import com.example.BackendApi.DataAccess.IRoleFunctionDataAccess;

@@ -1,6 +1,6 @@
 package com.example.BackendApi.Service;
 
-import com.example.BackendApi.Dto.Vo.common.AlarmMessage;
+import com.example.BackendApi.Dto.Vo.Common.AlarmMessage;
 
 import java.util.List;
 
