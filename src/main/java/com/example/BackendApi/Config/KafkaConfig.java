@@ -1,6 +1,6 @@
 package com.example.BackendApi.Config;
 
-import com.example.BackendApi.Dto.Vo.dto.AlarmMessage;
+import com.example.BackendApi.Dto.Vo.common.AlarmMessage;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.kafka.clients.consumer.ConsumerConfig;

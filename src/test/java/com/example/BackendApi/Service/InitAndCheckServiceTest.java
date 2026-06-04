@@ -28,7 +28,7 @@ import static org.mockito.Mockito.*;
  */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
-class initAndCheckServiceTest {
+class InitAndCheckServiceTest {
 
     @Mock
     private IRoleService roleService;

@@ -1,7 +1,7 @@
 package com.example.BackendApi.Service.impl;
 
-import com.example.BackendApi.Dto.Vo.dto.common.PageResult;
-import com.example.BackendApi.Dto.Vo.dto.search.AlertCheckLimitSearchQuery;
+import com.example.BackendApi.Dto.Vo.Search.AlertCheckLimitSearchQuery;
+import com.example.BackendApi.Dto.Vo.common.PageResult;
 import com.example.BackendApi.Service.IAlertCheckLimitService;
 import com.example.BackendApi.Util.SortFieldValidator;
 import com.example.BackendApi.DataAccess.IAlertCheckLimitDataAccess;
@@ -96,12 +96,12 @@ public class AlertCheckLimitService implements IAlertCheckLimitService {
     }
 
     @CachePut(value = "alertCheckLimit", key = "#alertCheckLimit.tableName + '.' + #alertCheckLimit.columnName")
-    private AlertCheckLimit updateEntity(AlertCheckLimit alertCheckLimit) {
+    public AlertCheckLimit updateEntity(AlertCheckLimit alertCheckLimit) {
         return alertCheckLimitDataAccess.save(alertCheckLimit);
     }
 
     @CacheEvict(value = "alertCheckLimit", key = "#alertCheckLimit.tableName + '.' + #alertCheckLimit.columnName")
-    private void deleteLimitEntity(AlertCheckLimit alertCheckLimit) {
+    public void deleteLimitEntity(AlertCheckLimit alertCheckLimit) {
         alertCheckLimitDataAccess.delete(alertCheckLimit);
     }
 

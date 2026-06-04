@@ -1,11 +1,11 @@
 package com.example.BackendApi.Service.impl;
 
+import com.example.BackendApi.Dto.Vo.common.AlarmMessage;
 import com.example.BackendApi.Service.IAlertCheckLimitService;
 import com.example.BackendApi.Service.IApiFetcher;
 import com.example.BackendApi.Service.IAquarkDataService;
 import com.example.BackendApi.Service.ICheckApiService;
 import com.example.BackendApi.Service.IAlarmService;
-import com.example.BackendApi.Dto.Vo.dto.AlarmMessage;
 import com.example.BackendApi.Dto.Vo.aquarkUse.RowData;
 import com.example.BackendApi.Dto.Vo.aquarkUse.aquarkApiReturnVo;
 import com.example.BackendApi.Dto.Vo.aquarkUse.AquarkDataRaw;

@@ -130,6 +130,10 @@ public class initAndCheckService implements IInitAndCheckService {
         allFunctionList.add(new ArrayList<>( List.of("System", "LimitSetting", "View")));
         allFunctionList.add(new ArrayList<>( List.of("System", "SkillManagement", "View")));
         allFunctionList.add(new ArrayList<>( List.of("System", "ProjectManagement", "View")));
+        allFunctionList.add(new ArrayList<>( List.of("System", "ProjectManagement", "Edit")));
+        allFunctionList.add(new ArrayList<>( List.of("System", "ProjectManagement", "EditAll")));
+
+
 
 
         for (List<String> functionListStr : allFunctionList) {

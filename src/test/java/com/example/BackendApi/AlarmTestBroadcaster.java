@@ -1,7 +1,7 @@
 package com.example.BackendApi;
 
+import com.example.BackendApi.Dto.Vo.common.AlarmMessage;
 import com.example.BackendApi.WebSocket.AlarmWebSocket;
-import com.example.BackendApi.Dto.Vo.dto.AlarmMessage;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 

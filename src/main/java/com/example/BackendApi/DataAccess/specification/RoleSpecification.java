@@ -1,6 +1,6 @@
 package com.example.BackendApi.DataAccess.specification;
 
-import com.example.BackendApi.Dto.Vo.dto.search.RoleSearchQuery;
+import com.example.BackendApi.Dto.Vo.Search.RoleSearchQuery;
 import com.example.BackendApi.Entity.Role;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;

@@ -1,12 +1,12 @@
 package com.example.BackendApi.Service.impl;
 
-import com.example.BackendApi.Dto.Vo.dto.common.PageResult;
-import com.example.BackendApi.Dto.Vo.dto.search.SkillLevelSearchQuery;
-import com.example.BackendApi.Dto.Vo.dto.search.SkillSearchQuery;
 import com.example.BackendApi.Dto.Vo.CurrentUserSkillVo;
 import com.example.BackendApi.Dto.Vo.PersonalSkillRequest;
+import com.example.BackendApi.Dto.Vo.Search.SkillLevelSearchQuery;
+import com.example.BackendApi.Dto.Vo.Search.SkillSearchQuery;
 import com.example.BackendApi.Dto.Vo.SkillLevelVo;
 import com.example.BackendApi.Dto.Vo.SkillVo;
+import com.example.BackendApi.Dto.Vo.common.PageResult;
 import com.example.BackendApi.Entity.Project;
 import com.example.BackendApi.Entity.ProjectSkill;
 import com.example.BackendApi.Entity.Skill;

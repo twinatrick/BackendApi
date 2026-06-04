@@ -1,8 +1,8 @@
 package com.example.BackendApi.Service;
 
-import com.example.BackendApi.Dto.Vo.dto.common.PageResult;
-import com.example.BackendApi.Dto.Vo.dto.search.FunctionSearchQuery;
 import com.example.BackendApi.Dto.Vo.FunctionVo;
+import com.example.BackendApi.Dto.Vo.Search.FunctionSearchQuery;
+import com.example.BackendApi.Dto.Vo.common.PageResult;
 
 import java.util.List;
 

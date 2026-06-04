@@ -1,9 +1,9 @@
 package com.example.BackendApi.Service.impl;
 
-import com.example.BackendApi.Dto.Vo.dto.common.PageResult;
-import com.example.BackendApi.Dto.Vo.dto.search.ProjectSearchQuery;
 import com.example.BackendApi.Dto.Vo.PersonalProjectRequest;
 import com.example.BackendApi.Dto.Vo.ProjectSkillVo;
+import com.example.BackendApi.Dto.Vo.Search.ProjectSearchQuery;
+import com.example.BackendApi.Dto.Vo.common.PageResult;
 import com.example.BackendApi.Entity.ProjectSkill;
 import com.example.BackendApi.Entity.Skill;
 import com.example.BackendApi.Entity.SkillLevel;

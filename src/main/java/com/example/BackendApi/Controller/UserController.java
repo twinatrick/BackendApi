@@ -1,10 +1,10 @@
 package com.example.BackendApi.Controller;
 
-import com.example.BackendApi.Dto.Vo.dto.common.PageResult;
-import com.example.BackendApi.Dto.Vo.dto.search.UserSearchQuery;
+import com.example.BackendApi.Dto.Vo.Search.UserSearchQuery;
+import com.example.BackendApi.Dto.Vo.common.PageResult;
 import com.example.BackendApi.Service.ISkillService;
 import com.example.BackendApi.Service.IUserService;
-import com.example.BackendApi.Annotation.RequireRole;
+import com.example.BackendApi.Annotation.RequirePermission;
 import com.example.BackendApi.Annotation.OpenApi.ApiControllerTag;
 import com.example.BackendApi.Annotation.OpenApi.ApiOperationAuth;
 import com.example.BackendApi.Annotation.OpenApi.ApiOperationBadRequest;
@@ -47,7 +47,7 @@ public class UserController {
 
     @PostMapping("/bindSkill")
     @Deprecated
-    @RequireRole({"admin"})
+    @RequirePermission({"System", "ProjectManagement", "Edit"})
     @ApiOperationBadRequest(summary = "Bind user skill", description = "Binds a skill level to a user. This operation manages binding relation only and does not modify skill content. Admin-assigned skills can still be bound by authorized users.")
     public ResponseType<String> bindUserSkill(@RequestBody UserSkillBindRequest body) {
         skillService.bindUserSkill(body.getUserId(), body.getSkillId(), body.getSkillLevelId());
@@ -56,7 +56,7 @@ public class UserController {
 
     @PostMapping("/bindProject")
     @Deprecated
-    @RequireRole({"admin"})
+    @RequirePermission({"System", "ProjectManagement", "Edit"})
     @ApiOperationBadRequest(summary = "Bind user project", description = "Binds a user to a project.")
     public ResponseType<String> bindUserProject(@RequestBody UserProjectBindRequest body) {
         userService.bindUserProject(body.getUserId(), body.getProjectId());

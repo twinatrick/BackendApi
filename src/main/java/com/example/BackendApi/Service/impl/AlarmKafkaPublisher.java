@@ -1,7 +1,7 @@
 package com.example.BackendApi.Service.impl;
 
+import com.example.BackendApi.Dto.Vo.common.AlarmMessage;
 import com.example.BackendApi.Service.IAlarmPublisher;
-import com.example.BackendApi.Dto.Vo.dto.AlarmMessage;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;

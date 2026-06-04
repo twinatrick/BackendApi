@@ -1,6 +1,6 @@
 package com.example.BackendApi.DataAccess.impl;
 
-import com.example.BackendApi.Dto.Vo.dto.search.ProjectSearchQuery;
+import com.example.BackendApi.Dto.Vo.Search.ProjectSearchQuery;
 import com.example.BackendApi.Repository.ProjectRepository;
 import com.example.BackendApi.DataAccess.IProjectDataAccess;
 import com.example.BackendApi.Entity.Project;

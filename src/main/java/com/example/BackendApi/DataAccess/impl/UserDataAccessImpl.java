@@ -1,6 +1,6 @@
 package com.example.BackendApi.DataAccess.impl;
 
-import com.example.BackendApi.Dto.Vo.dto.search.UserSearchQuery;
+import com.example.BackendApi.Dto.Vo.Search.UserSearchQuery;
 import com.example.BackendApi.Repository.UserRepository;
 import com.example.BackendApi.DataAccess.IUserDataAccess;
 import com.example.BackendApi.Entity.User;

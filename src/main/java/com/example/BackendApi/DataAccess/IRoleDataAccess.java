@@ -1,6 +1,6 @@
 package com.example.BackendApi.DataAccess;
 
-import com.example.BackendApi.Dto.Vo.dto.search.RoleSearchQuery;
+import com.example.BackendApi.Dto.Vo.Search.RoleSearchQuery;
 import com.example.BackendApi.Entity.Role;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;

@@ -1,7 +1,7 @@
 package com.example.BackendApi.Controller;
 
-import com.example.BackendApi.Dto.Vo.dto.common.PageResult;
-import com.example.BackendApi.Dto.Vo.dto.search.RoleSearchQuery;
+import com.example.BackendApi.Dto.Vo.Search.RoleSearchQuery;
+import com.example.BackendApi.Dto.Vo.common.PageResult;
 import com.example.BackendApi.Service.IFunctionService;
 import com.example.BackendApi.Service.IRoleService;
 import com.example.BackendApi.Service.IUserService;

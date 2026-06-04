@@ -6,7 +6,7 @@ import com.example.BackendApi.Entity.User;
 import com.example.BackendApi.Service.IProjectService;
 import com.example.BackendApi.Service.ISkillService;
 import com.example.BackendApi.Util.SkillLevelBindingMapper;
-import com.example.BackendApi.Annotation.RequireRole;
+import com.example.BackendApi.Annotation.RequirePermission;
 import com.example.BackendApi.Annotation.OpenApi.ApiControllerTag;
 import com.example.BackendApi.Annotation.OpenApi.ApiOperationBadRequest;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,7 +19,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/user/bindings")
-@RequireRole({"user", "admin"})
+@RequirePermission({"System", "ProjectManagement", "Edit"})
 @ApiControllerTag(name = "User Bindings", description = "Backend API endpoints - User binding self-service")
 public class UserBindingController {
 

@@ -1,6 +1,6 @@
 package com.example.BackendApi.DataAccess.impl;
 
-import com.example.BackendApi.Dto.Vo.dto.search.RoleSearchQuery;
+import com.example.BackendApi.Dto.Vo.Search.RoleSearchQuery;
 import com.example.BackendApi.Repository.RoleRepository;
 import com.example.BackendApi.DataAccess.IRoleDataAccess;
 import com.example.BackendApi.Entity.Role;

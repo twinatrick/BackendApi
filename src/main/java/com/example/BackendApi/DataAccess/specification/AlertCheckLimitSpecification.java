@@ -1,6 +1,6 @@
 package com.example.BackendApi.DataAccess.specification;
 
-import com.example.BackendApi.Dto.Vo.dto.search.AlertCheckLimitSearchQuery;
+import com.example.BackendApi.Dto.Vo.Search.AlertCheckLimitSearchQuery;
 import com.example.BackendApi.Entity.AlertCheckLimit;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;

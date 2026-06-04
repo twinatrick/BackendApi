@@ -1,6 +1,6 @@
 package com.example.BackendApi.DataAccess;
 
-import com.example.BackendApi.Dto.Vo.dto.search.AlertCheckLimitSearchQuery;
+import com.example.BackendApi.Dto.Vo.Search.AlertCheckLimitSearchQuery;
 import com.example.BackendApi.Entity.AlertCheckLimit;
 import org.springframework.data.domain.Page;
 

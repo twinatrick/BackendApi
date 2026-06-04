@@ -1,6 +1,5 @@
 package com.example.BackendApi.Controller;
 
-import com.example.BackendApi.Dto.Response.Token;
 import com.example.BackendApi.Service.IRoleService;
 import com.example.BackendApi.Service.IUserService;
 import com.example.BackendApi.Annotation.OpenApi.ApiControllerTag;
@@ -20,11 +19,14 @@ import org.jose4j.lang.JoseException;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-//import org.springframework.http.ResponseEntity;
-//import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.web.bind.annotation.*;
+import com.example.BackendApi.Dto.Response.Token;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
 
 @RestController
 @RequestMapping("/auth")

@@ -1,13 +1,13 @@
 package com.example.BackendApi.Controller;
 
-import com.example.BackendApi.Dto.Vo.dto.common.PageResult;
-import com.example.BackendApi.Dto.Vo.dto.search.ProjectSearchQuery;
+import com.example.BackendApi.Dto.Vo.Search.ProjectSearchQuery;
+import com.example.BackendApi.Dto.Vo.common.PageResult;
 import com.example.BackendApi.Dto.Vo.PersonalProjectSkillBindRequest;
 import com.example.BackendApi.Dto.Vo.PersonalProjectSkillLevelRequest;
 import com.example.BackendApi.Dto.Vo.PersonalProjectRequest;
 import com.example.BackendApi.Service.IProjectService;
 import com.example.BackendApi.Service.ISkillService;
-import com.example.BackendApi.Annotation.RequireRole;
+import com.example.BackendApi.Annotation.RequirePermission;
 import com.example.BackendApi.Annotation.OpenApi.ApiControllerTag;
 import com.example.BackendApi.Annotation.OpenApi.ApiOperationBadRequest;
 import com.example.BackendApi.Annotation.OpenApi.ApiOperationOk;
@@ -61,7 +61,7 @@ public class ProjectController {
 
     @PostMapping("/bindSkill")
     @Deprecated
-    @RequireRole({"admin"})
+    @RequirePermission({"System", "ProjectManagement", "Edit"})
     @ApiOperationBadRequest(summary = "Bind project skill", description = "Binds a skill level to a project. This operation manages binding relation only and does not modify skill content. Admin-assigned skills can still be bound by authorized users.")
     public ResponseType<String> bindProjectSkill(@RequestBody ProjectSkillBindRequest body) {
         skillService.bindProjectSkill(body.getProjectId(), body.getSkillId(), body.getSkillLevelId());

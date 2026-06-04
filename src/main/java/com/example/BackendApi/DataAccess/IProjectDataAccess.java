@@ -1,6 +1,6 @@
 package com.example.BackendApi.DataAccess;
 
-import com.example.BackendApi.Dto.Vo.dto.search.ProjectSearchQuery;
+import com.example.BackendApi.Dto.Vo.Search.ProjectSearchQuery;
 import com.example.BackendApi.Entity.Project;
 import org.springframework.data.domain.Page;
 

@@ -9,7 +9,7 @@ import com.example.BackendApi.Service.IProjectService;
 import com.example.BackendApi.Service.ISkillService;
 import com.example.BackendApi.Service.IUserService;
 import com.example.BackendApi.Util.SkillLevelBindingMapper;
-import com.example.BackendApi.Annotation.RequireRole;
+import com.example.BackendApi.Annotation.RequirePermission;
 import com.example.BackendApi.Annotation.OpenApi.ApiControllerTag;
 import com.example.BackendApi.Annotation.OpenApi.ApiOperationBadRequest;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,7 +22,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/admin/bindings")
-@RequireRole({"admin"})
+@RequirePermission({"System", "ProjectManagement", "EditAll"})
 @ApiControllerTag(name = "Admin Bindings", description = "Backend API endpoints - Admin binding management")
 public class AdminBindingController {
 
