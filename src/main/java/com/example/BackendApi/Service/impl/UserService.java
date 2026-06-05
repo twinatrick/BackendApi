@@ -35,7 +35,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import org.mindrot.jbcrypt.BCrypt;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Service
 @RequiredArgsConstructor
@@ -48,6 +48,7 @@ public class UserService implements IUserService {
     private final IUserProjectDataAccess userProjectDataAccess;
     private final UserMapper userMapper;
     private final FunctionMapper functionMapper;
+    private final PasswordEncoder passwordEncoder;
     private final User currentUser;
     @Caching(put = {
         @CachePut(value = "users", key = "#result.id", unless = "#result == null"),
@@ -56,8 +57,8 @@ public class UserService implements IUserService {
     @Override
     public UserVo createUser(UserVo userVo) {
         User user = userMapper.toEntity(userVo);
-        if (user.getPassword() != null && !user.getPassword().startsWith("$2a$") && !user.getPassword().startsWith("$2b$") && !user.getPassword().startsWith("$2y$")) {
-            user.setPassword(BCrypt.hashpw(user.getPassword(), BCrypt.gensalt()));
+        if (user.getPassword() != null && !user.getPassword().startsWith("{") && !user.getPassword().startsWith("$2a$") && !user.getPassword().startsWith("$2b$") && !user.getPassword().startsWith("$2y$")) {
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
         }
         userDataAccess.save(user);
         return userMapper.toVo(user);
@@ -97,8 +98,8 @@ public class UserService implements IUserService {
     @Override
     public UserVo saveUser(UserVo userVo) {
         User user = userMapper.toEntity(userVo);
-        if (user.getPassword() != null && !user.getPassword().startsWith("$2a$") && !user.getPassword().startsWith("$2b$") && !user.getPassword().startsWith("$2y$")) {
-            user.setPassword(BCrypt.hashpw(user.getPassword(), BCrypt.gensalt()));
+        if (user.getPassword() != null && !user.getPassword().startsWith("{") && !user.getPassword().startsWith("$2a$") && !user.getPassword().startsWith("$2b$") && !user.getPassword().startsWith("$2y$")) {
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
         }
         userDataAccess.save(user);
         return userMapper.toVo(user);
@@ -113,7 +114,7 @@ public class UserService implements IUserService {
         if(userVo.getId() == null|| userVo.getId().isEmpty()){
             User user = new User();
             user.setEmail(userVo.getEmail());
-            user.setPassword(BCrypt.hashpw(userVo.getPassword(), BCrypt.gensalt()));
+            user.setPassword(passwordEncoder.encode(userVo.getPassword()));
             user.setDisabled(userVo.isDisabled());
             userDataAccess.save(user);
             roleService.userBindRole(user.getId().toString(), userVo.getRoleArr());
@@ -126,8 +127,8 @@ public class UserService implements IUserService {
                 () -> new IllegalArgumentException("User not found")
         );
         u.setDisabled(userVo.isDisabled());
-        if (userVo.getPassword() != null && !userVo.getPassword().startsWith("$2a$") && !userVo.getPassword().startsWith("$2b$") && !userVo.getPassword().startsWith("$2y$")) {
-            u.setPassword(BCrypt.hashpw(userVo.getPassword(), BCrypt.gensalt()));
+        if (userVo.getPassword() != null && !userVo.getPassword().startsWith("{") && !userVo.getPassword().startsWith("$2a$") && !userVo.getPassword().startsWith("$2b$") && !userVo.getPassword().startsWith("$2y$")) {
+            u.setPassword(passwordEncoder.encode(userVo.getPassword()));
         }
         userDataAccess.save(u);
         roleService.userBindRole(u.getId().toString(), userVo.getRoleArr());
