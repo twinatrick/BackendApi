@@ -49,6 +49,11 @@ public class RoleFunctionDataAccessImpl implements IRoleFunctionDataAccess {
     }
 
     @Override
+    public void deleteByRoleKey(UUID roleId) {
+        roleFunctionRepository.deleteByRoleKey(roleId);
+    }
+
+    @Override
     public void deleteAllByFunctionIn(Collection<Function> functions) {
         roleFunctionRepository.deleteAllByFunctionIn(functions);
     }

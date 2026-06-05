@@ -243,6 +243,24 @@ public class UserService implements IUserService {
         }
     }
 
+    @Override
+    @Transactional
+    public void rebindUserRoles(UUID userId, List<String> roleIds) {
+        if (userId == null) {
+            throw new IllegalArgumentException("User ID must not be null");
+        }
+        if (roleIds == null) {
+            throw new IllegalArgumentException("Role list is required");
+        }
+
+        // 驗證使用者存在
+        userDataAccess.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        // 直接調用現有的 roleService.userBindRole
+        roleService.userBindRole(userId.toString(), roleIds);
+    }
+
     private UUID mapUuid(String id) {
         return id == null || id.isBlank() ? null : UUID.fromString(id);
     }

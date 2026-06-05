@@ -155,6 +155,32 @@ class RoleServiceTest {
     }
 
     @Test
+    @DisplayName("Should add role and bind functions")
+    void testAddRoleWithFunctions() {
+        RoleOutVo newRole = new RoleOutVo();
+        newRole.setName("ROLE_USER");
+        newRole.setFunctionIds(List.of(testFunctionId.toString()));
+
+        Role savedRole = new Role();
+        savedRole.setId(testRoleKey);
+        savedRole.setName("ROLE_USER");
+
+        when(roleDataAccess.exists(any(Example.class))).thenReturn(false);
+        when(roleDataAccess.save(any(Role.class))).thenReturn(savedRole);
+        when(roleDataAccess.findById(testRoleKey)).thenReturn(Optional.of(savedRole));
+        when(functionDataAccess.findAllById(List.of(testFunctionId))).thenReturn(List.of(testFunction));
+        doNothing().when(roleFunctionDataAccess).deleteByRoleKey(testRoleKey);
+        when(roleFunctionDataAccess.saveAll(anyList())).thenReturn(List.of());
+
+        RoleOutVo result = roleService.addRoleWithFunctions(newRole);
+
+        assertNotNull(result);
+        verify(roleFunctionDataAccess).deleteByRoleKey(testRoleKey);
+        verify(functionDataAccess).findAllById(List.of(testFunctionId));
+        verify(roleFunctionDataAccess).saveAll(anyList());
+    }
+
+    @Test
     @DisplayName("Should throw Exception when adding role with non-null key")
     void testAddRole_KeyNotNull() {
         // Arrange
@@ -253,6 +279,66 @@ class RoleServiceTest {
         verify(roleDataAccess, times(1)).findById(testRoleKey);
         verify(roleDataAccess, times(1)).save(any(Role.class));
         assertEquals("Updated description", result.getDescription());
+    }
+
+    @Test
+    @DisplayName("Should update role and replace functions")
+    void testUpdateRoleWithFunctions() {
+        RoleOutVo updateRole = new RoleOutVo();
+        updateRole.setId(testRoleKey);
+        updateRole.setName("ROLE_ADMIN");
+        updateRole.setDescription("Updated description");
+        updateRole.setFunctionIds(List.of(testFunctionId.toString()));
+
+        when(roleDataAccess.findById(testRoleKey)).thenReturn(Optional.of(testRole));
+        when(roleDataAccess.save(any(Role.class))).thenReturn(testRole);
+        when(functionDataAccess.findAllById(List.of(testFunctionId))).thenReturn(List.of(testFunction));
+        doNothing().when(roleFunctionDataAccess).deleteByRoleKey(testRoleKey);
+        when(roleFunctionDataAccess.saveAll(anyList())).thenReturn(List.of());
+
+        RoleOutVo result = roleService.updateRoleWithFunctions(updateRole);
+
+        assertNotNull(result);
+        verify(roleFunctionDataAccess).deleteByRoleKey(testRoleKey);
+        verify(functionDataAccess).findAllById(List.of(testFunctionId));
+        verify(roleFunctionDataAccess).saveAll(anyList());
+    }
+
+    @Test
+    @DisplayName("Should keep role functions when functionIds is null")
+    void testUpdateRoleWithFunctions_NullFunctionIdsKeepsBindings() {
+        RoleOutVo updateRole = new RoleOutVo();
+        updateRole.setId(testRoleKey);
+        updateRole.setName("ROLE_ADMIN");
+        updateRole.setFunctionIds(null);
+
+        when(roleDataAccess.findById(testRoleKey)).thenReturn(Optional.of(testRole));
+        when(roleDataAccess.save(any(Role.class))).thenReturn(testRole);
+
+        roleService.updateRoleWithFunctions(updateRole);
+
+        verify(roleFunctionDataAccess, never()).deleteByRoleKey(any());
+        verify(functionDataAccess, never()).findAllById(anyList());
+        verify(roleFunctionDataAccess, never()).saveAll(anyList());
+    }
+
+    @Test
+    @DisplayName("Should clear role functions when functionIds is empty")
+    void testUpdateRoleWithFunctions_EmptyFunctionIdsClearsBindings() {
+        RoleOutVo updateRole = new RoleOutVo();
+        updateRole.setId(testRoleKey);
+        updateRole.setName("ROLE_ADMIN");
+        updateRole.setFunctionIds(List.of());
+
+        when(roleDataAccess.findById(testRoleKey)).thenReturn(Optional.of(testRole));
+        when(roleDataAccess.save(any(Role.class))).thenReturn(testRole);
+        doNothing().when(roleFunctionDataAccess).deleteByRoleKey(testRoleKey);
+
+        roleService.updateRoleWithFunctions(updateRole);
+
+        verify(roleFunctionDataAccess).deleteByRoleKey(testRoleKey);
+        verify(functionDataAccess, never()).findAllById(anyList());
+        verify(roleFunctionDataAccess, never()).saveAll(anyList());
     }
 
     @Test

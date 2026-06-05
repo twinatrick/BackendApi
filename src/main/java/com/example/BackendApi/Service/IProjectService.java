@@ -110,4 +110,13 @@ public interface IProjectService {
     void rebindProjectSkills(UUID projectId, Map<UUID, UUID> skillLevelMapping);
 
     void rebindPersonalProjectSkills(UUID projectId, Map<UUID, UUID> skillLevelMapping);
+
+    /**
+     * 完整覆蓋式綁定專案成員技能。
+     * 所有使用者必須已是專案成員（user_project 存在），否則拋出異常。
+     *
+     * @param projectId 專案 ID
+     * @param memberSkillsMap Map of userId -> (skillId -> levelId)
+     */
+    void rebindProjectMemberSkills(UUID projectId, Map<UUID, Map<UUID, UUID>> memberSkillsMap);
 }

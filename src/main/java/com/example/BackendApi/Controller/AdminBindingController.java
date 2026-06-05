@@ -1,5 +1,7 @@
 package com.example.BackendApi.Controller;
 
+import com.example.BackendApi.Dto.Vo.MemberSkillBindings;
+import com.example.BackendApi.Dto.Vo.ProjectMemberSkillsRebindRequest;
 import com.example.BackendApi.Dto.Vo.ProjectSkillRebindRequest;
 import com.example.BackendApi.Dto.Vo.ResponseType;
 import com.example.BackendApi.Dto.Vo.SkillLevelBindingItem;
@@ -17,7 +19,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -61,5 +65,29 @@ public class AdminBindingController {
         UUID projectId = UUID.fromString(request.getProjectId());
         projectService.rebindProjectSkills(projectId, SkillLevelBindingMapper.toSkillLevelMap(request.getBindings()));
         return ResponseType.Success("Project skills rebound successfully");
+    }
+
+    @PostMapping("/project-members-skills/rebind")
+    @ApiOperationBadRequest(
+            summary = "Rebind project member skills",
+            description = "完整覆蓋式綁定專案成員技能。使用者必須已是專案成員（user_project 存在），否則拋出異常。"
+    )
+    public ResponseType<String> rebindProjectMemberSkills(@RequestBody ProjectMemberSkillsRebindRequest request) {
+        UUID projectId = UUID.fromString(request.getProjectId());
+
+        // 轉換 DTO 為 Service 層格式
+        Map<UUID, Map<UUID, UUID>> memberSkillsMap = new HashMap<>();
+        if (request.getMembers() != null) {
+            for (MemberSkillBindings member : request.getMembers()) {
+                UUID userId = UUID.fromString(member.getUserId());
+                Map<UUID, UUID> skillLevelMap = SkillLevelBindingMapper.toSkillLevelMap(
+                        member.getSkills() == null ? List.of() : member.getSkills()
+                );
+                memberSkillsMap.put(userId, skillLevelMap);
+            }
+        }
+
+        projectService.rebindProjectMemberSkills(projectId, memberSkillsMap);
+        return ResponseType.Success("Project member skills rebound successfully");
     }
 }

@@ -115,6 +115,161 @@ graph LR
     ATTU --> MILVUS
 ```
 
+### 資料模型
+
+系統採用關聯式資料模型，按業務領域拆分為 4 大模組：
+
+#### 1. 權限管理模組 (RBAC)
+
+```mermaid
+erDiagram
+    USER ||--o{ USER_ROLE : "has"
+    ROLE ||--o{ USER_ROLE : "assigned"
+    ROLE ||--o{ ROLE_FUNCTION : "grants"
+    FUNCTION ||--o{ ROLE_FUNCTION : "granted_to"
+    
+    USER {
+        uuid id PK
+        string email UK "唯一"
+        string name
+        boolean disabled
+    }
+    
+    ROLE {
+        uuid id PK
+        string name
+        string description
+    }
+    
+    FUNCTION {
+        uuid id PK
+        string name
+        string parent "父功能"
+        integer type
+    }
+    
+    USER_ROLE {
+        uuid id PK
+        uuid user_id FK
+        uuid role_id FK
+        constraint "UK(user_id,role_id)"
+    }
+    
+    ROLE_FUNCTION {
+        uuid id PK
+        uuid role_id FK
+        uuid function_id FK
+    }
+```
+
+#### 2. 技能管理模組
+
+```mermaid
+erDiagram
+    SKILL ||--o{ SKILL_LEVEL : "has_levels"
+    USER ||--o{ USER_SKILL : "owns"
+    SKILL ||--o{ USER_SKILL : "learned"
+    SKILL_LEVEL ||--o{ USER_SKILL : "at_level"
+    
+    SKILL {
+        uuid id PK
+        string name
+        string description
+    }
+    
+    SKILL_LEVEL {
+        uuid id PK
+        uuid skill_id FK
+        integer level_value
+        string title
+        string description
+        constraint "UK(skill_id,level_value)"
+    }
+    
+    USER_SKILL {
+        uuid id PK
+        uuid user_id FK
+        uuid skill_id FK
+        uuid skill_level_id FK
+        constraint "UK(user_id,skill_id)"
+    }
+```
+
+#### 3. 專案管理模組
+
+```mermaid
+erDiagram
+    PROJECT ||--o{ PROJECT_SKILL : "requires"
+    PROJECT ||--o{ USER_PROJECT : "has_members"
+    USER ||--o{ USER_PROJECT : "member_of"
+    SKILL ||--o{ PROJECT_SKILL : "required"
+    SKILL_LEVEL ||--o{ PROJECT_SKILL : "level"
+    
+    PROJECT {
+        uuid id PK
+        string name
+        string description
+    }
+    
+    PROJECT_SKILL {
+        uuid id PK
+        uuid project_id FK
+        uuid skill_id FK
+        uuid skill_level_id FK
+        constraint "UK(project_id,skill_id)"
+    }
+    
+    USER_PROJECT {
+        uuid id PK
+        uuid user_id FK
+        uuid project_id FK
+        constraint "UK(user_id,project_id)"
+    }
+```
+
+#### 4. 專案成員技能模組 🆕
+
+```mermaid
+erDiagram
+    USER ||--o{ USER_PROJECT_SKILL : "exhibits"
+    PROJECT ||--o{ USER_PROJECT_SKILL : "member_skills"
+    SKILL ||--o{ USER_PROJECT_SKILL : "used"
+    SKILL_LEVEL ||--o{ USER_PROJECT_SKILL : "level"
+    
+    USER_PROJECT_SKILL {
+        uuid id PK
+        uuid user_id FK
+        uuid project_id FK
+        uuid skill_id FK
+        uuid skill_level_id FK
+        constraint "UK(user_id,project_id,skill_id)"
+    }
+```
+
+**核心資料表說明**：
+
+| 資料表 | 類型 | 用途 | 唯一約束 |
+|--------|------|------|----------|
+| `user` | 主實體 | 使用者資訊 | email |
+| `role` | 主實體 | 角色定義 | - |
+| `function` | 主實體 | 功能權限（樹狀結構） | - |
+| `skill` | 主實體 | 技能定義 | - |
+| `skill_level` | 主實體 | 技能等級（隸屬於技能） | (skill_id, level_value) |
+| `project` | 主實體 | 專案資訊 | - |
+| `user_role` | 關聯表 | 使用者角色綁定 | (user_id, role_id) |
+| `role_function` | 關聯表 | 角色權限綁定 | - |
+| `user_skill` | 關聯表 | 使用者個人技能庫 | (user_id, skill_id) |
+| `project_skill` | 關聯表 | 專案技能需求 | (project_id, skill_id) |
+| `user_project` | 關聯表 | 專案成員 | (user_id, project_id) |
+| `user_project_skill` | 關聯表 | 🆕 專案成員技能（使用者在特定專案的技能等級） | (user_id, project_id, skill_id) |
+
+**資料模型設計特點**：
+- ✅ 所有 Entity 繼承 `BaseEntity`，自動擁有 `id` (UUID)、審計欄位 (`created_by`, `created_time`, `updated_by`, `updated_time`)
+- ✅ 使用複合唯一約束防止重複綁定關係
+- ✅ `user_project_skill` 為四向關聯表，支援「使用者在不同專案展現不同技能等級」的業務場景
+- ✅ `skill_level` 與 `skill` 為一對多關係，確保等級定義與技能綁定
+- ✅ `function` 支援樹狀結構（parent 欄位），實現階層式功能選單
+
 ## 技術選型說明
 
 | 技術 | 用途 | 選型原因 |
@@ -138,10 +293,11 @@ graph LR
 | 模組 | 說明 | 主要端點 |
 |------|------|----------|
 | **認證授權模組** | JWT 簽發與驗證、RBAC 權限模型 (User → Role → Function) | `/auth/login`, `/auth/signup` |
-| **使用者管理模組** | 使用者 CRUD、技能綁定、專案綁定、分頁搜尋 | `/users/*` |
-| **專案管理模組** | 一般/個人專案管理、技能綁定、擁有者權限控制 | `/project/*` |
+| **使用者管理模組** | 使用者 CRUD、技能綁定、專案綁定、角色綁定、分頁搜尋 | `/users/*` |
+| **專案管理模組** | 一般/個人專案管理、技能綁定、成員技能管理、擁有者權限控制 | `/project/*` |
 | **技能管理模組** | 技能/等級 CRUD、個人/專案維度技能管理 | `/skill/*` |
 | **角色與功能模組** | 角色/功能 CRUD、雙向綁定、階層式功能選單 | `/role/*`, `/function/*` |
+| **管理者綁定模組** | 統一管理使用者-專案、使用者-技能、專案-技能、專案成員技能等多對多綁定關係，採用完整覆蓋式 API 設計 | `/admin/bindings/*` |
 | **告警通知模組** | 定時拉取外部資料、閾值比對、Kafka 非同步推送、WebSocket 即時通知 | `/alertCheckLimit/*` |
 | **資料查詢模組** | Aquark 感測器資料查詢、動態條件過濾、Redis 快取 | `/aquarkData/*` |
 
@@ -197,6 +353,8 @@ DataAccess 層將資料存取邏輯從 Service 中分離，便於測試與替換
 ## 後續規劃
 
 - [x] **CI/CD 管線**: 整合 GitHub Actions，自動化測試、建置、部署
+- [x] **管理者綁定 API 重構**: 統一 Rebind API 設計，完整覆蓋語意，Diff 策略最佳化
+- [x] **專案成員技能管理**: 新增 `user_project_skill` 表，支援專案維度技能管理
 - [ ] **監控與日誌**: 引入 Micrometer + Prometheus + Grafana，集中化日誌管理
 - [ ] **效能優化**: 資料庫查詢優化、連線池調整、虛擬執行緒應用
 - [ ] **API 版本管理**: 引入 URI/Header 版本控制，向後相容

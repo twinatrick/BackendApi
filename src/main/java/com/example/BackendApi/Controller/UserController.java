@@ -10,6 +10,7 @@ import com.example.BackendApi.Annotation.OpenApi.ApiOperationAuth;
 import com.example.BackendApi.Annotation.OpenApi.ApiOperationBadRequest;
 import com.example.BackendApi.Annotation.OpenApi.ApiOperationOk;
 import com.example.BackendApi.Dto.Vo.UserProjectBindRequest;
+import com.example.BackendApi.Dto.Vo.UserRoleRebindRequest;
 import com.example.BackendApi.Dto.Vo.UserSkillBindRequest;
 import com.example.BackendApi.Dto.Vo.ResponseType;
 import com.example.BackendApi.Dto.Vo.UserVo;
@@ -18,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 
 @RestController
@@ -74,6 +76,23 @@ public class UserController {
     public ResponseType<String> saveUser(@RequestBody UserVo user) {
         userService.saveUserWithRole(user);
         return new ResponseType<>(0, "User updated successfully");
+    }
+
+    @PostMapping("/{userId}/roles/rebind")
+    @RequirePermission({"System", "ProjectManagement", "Edit"})
+    @ApiOperationBadRequest(
+            summary = "Rebind user roles",
+            description = "完整覆蓋式綁定使用者角色。空清單清空所有角色，null 清單拋出異常。"
+    )
+    public ResponseType<String> rebindUserRoles(
+            @PathVariable String userId,
+            @RequestBody UserRoleRebindRequest request) {
+        UUID userUuid = UUID.fromString(userId);
+        List<String> roleIds = request.getRoleIds() == null
+                ? List.of()
+                : request.getRoleIds();
+        userService.rebindUserRoles(userUuid, roleIds);
+        return ResponseType.Success("User roles rebound successfully");
     }
     
     @PostMapping("/search")

@@ -9,6 +9,8 @@ import com.example.BackendApi.Entity.Skill;
 import com.example.BackendApi.Entity.SkillLevel;
 import com.example.BackendApi.Entity.User;
 import com.example.BackendApi.Entity.UserProject;
+import com.example.BackendApi.Entity.UserProjectSkill;
+import com.example.BackendApi.DataAccess.ISkillDataAccess;
 import com.example.BackendApi.Service.IProjectService;
 import com.example.BackendApi.Util.SortFieldValidator;
 import com.example.BackendApi.DataAccess.IProjectSkillDataAccess;
@@ -16,6 +18,7 @@ import com.example.BackendApi.DataAccess.IProjectDataAccess;
 import com.example.BackendApi.DataAccess.ISkillLevelDataAccess;
 import com.example.BackendApi.DataAccess.IUserDataAccess;
 import com.example.BackendApi.DataAccess.IUserProjectDataAccess;
+import com.example.BackendApi.DataAccess.IUserProjectSkillDataAccess;
 import com.example.BackendApi.DataAccess.IUserSkillDataAccess;
 import com.example.BackendApi.Mapper.ProjectMapper;
 import com.example.BackendApi.Dto.Vo.ProjectVo;
@@ -26,6 +29,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.LinkedHashSet;
 import java.util.LinkedHashMap;
@@ -50,6 +54,8 @@ public class ProjectService implements IProjectService {
     private final IUserDataAccess userDataAccess;
     private final IUserSkillDataAccess userSkillDataAccess;
     private final ISkillLevelDataAccess skillLevelDataAccess;
+    private final ISkillDataAccess skillDataAccess;
+    private final IUserProjectSkillDataAccess userProjectSkillDataAccess;
     private final ProjectMapper projectMapper;
     private final User currentUser;
     private final EntityManager entityManager;
@@ -582,6 +588,115 @@ public class ProjectService implements IProjectService {
                     .orElseThrow(() -> new IllegalArgumentException("Skill level not found"));
             if (!level.getSkill().getId().equals(skillId)) {
                 throw new IllegalArgumentException("Skill level does not belong to skill");
+            }
+        }
+    }
+
+    @Override
+    @Transactional
+    public void rebindProjectMemberSkills(UUID projectId, Map<UUID, Map<UUID, UUID>> memberSkillsMap) {
+        if (projectId == null) {
+            throw new IllegalArgumentException("Project ID must not be null");
+        }
+        if (memberSkillsMap == null) {
+            memberSkillsMap = Map.of();
+        }
+
+        // 驗證專案存在
+        Project project = projectDataAccess.findById(projectId)
+                .orElseThrow(() -> new IllegalArgumentException("Project not found"));
+
+        // 驗證所有使用者存在且已綁定到該專案
+        for (UUID userId : memberSkillsMap.keySet()) {
+            User user = userDataAccess.findById(userId)
+                    .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+
+            if (!userProjectDataAccess.existsByUserIdAndProjectId(userId, projectId)) {
+                throw new IllegalArgumentException(
+                        "User " + userId + " is not a member of project " + projectId
+                );
+            }
+        }
+
+        // 驗證所有技能與等級存在
+        for (Map<UUID, UUID> skillLevelMap : memberSkillsMap.values()) {
+            for (Map.Entry<UUID, UUID> entry : skillLevelMap.entrySet()) {
+                UUID skillId = entry.getKey();
+                UUID levelId = entry.getValue();
+
+                Skill skill = skillDataAccess.findById(skillId)
+                        .orElseThrow(() -> new IllegalArgumentException("Skill not found: " + skillId));
+                SkillLevel skillLevel = skillLevelDataAccess.findById(levelId)
+                        .orElseThrow(() -> new IllegalArgumentException("Skill level not found: " + levelId));
+
+                if (!skillLevel.getSkill().getId().equals(skillId)) {
+                    throw new IllegalArgumentException("Skill level does not belong to skill");
+                }
+            }
+        }
+
+        // 取得現有的 user_project_skill 綁定
+        List<UserProjectSkill> existingBindings = userProjectSkillDataAccess.findByProjectId(projectId);
+        Map<UUID, Map<UUID, UserProjectSkill>> existingMap = new HashMap<>();
+        for (UserProjectSkill binding : existingBindings) {
+            UUID userId = binding.getUser().getId();
+            UUID skillId = binding.getSkill().getId();
+            existingMap.computeIfAbsent(userId, k -> new HashMap<>()).put(skillId, binding);
+        }
+
+        // 刪除不在目標清單的綁定
+        for (Map.Entry<UUID, Map<UUID, UserProjectSkill>> userEntry : existingMap.entrySet()) {
+            UUID userId = userEntry.getKey();
+            Map<UUID, UserProjectSkill> userSkills = userEntry.getValue();
+
+            if (!memberSkillsMap.containsKey(userId)) {
+                // 使用者不在目標清單，刪除該使用者在此專案的所有技能
+                for (UUID skillId : userSkills.keySet()) {
+                    userProjectSkillDataAccess.deleteByUserIdAndProjectIdAndSkillId(userId, projectId, skillId);
+                }
+            } else {
+                // 使用者在目標清單，刪除不在目標技能清單的技能
+                Map<UUID, UUID> targetSkills = memberSkillsMap.get(userId);
+                for (UUID skillId : userSkills.keySet()) {
+                    if (!targetSkills.containsKey(skillId)) {
+                        userProjectSkillDataAccess.deleteByUserIdAndProjectIdAndSkillId(userId, projectId, skillId);
+                    }
+                }
+            }
+        }
+
+        // 新增或更新目標綁定
+        for (Map.Entry<UUID, Map<UUID, UUID>> memberEntry : memberSkillsMap.entrySet()) {
+            UUID userId = memberEntry.getKey();
+            Map<UUID, UUID> targetSkills = memberEntry.getValue();
+
+            User user = userDataAccess.findById(userId).orElseThrow();
+
+            for (Map.Entry<UUID, UUID> skillEntry : targetSkills.entrySet()) {
+                UUID skillId = skillEntry.getKey();
+                UUID levelId = skillEntry.getValue();
+
+                UserProjectSkill existingBinding = existingMap
+                        .getOrDefault(userId, Map.of())
+                        .get(skillId);
+
+                if (existingBinding == null) {
+                    // 新增
+                    UserProjectSkill newBinding = new UserProjectSkill();
+                    newBinding.setUser(user);
+                    newBinding.setProject(project);
+                    newBinding.setSkill(skillDataAccess.findById(skillId).orElseThrow());
+                    newBinding.setSkillLevel(skillLevelDataAccess.findById(levelId).orElseThrow());
+                    userProjectSkillDataAccess.save(newBinding);
+                } else {
+                    // 更新等級
+                    UUID existingLevelId = existingBinding.getSkillLevel().getId();
+                    if (!existingLevelId.equals(levelId)) {
+                        SkillLevel newLevel = skillLevelDataAccess.findById(levelId).orElseThrow();
+                        existingBinding.setSkillLevel(newLevel);
+                        userProjectSkillDataAccess.save(existingBinding);
+                    }
+                }
             }
         }
     }

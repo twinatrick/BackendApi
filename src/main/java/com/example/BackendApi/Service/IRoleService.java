@@ -11,11 +11,15 @@ import java.util.List;
 public interface IRoleService {
     RoleOutVo addRole(RoleOutVo role);
 
+    RoleOutVo addRoleWithFunctions(RoleOutVo role);
+
     List<RoleOutVo> getRole();
 
     RoleOutVo getRoleById(String roleId);
 
     RoleOutVo updateRole(RoleOutVo role);
+
+    RoleOutVo updateRoleWithFunctions(RoleOutVo role);
 
     void deleteRole(RoleOutVo role);
 

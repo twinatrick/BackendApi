@@ -32,6 +32,14 @@ public interface IUserService {
     void bindUserProject(String userId, String projectId);
 
     void rebindUserProjects(UUID userId, List<UUID> projectIds);
+
+    /**
+     * 完整覆蓋式綁定使用者角色。空清單清空所有角色，null 清單拋出異常。
+     *
+     * @param userId 使用者 ID
+     * @param roleIds 角色 ID 清單（String 格式）
+     */
+    void rebindUserRoles(UUID userId, List<String> roleIds);
     
     /**
      * 分頁搜尋使用者

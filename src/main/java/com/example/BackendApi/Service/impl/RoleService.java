@@ -60,6 +60,14 @@ public class RoleService implements IRoleService {
 
     }
 
+    @Transactional
+    @Override
+    public RoleOutVo addRoleWithFunctions(RoleOutVo roleOutVo) {
+        RoleOutVo savedRole = addRole(roleOutVo);
+        syncRoleFunctions(savedRole.getId(), roleOutVo.getFunctionIds());
+        return getRoleById(savedRole.getId().toString());
+    }
+
     @Override
     public List<RoleOutVo> getRole() {
         return roleDataAccess.findAll().stream().map(roleMapper::toVo).toList();
@@ -91,6 +99,14 @@ public class RoleService implements IRoleService {
         existing.setName(role.getName());
         existing.setDescription(role.getDescription());
         return roleMapper.toVo(roleDataAccess.save(existing));
+    }
+
+    @Transactional
+    @Override
+    public RoleOutVo updateRoleWithFunctions(RoleOutVo roleOutVo) {
+        RoleOutVo updatedRole = updateRole(roleOutVo);
+        syncRoleFunctions(updatedRole.getId(), roleOutVo.getFunctionIds());
+        return getRoleById(updatedRole.getId().toString());
     }
 
     @Transactional
@@ -450,5 +466,33 @@ public class RoleService implements IRoleService {
 
     private UUID mapUuid(String id) {
         return id == null || id.isBlank() ? null : UUID.fromString(id);
+    }
+
+    private void syncRoleFunctions(UUID roleId, List<String> functionIds) {
+        if (functionIds == null) {
+            return;
+        }
+        Role role = roleDataAccess.findById(roleId).orElseThrow(
+                () -> new IllegalArgumentException("Role not found")
+        );
+        roleFunctionDataAccess.deleteByRoleKey(roleId);
+        if (functionIds.isEmpty()) {
+            return;
+        }
+        List<UUID> functionUuids = functionIds.stream()
+                .map(UUID::fromString)
+                .distinct()
+                .toList();
+        List<Function> functions = functionDataAccess.findAllById(functionUuids);
+        if (functions.size() != functionUuids.size()) {
+            throw new IllegalArgumentException("Function not found");
+        }
+        List<RoleFunction> roleFunctions = functions.stream().map(function -> {
+            RoleFunction roleFunction = new RoleFunction();
+            roleFunction.setRole(role);
+            roleFunction.setFunction(function);
+            return roleFunction;
+        }).toList();
+        roleFunctionDataAccess.saveAll(roleFunctions);
     }
 }
