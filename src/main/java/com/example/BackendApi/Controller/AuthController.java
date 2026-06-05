@@ -16,7 +16,6 @@ import com.example.BackendApi.Dto.Vo.SuperUserRequest;
 import com.example.BackendApi.Dto.Vo.UserVo;
 import jakarta.servlet.http.HttpServletResponse;
 import org.jose4j.lang.JoseException;
-import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import com.example.BackendApi.Dto.Response.Token;
@@ -47,11 +46,6 @@ public class AuthController {
 
     @Autowired
     private  HttpServletResponse httpResponse;
-
-//    @Autowired
-//
-//    private  BCryptPasswordEncoder passwordEncoder;
-
 
     @Autowired
     private JwtAuthenticationToken jwtUtils;

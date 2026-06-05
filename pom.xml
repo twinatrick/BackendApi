@@ -49,11 +49,6 @@
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.mindrot</groupId>
-            <artifactId>jbcrypt</artifactId>
-            <version>0.4</version>
-        </dependency>
-        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
@@ -87,30 +82,13 @@
             <scope>runtime</scope>
             <optional>true</optional>
         </dependency>
-        <!-- pos sql -->
+        <!-- PostgreSQL -->
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.7.3</version>
+            <version>42.7.11</version>
         </dependency>
 
-        <dependency>
-            <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt-api</artifactId>
-            <version>0.11.5</version>
-        </dependency>
-        <dependency>
-            <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt-impl</artifactId>
-            <version>0.11.5</version>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt-jackson</artifactId>
-            <version>0.11.5</version>
-            <scope>runtime</scope>
-        </dependency>
         <dependency>
             <groupId>jakarta.servlet</groupId>
             <artifactId>jakarta.servlet-api</artifactId>
@@ -305,35 +283,35 @@
                         <configuration>
                             <excludes>
                                 <!-- 排除 Controller 層 -->
-                                <exclude>com/example/backedapi/controller/**</exclude>
+                                <exclude>com/example/BackendApi/Controller/**</exclude>
                                 <!-- 排除 Entity 類 -->
-                                <exclude>com/example/backedapi/Enity/**</exclude>
+                                <exclude>com/example/BackendApi/Entity/**</exclude>
                                 <!-- 排除 DTO 和 VO -->
-                                <exclude>com/example/backedapi/Dto/**</exclude>
+                                <exclude>com/example/BackendApi/Dto/**</exclude>
                                 <!-- 排除 Mapper -->
-                                <exclude>com/example/backedapi/mapper/**</exclude>
+                                <exclude>com/example/BackendApi/Mapper/**</exclude>
                                 <!-- 排除 Specification -->
-                                <exclude>com/example/backedapi/dataaccess/specification/**</exclude>
+                                <exclude>com/example/BackendApi/DataAccess/specification/**</exclude>
                                 <!-- 排除 Config -->
-                                <exclude>com/example/backedapi/config/**</exclude>
+                                <exclude>com/example/BackendApi/Config/**</exclude>
                                 <!-- 排除 AOP -->
-                                <exclude>com/example/backedapi/Aop/**</exclude>
+                                <exclude>com/example/BackendApi/Aop/**</exclude>
                                 <!-- 排除 Filter -->
-                                <exclude>com/example/backedapi/fillter/**</exclude>
+                                <exclude>com/example/BackendApi/Filter/**</exclude>
                                 <!-- 排除 WebSocket -->
-                                <exclude>com/example/backedapi/WebSocket/**</exclude>
+                                <exclude>com/example/BackendApi/WebSocket/**</exclude>
                                 <!-- 排除 Timer -->
-                                <exclude>com/example/backedapi/Timer/**</exclude>
+                                <exclude>com/example/BackendApi/Timer/**</exclude>
                                 <!-- 排除 Exception -->
-                                <exclude>com/example/backedapi/exception/**</exclude>
+                                <exclude>com/example/BackendApi/Exception/**</exclude>
                                 <!-- 排除 Repository 介面 -->
-                                <exclude>com/example/backedapi/Repository/**</exclude>
+                                <exclude>com/example/BackendApi/Repository/**</exclude>
                                 <!-- 排除 DataAccess 介面 -->
-                                <exclude>com/example/backedapi/dataaccess/I*.class</exclude>
+                                <exclude>com/example/BackendApi/DataAccess/I*.class</exclude>
                                 <!-- 排除 Service 介面 -->
-                                <exclude>com/example/backedapi/Service/I*.class</exclude>
+                                <exclude>com/example/BackendApi/Service/I*.class</exclude>
                                 <!-- 排除主類 -->
-                                <exclude>com/example/backedapi/BackedApiApplication.class</exclude>
+                                <exclude>com/example/BackendApi/BackedApiApplication.class</exclude>
                             </excludes>
                         </configuration>
                     </execution>
@@ -345,35 +323,35 @@
                         <configuration>
                             <excludes>
                                 <!-- 排除 Controller 層 -->
-                                <exclude>com/example/backedapi/controller/**</exclude>
+                                <exclude>com/example/BackendApi/Controller/**</exclude>
                                 <!-- 排除 Entity 類 -->
-                                <exclude>com/example/backedapi/Enity/**</exclude>
+                                <exclude>com/example/BackendApi/Entity/**</exclude>
                                 <!-- 排除 DTO 和 VO -->
-                                <exclude>com/example/backedapi/Dto/**</exclude>
+                                <exclude>com/example/BackendApi/Dto/**</exclude>
                                 <!-- 排除 Mapper -->
-                                <exclude>com/example/backedapi/mapper/**</exclude>
+                                <exclude>com/example/BackendApi/Mapper/**</exclude>
                                 <!-- 排除 Specification -->
-                                <exclude>com/example/backedapi/dataaccess/specification/**</exclude>
+                                <exclude>com/example/BackendApi/DataAccess/specification/**</exclude>
                                 <!-- 排除 Config -->
-                                <exclude>com/example/backedapi/config/**</exclude>
+                                <exclude>com/example/BackendApi/Config/**</exclude>
                                 <!-- 排除 AOP -->
-                                <exclude>com/example/backedapi/Aop/**</exclude>
+                                <exclude>com/example/BackendApi/Aop/**</exclude>
                                 <!-- 排除 Filter -->
-                                <exclude>com/example/backedapi/fillter/**</exclude>
+                                <exclude>com/example/BackendApi/Filter/**</exclude>
                                 <!-- 排除 WebSocket -->
-                                <exclude>com/example/backedapi/WebSocket/**</exclude>
+                                <exclude>com/example/BackendApi/WebSocket/**</exclude>
                                 <!-- 排除 Timer -->
-                                <exclude>com/example/backedapi/Timer/**</exclude>
+                                <exclude>com/example/BackendApi/Timer/**</exclude>
                                 <!-- 排除 Exception -->
-                                <exclude>com/example/backedapi/exception/**</exclude>
+                                <exclude>com/example/BackendApi/Exception/**</exclude>
                                 <!-- 排除 Repository 介面 -->
-                                <exclude>com/example/backedapi/Repository/**</exclude>
+                                <exclude>com/example/BackendApi/Repository/**</exclude>
                                 <!-- 排除 DataAccess 介面 -->
-                                <exclude>com/example/backedapi/dataaccess/I*.class</exclude>
+                                <exclude>com/example/BackendApi/DataAccess/I*.class</exclude>
                                 <!-- 排除 Service 介面 -->
-                                <exclude>com/example/backedapi/Service/I*.class</exclude>
+                                <exclude>com/example/BackendApi/Service/I*.class</exclude>
                                 <!-- 排除主類 -->
-                                <exclude>com/example/backedapi/BackedApiApplication.class</exclude>
+                                <exclude>com/example/BackendApi/BackedApiApplication.class</exclude>
                             </excludes>
                             <rules>
                                 <rule>

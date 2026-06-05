@@ -414,15 +414,941 @@ Kafka 對外廣播主機可用 `KAFKA_ADVERTISED_HOST` 控制：
 
 可在 `compose.yaml` 查看各服務連線設定。
 
+## 常見問題排除
+
+### Kafka 連線失敗
+
+**症狀：**
+```
+ERROR o.a.k.c.NetworkClient - Connection to node -1 (localhost/127.0.0.1:9092) could not be established
+```
+
+**原因與解決方案：**
+
+| 執行環境 | 原因 | 解決方案 |
+|---------|------|---------|
+| 本機開發 | Kafka 廣播地址設定為容器名稱 | 設定 `KAFKA_ADVERTISED_HOST=localhost` |
+| Docker 內執行 | 應用程式無法解析 `localhost` | 設定 `APP_IN_DOCKER=true` |
+| 混合環境 | 網路隔離 | 檢查 Docker network 設定 |
+
+**驗證步驟：**
+```bash
+# 1. 確認 Kafka 容器運行中
+docker ps | grep kafka
+
+# 2. 測試 Kafka 可達性
+docker exec -it kafka kafka-topics --bootstrap-server kafka:9092 --list
+
+# 3. 檢查應用程式日誌
+tail -f logs/spring.log | grep kafka
+```
+
+---
+
+### Redis 連線問題
+
+**症狀：**
+```
+io.lettuce.core.RedisConnectionException: Unable to connect to localhost:6379
+```
+
+**解決步驟：**
+```bash
+# 1. 確認 Redis 運行中
+docker ps | grep redis
+
+# 2. 測試 Redis 連線
+docker exec -it redis_container redis-cli ping
+# 預期回應：PONG
+
+# 3. 若啟用密碼，測試認證
+docker exec -it redis_container redis-cli -a redisPd ping
+```
+
+**注意事項：**
+- 預設 Redis **未啟用密碼**（compose.yaml line 25 已註解）
+- 若要啟用密碼，取消註解 `compose.yaml` line 25
+
+---
+
+### PostgreSQL 連線錯誤
+
+**症狀 1：資料庫不存在**
+```
+PSQLException: FATAL: database "xxx" does not exist
+```
+
+**解決方案：**
+```bash
+# 進入 PostgreSQL 容器
+docker exec -it postgres_db_backend psql -U postgres
+
+# 建立資料庫（若需要）
+CREATE DATABASE your_db_name;
+```
+
+**症狀 2：密碼認證失敗**
+```
+PSQLException: FATAL: password authentication failed for user "postgres"
+```
+
+**檢查項目：**
+1. 確認 `.env` 中的 `POSTGRES_PASSWORD` 與 `application.yml` 一致
+2. 檢查 `SPRING_DATASOURCE_PASSWORD` 環境變數
+3. 若修改密碼後，需重啟容器：
+   ```bash
+   docker compose down -v  # -v 會刪除 volume，慎用
+   docker compose up -d
+   ```
+
+---
+
+### JPA DDL 自動更新問題
+
+**症狀：**
+```
+Caused by: org.hibernate.tool.schema.spi.SchemaManagementException: Unable to execute schema management to JDBC target
+```
+
+**檢查項目：**
+1. 確認使用者有 DDL 權限（CREATE TABLE, ALTER TABLE）
+2. 檢查 `application.yml` 中的 `spring.jpa.hibernate.ddl-auto` 設定
+   - `update`：自動更新 schema（開發環境）
+   - `validate`：僅驗證 schema（生產環境建議）
+   - `none`：不執行任何操作
+
+**生產環境建議：**
+- 改用 Flyway 或 Liquibase 管理資料庫版本
+- 禁用 Hibernate DDL 自動更新
+
+---
+
+### WebSocket 連線失敗
+
+**症狀：**
+前端無法建立 WebSocket 連線
+
+**檢查項目：**
+```javascript
+// 前端連線範例
+const ws = new WebSocket('ws://localhost:8000/ws/alarm');
+
+ws.onopen = () => console.log('Connected');
+ws.onerror = (error) => console.error('Connection failed:', error);
+```
+
+**常見原因：**
+1. CORS 設定錯誤（檢查 `WebSocketConfig.java`）
+2. 防火牆阻擋 WebSocket 連線
+3. Nginx 反向代理需額外設定：
+   ```nginx
+   location /ws/ {
+       proxy_pass http://backend:8000;
+       proxy_http_version 1.1;
+       proxy_set_header Upgrade $http_upgrade;
+       proxy_set_header Connection "upgrade";
+   }
+   ```
+
+---
+
+### Milvus 連線問題
+
+**症狀：**
+```
+Failed to connect to Milvus server at milvus:19530
+```
+
+**解決步驟：**
+```bash
+# 1. 確認 Milvus 及相依服務運行中
+docker ps | grep -E "milvus|etcd|minio"
+
+# 2. 檢查 Milvus 健康狀態
+curl http://localhost:9091/healthz
+# 預期回應：OK
+
+# 3. 透過 Attu UI 驗證連線
+# 瀏覽器開啟：http://localhost:8001
+# 使用帳密：root / Milvus
+```
+
+**Token 驗證錯誤：**
+- 檢查 `.env` 中的 `MILVUS_TOKEN` 是否與應用程式配置一致
+- 預設 token：`milvus-default-token`
+
+## 安全性配置指南
+
+### 🚨 生產環境必改項目
+
+以下配置項目**絕對不可**使用預設值，否則存在嚴重安全風險：
+
+#### 1. JWT Secret Key
+
+**風險等級：** 🔴 **嚴重**
+
+**預設值（開發用）：**
+```yaml
+jwt:
+  secret:
+    use: secretsecretsecretsecretsecretll  # ⚠️ 生產環境禁止使用
+```
+
+**生產環境設定：**
+```bash
+# 生成強隨機密鑰（至少 256 bits）
+openssl rand -base64 32
+
+# 設定環境變數
+export JWT_SECRET_USE="你生成的隨機密鑰"
+```
+
+**Kubernetes Secret 範例：**
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: backend-secrets
+type: Opaque
+data:
+  jwt-secret: <base64-encoded-secret>
+```
+
+---
+
+#### 2. 資料庫密碼
+
+**風險等級：** 🔴 **嚴重**
+
+**不安全的做法：**
+```yaml
+# ❌ 密碼寫死在 application.yml
+spring:
+  datasource:
+    password: verYs3cret
+```
+
+**安全做法：**
+```bash
+# 使用環境變數
+export SPRING_DATASOURCE_PASSWORD="$(openssl rand -base64 24)"
+
+# 或使用 Secrets Manager（AWS/GCP/Azure）
+# AWS 範例：
+export SPRING_DATASOURCE_PASSWORD="$(aws secretsmanager get-secret-value --secret-id db-password --query SecretString --output text)"
+```
+
+**PostgreSQL 密碼強度建議：**
+- 長度 ≥ 16 字元
+- 包含大小寫字母、數字、特殊符號
+- 避免使用字典單字
+
+---
+
+#### 3. Redis 密碼保護
+
+**目前狀態：** ⚠️ **未啟用密碼**
+
+**啟用步驟：**
+
+1. 修改 `compose.yaml`（取消註解 line 25）：
+```yaml
+redis:
+  command: redis-server --requirepass redisPd
+  # 或使用環境變數
+  command: redis-server --requirepass ${REDIS_PASSWORD}
+```
+
+2. 修改 `application.yml`：
+```yaml
+spring:
+  data:
+    redis:
+      password: ${REDIS_PASSWORD:redisPd}
+```
+
+3. 生產環境密碼生成：
+```bash
+export REDIS_PASSWORD="$(openssl rand -base64 20)"
+```
+
+---
+
+#### 4. Super User Key
+
+**風險等級：** 🟡 **中等**
+
+**用途：** 建立管理員帳號的一次性密鑰
+
+**設定：**
+```bash
+# 生產環境設定唯一密鑰
+export SUPERUSER_KEY="$(uuidgen)-$(openssl rand -base64 16)"
+```
+
+**使用後建議：**
+- 建立管理員帳號後，立即更換或刪除此密鑰
+- 記錄使用日誌以供審計
+
+---
+
+### 🛡️ 建議啟用的安全機制
+
+#### 1. API Rate Limiting（速率限制）
+
+**目的：** 防止 API 濫用與 DDoS 攻擊
+
+**實作選項：**
+
+**選項 A：使用 Bucket4j + Spring Cache**
+```xml
+<dependency>
+    <groupId>com.bucket4j</groupId>
+    <artifactId>bucket4j-core</artifactId>
+    <version>8.7.0</version>
+</dependency>
+```
+
+**選項 B：使用 Spring Cloud Gateway（若引入）**
+```yaml
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: backend
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10  # 每秒補充 10 個 token
+                redis-rate-limiter.burstCapacity: 20  # 最多累積 20 個 token
+```
+
+**建議限制：**
+- 未認證請求：10 req/min
+- 已認證使用者：100 req/min
+- 管理員：1000 req/min
+
+---
+
+#### 2. CORS 細部控制
+
+**目前狀態：** 需檢查 `WebSocketConfig.java` 與 Security 配置
+
+**生產環境配置範例：**
+```java
+@Configuration
+public class CorsConfig {
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        
+        // ❌ 不安全：允許所有來源
+        // config.addAllowedOrigin("*");
+        
+        // ✅ 安全：明確指定允許的來源
+        config.setAllowedOrigins(Arrays.asList(
+            "https://yourdomain.com",
+            "https://app.yourdomain.com"
+        ));
+        
+        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE"));
+        config.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
+        config.setAllowCredentials(true);
+        config.setMaxAge(3600L);
+        
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
+    }
+}
+```
+
+---
+
+#### 3. 輸入驗證統一處理
+
+**檢查項目：**
+
+✅ **已實作：**
+- 統一例外處理（`GlobalExceptionHandler`）
+- 標準化回應格式（`ResponseType<T>`）
+
+⚠️ **建議補強：**
+
+**Controller 層驗證：**
+```java
+@PostMapping("/signup")
+public ResponseType<Token> signup(@Valid @RequestBody SignupRequest request) {
+    // @Valid 觸發 Bean Validation
+}
+```
+
+**DTO 驗證規則：**
+```java
+public class SignupRequest {
+    @NotBlank(message = "Email cannot be blank")
+    @Email(message = "Invalid email format")
+    private String email;
+    
+    @NotBlank
+    @Size(min = 8, message = "Password must be at least 8 characters")
+    @Pattern(regexp = "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d).*$", 
+             message = "Password must contain uppercase, lowercase, and digit")
+    private String password;
+}
+```
+
+**全域驗證例外處理：**
+```java
+@ExceptionHandler(MethodArgumentNotValidException.class)
+public ResponseEntity<ResponseType<?>> handleValidationExceptions(
+        MethodArgumentNotValidException ex) {
+    Map<String, String> errors = new HashMap<>();
+    ex.getBindingResult().getFieldErrors().forEach(error ->
+        errors.put(error.getField(), error.getDefaultMessage())
+    );
+    return ResponseEntity.badRequest()
+        .body(new ResponseType<>(-1, errors, "Validation failed"));
+}
+```
+
+---
+
+#### 4. SQL Injection 防護
+
+**目前狀態：** ✅ 已使用 JPA，風險較低
+
+**需注意：**
+- 檢查是否有使用 `@Query` 與 native query
+- 若有，確保使用參數綁定而非字串拼接
+
+**不安全範例：**
+```java
+// ❌ 危險：SQL Injection 風險
+@Query(value = "SELECT * FROM users WHERE email = '" + email + "'", nativeQuery = true)
+User findByEmailUnsafe(String email);
+```
+
+**安全範例：**
+```java
+// ✅ 安全：使用參數綁定
+@Query(value = "SELECT * FROM users WHERE email = :email", nativeQuery = true)
+User findByEmailSafe(@Param("email") String email);
+```
+
+**檢查指令：**
+```bash
+# 搜尋專案中的 native query
+grep -r "@Query.*nativeQuery.*true" src/
+```
+
+---
+
+#### 5. 敏感資料遮罩（日誌輸出）
+
+**風險：** 密碼、Token 等敏感資料可能被記錄在日誌中
+
+**解決方案：**
+
+**選項 A：使用 Logback 遮罩規則**
+```xml
+<!-- logback-spring.xml -->
+<configuration>
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
+            <layout class="ch.qos.logback.classic.PatternLayout">
+                <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+            </layout>
+            <charset>UTF-8</charset>
+        </encoder>
+        <filter class="com.example.BackendApi.Filter.SensitiveDataMaskingFilter"/>
+    </appender>
+</configuration>
+```
+
+**選項 B：DTO 層面遮罩**
+```java
+@Data
+public class UserVo {
+    private String email;
+    
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)  // 僅接受輸入，不輸出
+    private String password;
+    
+    @Override
+    public String toString() {
+        return "UserVo{email='" + email + "', password='***'}";
+    }
+}
+```
+
+---
+
+### 🔍 安全性檢查清單
+
+部署前請確認以下項目：
+
+#### 基本安全
+- [ ] JWT Secret 已更換為強隨機密鑰（≥256 bits）
+- [ ] 資料庫密碼已更換且符合強度要求
+- [ ] Redis 已啟用密碼保護
+- [ ] Super User Key 已設定唯一值
+
+#### 網路安全
+- [ ] CORS 已限制允許的 Origin（不使用 `*`）
+- [ ] API 已啟用 Rate Limiting
+- [ ] HTTPS 已啟用（生產環境）
+- [ ] WebSocket 使用 WSS（HTTPS 環境）
+
+#### 應用安全
+- [ ] 所有 DTO 已加上 `@Valid` 驗證
+- [ ] 密碼驗證規則已設定（長度、複雜度）
+- [ ] 敏感資料不會出現在日誌中
+- [ ] SQL Injection 防護已檢查（native query）
+
+#### 基礎設施
+- [ ] Docker 容器以非 root 使用者執行
+- [ ] 資料庫僅允許特定 IP 連線
+- [ ] Redis 僅允許 localhost 連線（或設定防火牆）
+- [ ] Kafka 已設定認證（SASL）（若對外暴露）
+
+#### 監控與審計
+- [ ] 已設定登入失敗警報
+- [ ] 已記錄敏感操作日誌（建立管理員、修改權限）
+- [ ] 已設定異常流量監控
+- [ ] 已建立事件響應流程
+
+---
+
+### 📚 延伸閱讀
+
+- [OWASP Top 10](https://owasp.org/www-project-top-ten/)
+- [Spring Security 官方文件](https://spring.io/projects/spring-security)
+- [CWE-521: Weak Password Requirements](https://cwe.mitre.org/data/definitions/521.html)
+- [JWT 最佳實踐](https://datatracker.ietf.org/doc/html/rfc8725)
+
 ## Swagger
 
 - `http://localhost:8000/swagger-ui/index.html`
 
-## 測試與覆蓋率
+## 測試策略
 
-```bash
-./mvnw test
-./mvnw jacoco:report
+本專案採用分層測試策略，確保各層級功能正確性。
+
+### 測試分層架構
+
+```
+┌─────────────────────────────────────────┐
+│  E2E 測試（未來規劃）                     │  ← API 測試、整合測試
+├─────────────────────────────────────────┤
+│  Service 層測試（單元測試）                │  ← 業務邏輯測試
+├─────────────────────────────────────────┤
+│  DataAccess 層測試（@DataJpaTest）        │  ← 資料存取測試
+├─────────────────────────────────────────┤
+│  Repository 層（Spring Data JPA）         │  ← 基本 CRUD（無需測試）
+└─────────────────────────────────────────┘
 ```
 
-覆蓋率報告位置：`target/site/jacoco/index.html`
+---
+
+### 1. 資料層測試（DataAccess Layer）
+
+**測試框架：** `@DataJpaTest` + H2 in-memory database
+
+**特性：**
+- ✅ 自動配置 H2 記憶體資料庫
+- ✅ 自動回滾事務（每個測試互不影響）
+- ✅ 僅載入 JPA 相關元件（快速啟動）
+- ✅ 支援 Specification 動態查詢測試
+
+**範例檔案：**
+- `UserDataAccessImplTest.java`
+- `ProjectDataAccessImplTest.java`
+- `AquarkDataDataAccessImplTest.java`
+
+**執行資料層測試：**
+```bash
+# 執行所有資料層測試
+./mvnw test -Dtest="*DataAccessImplTest"
+
+# 執行特定測試類別
+./mvnw test -Dtest="UserDataAccessImplTest"
+```
+
+**測試範例：**
+```java
+@DataJpaTest
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+class UserDataAccessImplTest {
+    
+    @Autowired
+    private UserRepository userRepository;
+    
+    private UserDataAccessImpl userDataAccess;
+    
+    @BeforeEach
+    void setUp() {
+        userDataAccess = new UserDataAccessImpl(userRepository);
+    }
+    
+    @Test
+    @DisplayName("應該能夠根據 email 查詢使用者")
+    void shouldFindUserByEmail() {
+        // Given
+        User user = new User();
+        user.setEmail("test@example.com");
+        user.setName("Test User");
+        userRepository.save(user);
+        
+        // When
+        Optional<User> result = userDataAccess.findByEmail("test@example.com");
+        
+        // Then
+        assertThat(result).isPresent();
+        assertThat(result.get().getEmail()).isEqualTo("test@example.com");
+    }
+    
+    @Test
+    @DisplayName("應該能夠使用 Specification 進行複雜查詢")
+    void shouldFindUsersWithSpecification() {
+        // Given
+        User user1 = new User();
+        user1.setEmail("active@example.com");
+        user1.setDisabled(false);
+        userRepository.save(user1);
+        
+        User user2 = new User();
+        user2.setEmail("disabled@example.com");
+        user2.setDisabled(true);
+        userRepository.save(user2);
+        
+        // When
+        Specification<User> spec = (root, query, cb) -> 
+            cb.equal(root.get("disabled"), false);
+        Page<User> result = userDataAccess.findAll(spec, PageRequest.of(0, 10));
+        
+        // Then
+        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getContent().get(0).getEmail()).isEqualTo("active@example.com");
+    }
+}
+```
+
+**為何需要測試 DataAccess 層？**
+1. ✅ 驗證複雜的 Specification 查詢邏輯
+2. ✅ 確保資料庫約束正確（unique, foreign key）
+3. ✅ 測試審計欄位自動填充（created_by, updated_by）
+4. ✅ 驗證自訂 Query 方法（`@Query` 註解）
+
+---
+
+### 2. Service 層測試（單元測試）
+
+**測試框架：** JUnit 5 + Mockito
+
+**特性：**
+- ✅ 使用 Mock 隔離依賴
+- ✅ 測試業務邏輯正確性
+- ✅ 快速執行（無需啟動 Spring 容器）
+
+**範例檔案：**
+- `UserServiceTest.java`
+
+**執行 Service 層測試：**
+```bash
+# 執行所有 Service 測試
+./mvnw test -Dtest="*ServiceTest"
+```
+
+**測試範例：**
+```java
+@ExtendWith(MockitoExtension.class)
+class UserServiceTest {
+    
+    @Mock
+    private IUserDataAccess userDataAccess;
+    
+    @Mock
+    private PasswordEncoder passwordEncoder;
+    
+    @InjectMocks
+    private UserService userService;
+    
+    @Test
+    @DisplayName("建立使用者時應該加密密碼")
+    void shouldEncryptPasswordWhenCreatingUser() {
+        // Given
+        UserVo userVo = new UserVo();
+        userVo.setEmail("test@example.com");
+        userVo.setPassword("plainPassword");
+        
+        when(passwordEncoder.encode("plainPassword")).thenReturn("$2a$10$encrypted");
+        when(userDataAccess.save(any())).thenAnswer(i -> i.getArgument(0));
+        
+        // When
+        UserVo result = userService.createUser(userVo);
+        
+        // Then
+        verify(passwordEncoder).encode("plainPassword");
+        assertThat(result.getPassword()).isEqualTo("$2a$10$encrypted");
+    }
+}
+```
+
+---
+
+### 3. 整合測試（未來規劃）
+
+**建議使用：** Testcontainers + RestAssured
+
+**Testcontainers 優勢：**
+- ✅ 使用真實的 PostgreSQL/Redis/Kafka 容器
+- ✅ 避免 H2 與 PostgreSQL 行為差異
+- ✅ 更接近生產環境
+
+**規劃範例：**
+```java
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@Testcontainers
+class UserIntegrationTest {
+    
+    @Container
+    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:latest")
+        .withDatabaseName("testdb")
+        .withUsername("test")
+        .withPassword("test");
+    
+    @DynamicPropertySource
+    static void configureProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url", postgres::getJdbcUrl);
+        registry.add("spring.datasource.username", postgres::getUsername);
+        registry.add("spring.datasource.password", postgres::getPassword);
+    }
+    
+    @Test
+    void shouldCreateUserEndToEnd() {
+        given()
+            .contentType(ContentType.JSON)
+            .body("""
+                {
+                    "email": "test@example.com",
+                    "password": "Test1234"
+                }
+                """)
+        .when()
+            .post("/auth/signup")
+        .then()
+            .statusCode(200)
+            .body("data.accessToken", notNullValue());
+    }
+}
+```
+
+**引入 Testcontainers：**
+```xml
+<dependency>
+    <groupId>org.testcontainers</groupId>
+    <artifactId>testcontainers</artifactId>
+    <version>1.19.8</version>
+    <scope>test</scope>
+</dependency>
+<dependency>
+    <groupId>org.testcontainers</groupId>
+    <artifactId>postgresql</artifactId>
+    <version>1.19.8</version>
+    <scope>test</scope>
+</dependency>
+```
+
+---
+
+### 測試覆蓋率要求
+
+**目標覆蓋率：** ≥ 80%（BUNDLE 級別）
+
+**排除項目：**
+- Controller 層（透過整合測試驗證）
+- Entity、DTO、VO（資料類別）
+- Mapper（MapStruct 自動生成）
+- Config、Filter、WebSocket（配置類別）
+
+**執行測試與生成報告：**
+```bash
+# 執行所有測試
+./mvnw test
+
+# 生成覆蓋率報告
+./mvnw jacoco:report
+
+# 檢查覆蓋率是否達標（會驗證 80% 門檻）
+./mvnw jacoco:check
+```
+
+**檢視覆蓋率報告：**
+```bash
+# Windows
+start target/site/jacoco/index.html
+
+# Linux/Mac
+open target/site/jacoco/index.html
+```
+
+**覆蓋率報告位置：**
+```
+target/
+└── site/
+    └── jacoco/
+        ├── index.html          ← 總覽
+        ├── jacoco.xml          ← CI/CD 用
+        └── com.example.BackendApi/
+            ├── Service/
+            │   └── impl/
+            │       └── UserService.html
+            └── DataAccess/
+                └── impl/
+                    └── UserDataAccessImpl.html
+```
+
+---
+
+### 測試最佳實踐
+
+#### 1. 測試命名規範
+```java
+// ✅ 好的命名（清楚描述測試意圖）
+@Test
+@DisplayName("當 email 已存在時，應該拋出 AppException")
+void shouldThrowExceptionWhenEmailAlreadyExists() { }
+
+// ❌ 不好的命名
+@Test
+void test1() { }
+```
+
+#### 2. Given-When-Then 模式
+```java
+@Test
+void shouldCalculateCorrectly() {
+    // Given - 準備測試資料
+    User user = new User();
+    user.setEmail("test@example.com");
+    
+    // When - 執行待測試方法
+    UserVo result = userService.createUser(user);
+    
+    // Then - 驗證結果
+    assertThat(result.getEmail()).isEqualTo("test@example.com");
+}
+```
+
+#### 3. 使用 AssertJ 提升可讀性
+```java
+// ✅ AssertJ（流暢 API）
+assertThat(users)
+    .hasSize(3)
+    .extracting("email")
+    .containsExactly("a@test.com", "b@test.com", "c@test.com");
+
+// ❌ JUnit 原生（較不直觀）
+assertEquals(3, users.size());
+assertEquals("a@test.com", users.get(0).getEmail());
+```
+
+---
+
+### MyBatis 未來使用時的測試策略
+
+**若未來引入 MyBatis 處理複雜查詢：**
+
+#### 1. Mapper XML 測試
+```java
+@MybatisTest
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+class UserMapperTest {
+    
+    @Autowired
+    private UserMapper userMapper;
+    
+    @Test
+    @DisplayName("應該能夠執行複雜的多表 Join 查詢")
+    void shouldPerformComplexJoinQuery() {
+        // Given
+        // ... 準備測試資料
+        
+        // When
+        List<UserProjectDto> result = userMapper.findUsersWithProjects(params);
+        
+        // Then
+        assertThat(result).isNotEmpty();
+    }
+}
+```
+
+#### 2. 動態 SQL 測試
+```xml
+<!-- UserMapper.xml -->
+<select id="findUsersWithDynamicConditions" resultType="User">
+    SELECT * FROM users
+    WHERE 1=1
+    <if test="email != null">
+        AND email = #{email}
+    </if>
+    <if test="disabled != null">
+        AND disabled = #{disabled}
+    </if>
+</select>
+```
+
+```java
+@Test
+@DisplayName("動態 SQL 應該正確組合條件")
+void shouldBuildDynamicSqlCorrectly() {
+    // Test with email only
+    Map<String, Object> params1 = Map.of("email", "test@example.com");
+    List<User> result1 = userMapper.findUsersWithDynamicConditions(params1);
+    
+    // Test with both conditions
+    Map<String, Object> params2 = Map.of(
+        "email", "test@example.com",
+        "disabled", false
+    );
+    List<User> result2 = userMapper.findUsersWithDynamicConditions(params2);
+    
+    assertThat(result1).hasSizeGreaterThan(result2);
+}
+```
+
+---
+
+### CI/CD 整合
+
+**GitHub Actions 範例：**
+```yaml
+name: Test
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up JDK 21
+        uses: actions/setup-java@v3
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+      
+      - name: Run tests
+        run: ./mvnw test
+      
+      - name: Generate coverage report
+        run: ./mvnw jacoco:report
+      
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./target/site/jacoco/jacoco.xml
+```
