@@ -29,12 +29,12 @@ public interface IUserDataAccess {
     List<User> findAll();
 
     /**
-     * Find users by email address.
+     * Find user by email address.
      *
      * @param email the email to search for
-     * @return list of users with matching email
+     * @return optional user with matching email
      */
-    List<User> findByEmail(String email);
+    Optional<User> findByEmail(String email);
 
     /**
      * Find a user by their key.
