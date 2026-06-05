@@ -19,8 +19,9 @@ import java.util.List;
 public class User extends BaseEntity {
     @Column(name = "name")
     private String name;
-    @Column(name = "email")
+    @Column(name = "email", nullable = false, unique = true)
     private String email;
+    @JsonIgnore
     @Column(name = "password")
     private String password;
     @Column(name = "phone")

@@ -80,7 +80,7 @@ class UserDataAccessImplTest {
     }
 
     @Test
-    @DisplayName("Should find users by email")
+    @DisplayName("Should find user by email")
     void testFindByEmail() {
         // Arrange
         User user = new User();
@@ -90,18 +90,18 @@ class UserDataAccessImplTest {
         userRepository.save(user);
 
         // Act
-        List<User> result = userDataAccess.findByEmail("find@example.com");
+        Optional<User> result = userDataAccess.findByEmail("find@example.com");
 
         // Assert
-        assertEquals(1, result.size());
-        assertEquals("find@example.com", result.get(0).getEmail());
+        assertTrue(result.isPresent());
+        assertEquals("find@example.com", result.get().getEmail());
     }
 
     @Test
-    @DisplayName("Should return empty list when email not found")
+    @DisplayName("Should return empty when email not found")
     void testFindByEmail_NotFound() {
         // Act
-        List<User> result = userDataAccess.findByEmail("nonexistent@example.com");
+        Optional<User> result = userDataAccess.findByEmail("nonexistent@example.com");
 
         // Assert
         assertTrue(result.isEmpty());
@@ -118,8 +118,7 @@ class UserDataAccessImplTest {
         userRepository.save(user);
 
         // Get saved user
-        List<User> savedUsers = userRepository.findByEmail("update@example.com");
-        User savedUser = savedUsers.get(0);
+        User savedUser = userRepository.findByEmail("update@example.com").orElseThrow();
         UUID userId = savedUser.getId();
 
         // Modify user
@@ -129,10 +128,9 @@ class UserDataAccessImplTest {
         userDataAccess.save(savedUser);
 
         // Assert
-        List<User> updatedUsers = userRepository.findByEmail("update@example.com");
-        assertEquals(1, updatedUsers.size());
-        assertEquals("newPassword", updatedUsers.get(0).getPassword());
-        assertEquals(userId, updatedUsers.get(0).getId()); // Same id
+        User updatedUser = userRepository.findByEmail("update@example.com").orElseThrow();
+        assertEquals("newPassword", updatedUser.getPassword());
+        assertEquals(userId, updatedUser.getId()); // Same id
     }
 
     @Test

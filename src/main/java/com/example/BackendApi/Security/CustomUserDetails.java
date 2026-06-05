@@ -2,7 +2,7 @@ package com.example.BackendApi.Security;
 
 import com.example.BackendApi.Entity.User;
 import com.example.BackendApi.Entity.UserRole;
-import lombok.Getter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -11,13 +11,17 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Getter
 public class CustomUserDetails implements UserDetails {
 
     private final User user;
 
     public CustomUserDetails(User user) {
         this.user = user;
+    }
+
+    @JsonIgnore
+    public User getUser() {
+        return user;
     }
 
     @Override
@@ -32,6 +36,7 @@ public class CustomUserDetails implements UserDetails {
     }
 
     @Override
+    @JsonIgnore
     public String getPassword() {
         return user.getPassword();
     }

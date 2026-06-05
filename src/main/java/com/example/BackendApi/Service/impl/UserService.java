@@ -70,13 +70,15 @@ public class UserService implements IUserService {
     }
     @Override
     public List<UserVo> getUserByEmail(String email) {
-        return userDataAccess.findByEmail(email).stream().map(userMapper::toVo).toList();
+        return userDataAccess.findByEmail(email).map(userMapper::toVo).map(List::of).orElseGet(List::of);
     }
     @Cacheable(value = "users", key = "#email", unless = "#result == null")
     @Override
     public UserVo getOnlyUserByEmail(String email) {
-        List<User> users = userDataAccess.findByEmail(email);
-        return userMapper.toVo(users.getFirst());
+        User user = userDataAccess.findByEmail(email).orElseThrow(
+                () -> new IllegalArgumentException("User not found")
+        );
+        return userMapper.toVo(user);
     }
     @Cacheable(value = "users", key = "#result.id", unless = "#result == null")
     @Override
@@ -123,7 +125,7 @@ public class UserService implements IUserService {
 //        User user = new User();
 //        user.setEmail(userVo.getEmail());
 //        Example<User> example = Example.of(user);
-        User u = userDataAccess.findByEmail(userVo.getEmail()).stream().findFirst().orElseThrow(
+        User u = userDataAccess.findByEmail(userVo.getEmail()).orElseThrow(
                 () -> new IllegalArgumentException("User not found")
         );
         u.setDisabled(userVo.isDisabled());
@@ -153,7 +155,7 @@ public class UserService implements IUserService {
 
     @Override
     public UserVo getCurrentUserInfo() {
-        User user = userDataAccess.findByEmail(currentUser.getEmail()).stream().findFirst().orElseThrow(
+        User user = userDataAccess.findByEmail(currentUser.getEmail()).orElseThrow(
                 () -> new IllegalArgumentException("User not found")
         );
         UserVo userVo = userMapper.toVo(user);
