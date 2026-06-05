@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
@@ -29,6 +30,7 @@ import org.springframework.data.domain.PageRequest;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -69,6 +71,9 @@ class UserServiceTest {
 
     @Mock
     private FunctionMapper functionMapper;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
 
     @InjectMocks
     private UserService userService;
@@ -119,6 +124,8 @@ class UserServiceTest {
             vo.setParent(function.getParent());
             return vo;
         });
+
+        when(passwordEncoder.encode(anyString())).thenReturn("encodedPassword");
     }
 
     @Test
@@ -159,8 +166,7 @@ class UserServiceTest {
     @DisplayName("Should return users by email")
     void testGetUserByEmail() {
         // Arrange
-        List<User> users = List.of(testUser);
-        when(userDataAccess.findByEmail("test@example.com")).thenReturn(users);
+        when(userDataAccess.findByEmail("test@example.com")).thenReturn(Optional.of(testUser));
 
         // Act
         List<UserVo> result = userService.getUserByEmail("test@example.com");
@@ -176,8 +182,7 @@ class UserServiceTest {
     @DisplayName("Should return only one user by email")
     void testGetOnlyUserByEmail() {
         // Arrange
-        List<User> users = List.of(testUser);
-        when(userDataAccess.findByEmail("test@example.com")).thenReturn(users);
+        when(userDataAccess.findByEmail("test@example.com")).thenReturn(Optional.of(testUser));
 
         // Act
         UserVo result = userService.getOnlyUserByEmail("test@example.com");
@@ -239,8 +244,7 @@ class UserServiceTest {
         userVo.setPassword("newPassword");
         userVo.setRoleArr(List.of(UUID.randomUUID().toString()));
 
-        List<User> existingUsers = List.of(testUser);
-        when(userDataAccess.findByEmail("test@example.com")).thenReturn(existingUsers);
+        when(userDataAccess.findByEmail("test@example.com")).thenReturn(Optional.of(testUser));
         doNothing().when(userDataAccess).save(any(User.class));
         doNothing().when(roleService).userBindRole(anyString(), anyList());
 
@@ -594,7 +598,7 @@ class UserServiceTest {
         UUID parentId = UUID.randomUUID();
         
         when(currentUser.getEmail()).thenReturn("test@example.com");
-        when(userDataAccess.findByEmail("test@example.com")).thenReturn(List.of(testUser));
+        when(userDataAccess.findByEmail("test@example.com")).thenReturn(Optional.of(testUser));
         
         FunctionVo functionVo = new FunctionVo();
         functionVo.setId(functionId.toString());
@@ -638,7 +642,7 @@ class UserServiceTest {
     void testGetCurrentUserInfo_UserNotFound() {
         // Arrange
         when(currentUser.getEmail()).thenReturn("notfound@example.com");
-        when(userDataAccess.findByEmail("notfound@example.com")).thenReturn(new ArrayList<>());
+        when(userDataAccess.findByEmail("notfound@example.com")).thenReturn(Optional.empty());
 
         // Act & Assert
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
@@ -656,7 +660,7 @@ class UserServiceTest {
         userVo.setPassword("newPassword");
         userVo.setRoleArr(List.of(UUID.randomUUID().toString()));
 
-        when(userDataAccess.findByEmail("notfound@example.com")).thenReturn(new ArrayList<>());
+        when(userDataAccess.findByEmail("notfound@example.com")).thenReturn(Optional.empty());
 
         // Act & Assert
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,

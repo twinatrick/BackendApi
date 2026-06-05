@@ -164,10 +164,13 @@ DataAccess 層將資料存取邏輯從 Service 中分離，便於測試與替換
 - 消費者群組 `myGroup` 確保訊息可靠消費
 - 解耦資料檢查與即時推送邏輯
 
-### AOP 認證攔截
-- 使用 `@Aspect` 攔截所有 Controller 方法 (除 `@Ingnore` 標註)
+### Spring Security 認證攔截
+- 整合 `spring-boot-starter-security`，使用 `SecurityFilterChain` 與自訂 `JwtAuthenticationFilter`
 - JWT 驗證失敗直接回傳 401，不進入業務邏輯
-- 通過驗證後將 User 物件注入 Request Attribute
+- 通過驗證後將 CustomUserDetails 物件注入 `SecurityContextHolder` 供後續存取
+- 利用 `IgnoreUrlsProvider` 動態掃描 `@Ingnore` 註解，自動配置 `permitAll()` 規則，並保留原本簡潔的開發體驗
+- 登入機制改用 Spring Security 內建之 `AuthenticationManager` 處理密碼比對
+- 密碼儲存與驗證改用 `DelegatingPasswordEncoder`：預設使用 `bcrypt` 進行加密 (新密碼會帶有 `{bcrypt}` 前綴)，同時向下相容舊資料庫中未帶前綴的裸 bcrypt 密碼，保有未來無縫切換其他加密演算法 (如 Argon2) 的擴充彈性
 
 ### 動態查詢
 - 使用 JPA Specification 實現分頁與多條件搜尋
