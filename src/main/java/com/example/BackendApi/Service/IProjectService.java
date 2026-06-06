@@ -1,6 +1,7 @@
 package com.example.BackendApi.Service;
 
 import com.example.BackendApi.Dto.Vo.PersonalProjectRequest;
+import com.example.BackendApi.Dto.Vo.ProjectMemberSkillVo;
 import com.example.BackendApi.Dto.Vo.ProjectSkillVo;
 import com.example.BackendApi.Dto.Vo.ProjectVo;
 import com.example.BackendApi.Dto.Vo.Search.ProjectSearchQuery;
@@ -119,4 +120,12 @@ public interface IProjectService {
      * @param memberSkillsMap Map of userId -> (skillId -> levelId)
      */
     void rebindProjectMemberSkills(UUID projectId, Map<UUID, Map<UUID, UUID>> memberSkillsMap);
+
+    /**
+     * 取得專案所有成員在此專案中的技能等級綁定，供編輯專案時回填。
+     *
+     * @param projectId 專案 ID
+     * @return 成員技能等級列表（含無技能綁定的成員，skills 為空陣列）
+     */
+    List<ProjectMemberSkillVo> getProjectMemberSkills(UUID projectId);
 }

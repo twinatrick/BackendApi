@@ -26,6 +26,9 @@ import com.example.BackendApi.DataAccess.IUserSkillDataAccess;
 import com.example.BackendApi.Mapper.SkillMapper;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -59,6 +62,7 @@ public class SkillService implements ISkillService {
 
     @Transactional
     @Override
+    @CacheEvict(value = "skills", allEntries = true)
     public SkillVo addSkill(SkillVo skillVo) {
         Skill skill = skillMapper.toEntity(skillVo);
         if (skill.getId() != null) {
@@ -83,6 +87,7 @@ public class SkillService implements ISkillService {
 
     @Transactional
     @Override
+    @CacheEvict(value = "skills", allEntries = true)
     public void updateSkill(SkillVo skillVo) {
         Skill skill = skillMapper.toEntity(skillVo);
         if (skill.getId() == null) {
@@ -165,11 +170,13 @@ public class SkillService implements ISkillService {
     }
 
     @Override
+    @Cacheable(value = "skills", unless = "#result == null || #result.isEmpty()")
     public List<SkillVo> getSkill() {
         return skillDataAccess.findAll().stream().map(skillMapper::toVo).toList();
     }
 
     @Override
+    @CacheEvict(value = "skills", allEntries = true)
     public SkillLevelVo addSkillLevel(SkillLevelVo skillLevelVo) {
         if (skillLevelVo.getId() != null && !skillLevelVo.getId().isBlank()) {
             throw new IllegalArgumentException("Key must be null");
@@ -197,6 +204,7 @@ public class SkillService implements ISkillService {
     }
 
     @Override
+    @CacheEvict(value = "skills", allEntries = true)
     public void updateSkillLevel(SkillLevelVo skillLevelVo) {
         UUID skillLevelId = mapUuid(skillLevelVo.getId());
         if (skillLevelId == null) {
@@ -222,6 +230,7 @@ public class SkillService implements ISkillService {
     }
 
     @Override
+    @Cacheable(value = "skills", unless = "#result == null || #result.isEmpty()")
     public List<SkillLevelVo> getSkillLevels(String skillId) {
         UUID skillUuid = mapUuid(skillId);
         if (skillUuid == null) {
@@ -235,6 +244,7 @@ public class SkillService implements ISkillService {
     }
 
     @Override
+    @CacheEvict(value = "skills", allEntries = true)
     public void deleteSkillLevel(String skillLevelId) {
         UUID skillLevelUuid = mapUuid(skillLevelId);
         if (skillLevelUuid == null) {
@@ -422,6 +432,7 @@ public class SkillService implements ISkillService {
 
     @Transactional
     @Override
+    @CacheEvict(value = "skills", allEntries = true)
     public void deleteSkill(SkillVo skillVo) {
         Skill skill = skillMapper.toEntity(skillVo);
         if (skill.getId() == null) {
@@ -457,6 +468,7 @@ public class SkillService implements ISkillService {
     }
     
     @Override
+    @Cacheable(value = "currentUserSkills", unless = "#result == null")
     public List<CurrentUserSkillVo> getCurrentUserSkills() {
         List<CurrentUserSkillVo> result = new ArrayList<>();
         Set<UUID> seenSkillIds = new HashSet<>();
@@ -668,6 +680,7 @@ public class SkillService implements ISkillService {
     
     @Transactional
     @Override
+    @CacheEvict(value = "skills", allEntries = true)
     public SkillVo addPersonalSkill(PersonalSkillRequest request) {
         // 驗證輸入
         if (request.getName() == null || request.getName().trim().isEmpty()) {
@@ -723,6 +736,7 @@ public class SkillService implements ISkillService {
     
     @Transactional
     @Override
+    @CacheEvict(value = "skills", allEntries = true)
     public void updatePersonalSkill(UUID skillId, PersonalSkillRequest request) {
         // 驗證輸入
         if (skillId == null) {
@@ -773,6 +787,7 @@ public class SkillService implements ISkillService {
 
     @Transactional
     @Override
+    @CacheEvict(value = "skills", allEntries = true)
     public void updatePersonalSkillLevel(UUID skillId, UUID skillLevelId) {
         if (skillId == null || skillLevelId == null) {
             throw new IllegalArgumentException("Key must not be null");
@@ -800,6 +815,7 @@ public class SkillService implements ISkillService {
     
     @Transactional
     @Override
+    @CacheEvict(value = "skills", allEntries = true)
     public void deletePersonalSkill(UUID skillId) {
         // 驗證輸入
         if (skillId == null) {
