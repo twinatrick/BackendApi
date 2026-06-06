@@ -13,7 +13,7 @@ import java.util.Arrays;
 import java.util.List;
 
 @Service
-public class initAndCheckService implements IInitAndCheckService {
+public class InitAndCheckService implements IInitAndCheckService {
     @Autowired
     private IRoleService roleService;
 

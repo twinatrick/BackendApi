@@ -4,7 +4,7 @@ import com.example.BackendApi.Dto.Vo.AlertCheckLimitVo;
 import com.example.BackendApi.Dto.Vo.FunctionVo;
 import com.example.BackendApi.Dto.Vo.RoleOutVo;
 import com.example.BackendApi.Dto.Vo.UserVo;
-import com.example.BackendApi.Service.impl.initAndCheckService;
+import com.example.BackendApi.Service.impl.InitAndCheckService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -43,7 +43,7 @@ class InitAndCheckServiceTest {
     private IUserService userService;
 
     @InjectMocks
-    private initAndCheckService initAndCheckService;
+    private InitAndCheckService initAndCheckService;
 
     private RoleOutVo adminRole;
     private RoleOutVo userRole;
