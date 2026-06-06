@@ -4,9 +4,11 @@ import com.example.BackendApi.Annotation.RequirePermission;
 import com.example.BackendApi.Annotation.OpenApi.ApiControllerTag;
 import com.example.BackendApi.Annotation.OpenApi.ApiOperationBadRequest;
 import com.example.BackendApi.Annotation.OpenApi.ApiOperationOk;
+import com.example.BackendApi.Dto.Vo.Common.PageResult;
 import com.example.BackendApi.Dto.Vo.CreateJobPostingRequest;
 import com.example.BackendApi.Dto.Vo.JobPostingVo;
 import com.example.BackendApi.Dto.Vo.ResponseType;
+import com.example.BackendApi.Dto.Vo.Search.JobPostingSearchQuery;
 import com.example.BackendApi.Service.IJobPostingService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -79,5 +81,12 @@ public class JobPostingController {
     @ApiOperationBadRequest(summary = "爬取並分析職缺", description = "根據公司 ID 爬取該公司網站上的職缺並使用 Gemini 分析。")
     public ResponseType<List<JobPostingVo>> scrapeJobs(@PathVariable String companyId) {
         return ResponseType.Success(jobPostingService.scrapeAndAnalyzeJobs(companyId), "職缺爬取與分析完成");
+    }
+
+    @PostMapping("/search")
+    @RequirePermission({"System", "JobPosting", "View"})
+    @ApiOperationBadRequest(summary = "分頁搜尋職缺", description = "根據條件分頁搜尋職缺。")
+    public ResponseType<PageResult<JobPostingVo>> searchJobPostings(@RequestBody JobPostingSearchQuery query) {
+        return ResponseType.Success(jobPostingService.searchJobPostings(query), "職缺搜尋成功");
     }
 }

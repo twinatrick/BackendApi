@@ -3,8 +3,10 @@ package com.example.BackendApi.Service.impl;
 import com.example.BackendApi.Crawler.impl.CompositeJobCrawler;
 import com.example.BackendApi.DataAccess.ICompanyDataAccess;
 import com.example.BackendApi.DataAccess.IJobPostingDataAccess;
+import com.example.BackendApi.Dto.Vo.Common.PageResult;
 import com.example.BackendApi.Dto.Vo.CreateJobPostingRequest;
 import com.example.BackendApi.Dto.Vo.JobPostingVo;
+import com.example.BackendApi.Dto.Vo.Search.JobPostingSearchQuery;
 import com.example.BackendApi.Entity.Company;
 import com.example.BackendApi.Entity.JobPosting;
 import com.example.BackendApi.Mapper.JobPostingMapper;
@@ -15,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -248,6 +251,16 @@ public class JobPostingService implements IJobPostingService {
                 log.error("Failed to scrape company: {}", company.getName(), e);
             }
         }
+    }
+
+    @Override
+    @Cacheable(value = "jobPostings", key = "'search:' + #query.toString()", unless = "#result == null || #result.content.isEmpty()")
+    public PageResult<JobPostingVo> searchJobPostings(JobPostingSearchQuery query) {
+        Page<JobPosting> page = jobPostingDataAccess.searchJobPostings(query);
+        List<JobPostingVo> content = page.getContent().stream()
+                .map(jobPostingMapper::toVo)
+                .toList();
+        return PageResult.of(page, content);
     }
 
     private JobPosting findMatch(List<JobPosting> existingJobs, String title, String salaryRange) {
