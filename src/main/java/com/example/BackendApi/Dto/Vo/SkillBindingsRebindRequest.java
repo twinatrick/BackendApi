@@ -1,5 +1,7 @@
 package com.example.BackendApi.Dto.Vo;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -10,5 +12,6 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 public class SkillBindingsRebindRequest {
-    private List<SkillLevelBindingItem> bindings;
+    @NotEmpty(message = "bindings must not be empty")
+    private @Valid List<@Valid SkillLevelBindingItem> bindings;
 }

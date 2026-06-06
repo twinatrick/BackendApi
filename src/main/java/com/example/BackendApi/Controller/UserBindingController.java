@@ -9,6 +9,9 @@ import com.example.BackendApi.Util.SkillLevelBindingMapper;
 import com.example.BackendApi.Annotation.RequirePermission;
 import com.example.BackendApi.Annotation.OpenApi.ApiControllerTag;
 import com.example.BackendApi.Annotation.OpenApi.ApiOperationBadRequest;
+import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -23,6 +26,8 @@ import java.util.UUID;
 @ApiControllerTag(name = "User Bindings", description = "Backend API endpoints - User binding self-service")
 public class UserBindingController {
 
+    private static final Logger log = LoggerFactory.getLogger(UserBindingController.class);
+
     private final User currentUser;
     private final ISkillService skillService;
     private final IProjectService projectService;
@@ -35,9 +40,12 @@ public class UserBindingController {
 
     @PostMapping("/skill/rebind")
     @ApiOperationBadRequest(summary = "Rebind current user skills", description = "Rebind all current-user skill-level bindings with diff strategy")
-    public ResponseType<String> rebindCurrentUserSkills(@RequestBody SkillBindingsRebindRequest request) {
+    public ResponseType<String> rebindCurrentUserSkills(@Valid @RequestBody SkillBindingsRebindRequest request) {
         UUID currentUserId = requireCurrentUserId();
+        int bindingCount = request.getBindings() == null ? 0 : request.getBindings().size();
+        log.info("User {} rebinding own skills with {} bindings", currentUserId, bindingCount);
         skillService.rebindUserSkills(currentUserId, SkillLevelBindingMapper.toSkillLevelMap(request.getBindings()));
+        log.info("User {} rebound own skills successfully", currentUserId);
         return ResponseType.Success("Current user skills rebound successfully");
     }
 
@@ -45,8 +53,11 @@ public class UserBindingController {
     @ApiOperationBadRequest(summary = "Rebind current user project skills", description = "Rebind project skills for a manageable project with diff strategy")
     public ResponseType<String> rebindCurrentUserProjectSkills(
             @PathVariable UUID projectId,
-            @RequestBody SkillBindingsRebindRequest request) {
+            @Valid @RequestBody SkillBindingsRebindRequest request) {
+        int bindingCount = request.getBindings() == null ? 0 : request.getBindings().size();
+        log.info("User {} rebinding project {} with {} skill bindings", requireCurrentUserId(), projectId, bindingCount);
         projectService.rebindPersonalProjectSkills(projectId, SkillLevelBindingMapper.toSkillLevelMap(request.getBindings()));
+        log.info("User {} rebound project {} skills successfully", requireCurrentUserId(), projectId);
         return ResponseType.Success("Current user project skills rebound successfully");
     }
 

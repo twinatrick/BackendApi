@@ -1,5 +1,7 @@
 package com.example.BackendApi.Dto.Vo;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -10,6 +12,9 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 public class UserProjectRebindRequest {
+    @NotBlank(message = "userId must not be blank")
     private String userId;
-    private List<String> projectIds;
+
+    @NotEmpty(message = "projectIds must not be empty")
+    private List<@NotBlank String> projectIds;
 }

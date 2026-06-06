@@ -23,4 +23,6 @@ public interface UserProjectRepository extends JpaRepository<UserProject, UUID> 
     void deleteByUserIdAndProjectId(@Param("userId") UUID userId, @Param("projectId") UUID projectId);
     
     List<UserProject> findByUserId(UUID userId);
+
+    List<UserProject> findByProjectId(UUID projectId);
 }

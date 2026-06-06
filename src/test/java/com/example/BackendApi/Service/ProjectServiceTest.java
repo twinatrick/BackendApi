@@ -1,6 +1,7 @@
 package com.example.BackendApi.Service;
 
 import com.example.BackendApi.Dto.Vo.PersonalProjectRequest;
+import com.example.BackendApi.Dto.Vo.ProjectMemberSkillVo;
 import com.example.BackendApi.Dto.Vo.ProjectVo;
 import com.example.BackendApi.Dto.Vo.Search.ProjectSearchQuery;
 import com.example.BackendApi.Dto.Vo.Common.PageResult;
@@ -10,13 +11,16 @@ import com.example.BackendApi.Entity.Skill;
 import com.example.BackendApi.Entity.SkillLevel;
 import com.example.BackendApi.Entity.User;
 import com.example.BackendApi.Entity.UserProject;
+import com.example.BackendApi.Entity.UserProjectSkill;
 import com.example.BackendApi.Entity.UserSkill;
 import com.example.BackendApi.Service.impl.ProjectService;
 import com.example.BackendApi.DataAccess.IProjectDataAccess;
 import com.example.BackendApi.DataAccess.IProjectSkillDataAccess;
+import com.example.BackendApi.DataAccess.ISkillDataAccess;
 import com.example.BackendApi.DataAccess.ISkillLevelDataAccess;
 import com.example.BackendApi.DataAccess.IUserDataAccess;
 import com.example.BackendApi.DataAccess.IUserProjectDataAccess;
+import com.example.BackendApi.DataAccess.IUserProjectSkillDataAccess;
 import com.example.BackendApi.DataAccess.IUserSkillDataAccess;
 import com.example.BackendApi.Exception.AppException;
 import com.example.BackendApi.Mapper.ProjectMapper;
@@ -56,6 +60,10 @@ class ProjectServiceTest {
     private IUserSkillDataAccess userSkillDataAccess;
     @Mock
     private ISkillLevelDataAccess skillLevelDataAccess;
+    @Mock
+    private ISkillDataAccess skillDataAccess;
+    @Mock
+    private IUserProjectSkillDataAccess userProjectSkillDataAccess;
     @Mock
     private ProjectMapper projectMapper;
 
@@ -747,5 +755,84 @@ class ProjectServiceTest {
         projectService.unbindPersonalProjectSkill(projectId, skillId);
 
         verify(projectSkillDataAccess).deleteByProjectIdAndSkillId(projectId, skillId);
+    }
+
+    @Test
+    void getProjectMemberSkills_shouldThrow_whenProjectNotFound() {
+        UUID projectId = UUID.randomUUID();
+        when(projectDataAccess.existsById(projectId)).thenReturn(false);
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> projectService.getProjectMemberSkills(projectId));
+        assertEquals("Project not found", exception.getMessage());
+    }
+
+    @Test
+    void getProjectMemberSkills_shouldReturnMembersWithSkills() {
+        UUID projectId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        UUID skillId = UUID.randomUUID();
+        UUID levelId = UUID.randomUUID();
+
+        User user = new User();
+        user.setId(userId);
+        user.setEmail("member@example.com");
+
+        UserProject userProject = new UserProject();
+        userProject.setUser(user);
+
+        Skill skill = new Skill();
+        skill.setId(skillId);
+        skill.setName("Java");
+
+        SkillLevel level = new SkillLevel();
+        level.setId(levelId);
+        level.setTitle("Senior");
+        level.setLevelValue(3);
+
+        UserProjectSkill binding = new UserProjectSkill();
+        binding.setUser(user);
+        binding.setSkill(skill);
+        binding.setSkillLevel(level);
+
+        when(projectDataAccess.existsById(projectId)).thenReturn(true);
+        when(userProjectDataAccess.findByProjectId(projectId)).thenReturn(List.of(userProject));
+        when(userProjectSkillDataAccess.findByProjectId(projectId)).thenReturn(List.of(binding));
+
+        List<ProjectMemberSkillVo> result = projectService.getProjectMemberSkills(projectId);
+
+        assertEquals(1, result.size());
+        assertEquals(userId.toString(), result.get(0).getUserId());
+        assertEquals("member@example.com", result.get(0).getUserEmail());
+        assertEquals(1, result.get(0).getSkills().size());
+        assertEquals(skillId.toString(), result.get(0).getSkills().get(0).getSkillId());
+        assertEquals("Java", result.get(0).getSkills().get(0).getSkillName());
+        assertEquals(levelId.toString(), result.get(0).getSkills().get(0).getSkillLevelId());
+        assertEquals("Senior", result.get(0).getSkills().get(0).getLevelTitle());
+        assertEquals(3, result.get(0).getSkills().get(0).getLevelValue());
+    }
+
+    @Test
+    void getProjectMemberSkills_shouldReturnEmptySkills_whenMemberHasNoBindings() {
+        UUID projectId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+
+        User user = new User();
+        user.setId(userId);
+        user.setEmail("member@example.com");
+
+        UserProject userProject = new UserProject();
+        userProject.setUser(user);
+
+        when(projectDataAccess.existsById(projectId)).thenReturn(true);
+        when(userProjectDataAccess.findByProjectId(projectId)).thenReturn(List.of(userProject));
+        when(userProjectSkillDataAccess.findByProjectId(projectId)).thenReturn(List.of());
+
+        List<ProjectMemberSkillVo> result = projectService.getProjectMemberSkills(projectId);
+
+        assertEquals(1, result.size());
+        assertEquals(userId.toString(), result.get(0).getUserId());
+        assertEquals("member@example.com", result.get(0).getUserEmail());
+        assertTrue(result.get(0).getSkills().isEmpty());
     }
 }
