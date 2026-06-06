@@ -20,4 +20,6 @@ public interface IJobPostingService {
     List<JobPostingVo> getJobPostingsByCompanyId(String companyId);
 
     List<JobPostingVo> scrapeAndAnalyzeJobs(String companyId);
+
+    void scrapeAndAnalyzeAllCompanies();
 }

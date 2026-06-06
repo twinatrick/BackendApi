@@ -36,8 +36,7 @@ import java.util.List;
 @RequestMapping("/auth")
 @ApiControllerTag(name = "Auth", description = "Backend API endpoints - Authentication and registration")
 public class AuthController {
-//    @Autowired
-//    private   UserRepository userRepository;
+
     @Autowired
     private IUserService userService;
 

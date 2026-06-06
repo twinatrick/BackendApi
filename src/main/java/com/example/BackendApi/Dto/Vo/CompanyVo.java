@@ -4,13 +4,14 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.Date;
+import java.util.List;
 
 @Getter
 @Setter
 public class CompanyVo {
     private String id;
     private String name;
-    private String website;
+    private List<String> websites;
     private String description;
     private String createdBy;
     private String updatedBy;

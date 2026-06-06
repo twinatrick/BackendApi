@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.List;
 import java.util.UUID;
 
 @Getter
@@ -12,6 +13,6 @@ import java.util.UUID;
 public class UpdateCompanyRequest {
     private UUID id;
     private String name;
-    private String website;
+    private List<String> websites;
     private String description;
 }
