@@ -360,7 +360,10 @@ DataAccess 層將資料存取邏輯從 Service 中分離，便於測試與替換
 ### 快取策略
 - 使用 Spring Cache 抽象層，以 `@Cacheable` / `@CachePut` / `@CacheEvict` 管理
 - Redis 採用 JSON 序列化，支援多型型別
-- 各快取區域獨立 TTL：users (2h)、alertCheckLimit (1h)、aquarkData (1h)
+- 全 Service 層已加入快取註解，分為三層級 TTL 策略（詳見 `redis快取策略.md`）：
+  - **參考資料**（24h）：skills、skillLevels、functions
+  - **業務資料**（1-6h）：roles（6h）、companies（6h）、jobPostings（1h）
+  - **使用者資料**（10-30min）：currentUserSkills、userProjects、userJobLinks、userRoles
 
 ### 非同步事件處理
 - 告警訊息透過 Kafka `socketSend` topic 非同步傳輸
@@ -402,6 +405,7 @@ DataAccess 層將資料存取邏輯從 Service 中分離，便於測試與替換
 - [x] **CI/CD 管線**: 整合 GitHub Actions，自動化測試、建置、部署
 - [x] **管理者綁定 API 重構**: 統一 Rebind API 設計，完整覆蓋語意，Diff 策略最佳化
 - [x] **專案成員技能管理**: 新增 `user_project_skill` 表，支援專案維度技能管理
+- [x] **Redis 快取策略擴充**: 全 Service 層快取註解、14+ 命名空間、多層級 TTL 策略
 - [x] **職缺爬蟲與 AI 分析**: 整合 Jsoup/Selenium 複合爬蟲 + Gemini API 智能萃取，支援公司/職缺/使用者收藏 CRUD
 - [ ] **監控與日誌**: 引入 Micrometer + Prometheus + Grafana，集中化日誌管理
 - [ ] **效能優化**: 資料庫查詢優化、連線池調整、虛擬執行緒應用

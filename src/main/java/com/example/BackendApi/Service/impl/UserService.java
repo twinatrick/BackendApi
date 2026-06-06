@@ -20,6 +20,7 @@ import com.example.BackendApi.Dto.Vo.UserVo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -80,7 +81,7 @@ public class UserService implements IUserService {
         );
         return userMapper.toVo(user);
     }
-    @Cacheable(value = "users", key = "#result.id", unless = "#result == null")
+    @Cacheable(value = "users", key = "#id", unless = "#result == null")
     @Override
     public UserVo getUserById(String id) {
         UUID userId = mapUuid(id);
@@ -109,6 +110,7 @@ public class UserService implements IUserService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "users", allEntries = true)
     public void saveUserWithRole(UserVo userVo) {
         if (userVo.getRoleArr() == null) {
             throw new IllegalArgumentException("Role list is required");
@@ -196,6 +198,7 @@ public class UserService implements IUserService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "userProjects", allEntries = true)
     public void rebindUserProjects(UUID userId, List<UUID> projectIds) {
         if (userId == null) {
             throw new IllegalArgumentException("Key must not be null");
@@ -245,6 +248,7 @@ public class UserService implements IUserService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "users", allEntries = true)
     public void rebindUserRoles(UUID userId, List<String> roleIds) {
         if (userId == null) {
             throw new IllegalArgumentException("User ID must not be null");

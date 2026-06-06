@@ -13,7 +13,9 @@ import com.example.BackendApi.Mapper.UserMapper;
 import com.example.BackendApi.Dto.Vo.FunctionVo;
 import com.example.BackendApi.Dto.Vo.UserVo;
 import com.example.BackendApi.Entity.Function;
+import com.example.BackendApi.Entity.Project;
 import com.example.BackendApi.Entity.User;
+import com.example.BackendApi.Entity.UserProject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -720,5 +722,155 @@ class UserServiceTest {
         // Assert
         assertNotNull(result);
         verify(userDataAccess).save(any(User.class));
+    }
+
+    @Test
+    @DisplayName("Should rebind user projects with diff strategy")
+    void testRebindUserProjects_Success() {
+        // Arrange
+        UUID userId = UUID.randomUUID();
+        UUID projectId1 = UUID.randomUUID();
+        UUID projectId2 = UUID.randomUUID();
+
+        Project project1 = new Project();
+        project1.setId(projectId1);
+        Project project2 = new Project();
+        project2.setId(projectId2);
+
+        UserProject existingBinding = new UserProject();
+        existingBinding.setUser(testUser);
+        existingBinding.setProject(project1);
+
+        when(userDataAccess.findById(userId)).thenReturn(Optional.of(testUser));
+        when(projectDataAccess.findById(projectId1)).thenReturn(Optional.of(project1));
+        when(projectDataAccess.findById(projectId2)).thenReturn(Optional.of(project2));
+        when(userProjectDataAccess.findByUserId(userId)).thenReturn(List.of(existingBinding));
+        doNothing().when(userProjectDataAccess).deleteByUserIdAndProjectId(any(), any());
+        when(userProjectDataAccess.save(any(UserProject.class))).thenReturn(null);
+
+        // Act
+        userService.rebindUserProjects(userId, List.of(projectId1, projectId2));
+
+        // Assert
+        verify(userDataAccess).findById(userId);
+        verify(projectDataAccess, times(2)).findById(any(UUID.class));
+        verify(userProjectDataAccess).findByUserId(userId);
+        verify(userProjectDataAccess, never()).deleteByUserIdAndProjectId(userId, projectId1);
+        verify(userProjectDataAccess, times(1)).save(any(UserProject.class));
+    }
+
+    @Test
+    @DisplayName("Should throw Exception when userId is null in rebindUserProjects")
+    void testRebindUserProjects_NullUserId() {
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> userService.rebindUserProjects(null, List.of(UUID.randomUUID())));
+        assertEquals("Key must not be null", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("Should handle empty project list in rebindUserProjects")
+    void testRebindUserProjects_EmptyProjectList() {
+        // Arrange
+        UUID userId = UUID.randomUUID();
+        UUID existingProjectId = UUID.randomUUID();
+
+        Project existingProject = new Project();
+        existingProject.setId(existingProjectId);
+
+        when(userDataAccess.findById(userId)).thenReturn(Optional.of(testUser));
+        when(userProjectDataAccess.findByUserId(userId)).thenReturn(List.of());
+        doNothing().when(userProjectDataAccess).deleteByUserIdAndProjectId(any(), any());
+        when(userProjectDataAccess.save(any(UserProject.class))).thenReturn(null);
+
+        // Act
+        userService.rebindUserProjects(userId, List.of());
+
+        // Assert
+        verify(userDataAccess).findById(userId);
+        verify(userProjectDataAccess).findByUserId(userId);
+        verify(userProjectDataAccess, never()).deleteByUserIdAndProjectId(any(), any());
+        verify(userProjectDataAccess, never()).save(any(UserProject.class));
+    }
+
+    @Test
+    @DisplayName("Should throw Exception when user not found in rebindUserProjects")
+    void testRebindUserProjects_UserNotFound() {
+        // Arrange
+        UUID userId = UUID.randomUUID();
+        when(userDataAccess.findById(userId)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> userService.rebindUserProjects(userId, List.of(UUID.randomUUID())));
+        assertEquals("User not found", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("Should throw Exception when project not found in rebindUserProjects")
+    void testRebindUserProjects_ProjectNotFound() {
+        // Arrange
+        UUID userId = UUID.randomUUID();
+        UUID projectId = UUID.randomUUID();
+
+        when(userDataAccess.findById(userId)).thenReturn(Optional.of(testUser));
+        when(projectDataAccess.findById(projectId)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> userService.rebindUserProjects(userId, List.of(projectId)));
+        assertEquals("Project not found", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("Should rebind user roles successfully")
+    void testRebindUserRoles_Success() {
+        // Arrange
+        UUID userId = UUID.randomUUID();
+        List<String> roleIds = List.of(UUID.randomUUID().toString(), UUID.randomUUID().toString());
+
+        when(userDataAccess.findById(userId)).thenReturn(Optional.of(testUser));
+        doNothing().when(roleService).userBindRole(anyString(), anyList());
+
+        // Act
+        userService.rebindUserRoles(userId, roleIds);
+
+        // Assert
+        verify(userDataAccess).findById(userId);
+        verify(roleService).userBindRole(userId.toString(), roleIds);
+    }
+
+    @Test
+    @DisplayName("Should throw Exception when userId is null in rebindUserRoles")
+    void testRebindUserRoles_NullUserId() {
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> userService.rebindUserRoles(null, List.of("role1")));
+        assertEquals("User ID must not be null", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("Should throw Exception when roleIds is null in rebindUserRoles")
+    void testRebindUserRoles_NullRoleIds() {
+        // Arrange
+        UUID userId = UUID.randomUUID();
+
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> userService.rebindUserRoles(userId, null));
+        assertEquals("Role list is required", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("Should throw Exception when user not found in rebindUserRoles")
+    void testRebindUserRoles_UserNotFound() {
+        // Arrange
+        UUID userId = UUID.randomUUID();
+        when(userDataAccess.findById(userId)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> userService.rebindUserRoles(userId, List.of("role1")));
+        assertEquals("User not found", exception.getMessage());
     }
 }

@@ -144,8 +144,15 @@ public class initAndCheckService implements IInitAndCheckService {
         functionList = functionService.getFunction();
         RoleOutVo role = roleService.getRoleByName("admin");
         if (role != null) {
-            List<String> functionIds = functionList.stream().map(FunctionVo::getId).toList();
-            roleService.roleBindFunction(role.getId().toString(), functionIds);
+            var parentIds = functionList.stream()
+                    .map(FunctionVo::getParent)
+                    .filter(p -> p != null && !p.isBlank())
+                    .collect(java.util.stream.Collectors.toSet());
+            List<String> leafFunctionIds = functionList.stream()
+                    .filter(f -> !parentIds.contains(f.getId()))
+                    .map(FunctionVo::getId)
+                    .toList();
+            roleService.roleBindFunction(role.getId().toString(), leafFunctionIds);
         }
     }
     @Override

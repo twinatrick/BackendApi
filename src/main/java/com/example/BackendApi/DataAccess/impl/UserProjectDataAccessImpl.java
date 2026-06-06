@@ -44,4 +44,9 @@ public class UserProjectDataAccessImpl implements IUserProjectDataAccess {
     public List<UserProject> findByUserId(UUID userId) {
         return userProjectRepository.findByUserId(userId);
     }
+
+    @Override
+    public List<UserProject> findByProjectId(UUID projectId) {
+        return userProjectRepository.findByProjectId(projectId);
+    }
 }

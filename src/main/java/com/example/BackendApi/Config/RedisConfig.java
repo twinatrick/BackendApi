@@ -89,13 +89,79 @@ public class RedisConfig {
         RedisCacheConfiguration aquarkDataConfig = defaultConfig
             .entryTtl(Duration.ofHours(cacheTtlHours));
 
-        LOGGER.info("Redis 快取配置完成 - 預設 TTL: {} 小時, users: 2 小時, 序列化: JSON", cacheTtlHours);
+        // 參考資料 - 技能（24 小時）
+        RedisCacheConfiguration skillsConfig = defaultConfig
+            .entryTtl(Duration.ofHours(24));
+
+        // 參考資料 - 技能等級（24 小時）
+        RedisCacheConfiguration skillLevelsConfig = defaultConfig
+            .entryTtl(Duration.ofHours(24));
+
+        // 參考資料 - 角色（6 小時）
+        RedisCacheConfiguration rolesConfig = defaultConfig
+            .entryTtl(Duration.ofHours(6));
+
+        // 參考資料 - 角色功能（6 小時）
+        RedisCacheConfiguration roleFunctionsConfig = defaultConfig
+            .entryTtl(Duration.ofHours(6));
+
+        // 參考資料 - 功能（24 小時）
+        RedisCacheConfiguration functionsConfig = defaultConfig
+            .entryTtl(Duration.ofHours(24));
+
+        // 業務資料 - 公司（6 小時）
+        RedisCacheConfiguration companiesConfig = defaultConfig
+            .entryTtl(Duration.ofHours(6));
+
+        // 業務資料 - 職缺（1 小時）
+        RedisCacheConfiguration jobPostingsConfig = defaultConfig
+            .entryTtl(Duration.ofHours(1));
+
+        // 業務資料 - 專案技能（30 分鐘）
+        RedisCacheConfiguration projectSkillsConfig = defaultConfig
+            .entryTtl(Duration.ofMinutes(30));
+
+        // 使用者資料 - 目前使用者專案（10 分鐘）
+        RedisCacheConfiguration userProjectsConfig = defaultConfig
+            .entryTtl(Duration.ofMinutes(10));
+
+        // 使用者資料 - 目前使用者技能（10 分鐘）
+        RedisCacheConfiguration currentUserSkillsConfig = defaultConfig
+            .entryTtl(Duration.ofMinutes(10));
+
+        // 使用者資料 - 使用者職缺連結（10 分鐘）
+        RedisCacheConfiguration userJobLinksConfig = defaultConfig
+            .entryTtl(Duration.ofMinutes(10));
+
+        // 使用者資料 - 使用者角色（10 分鐘）
+        RedisCacheConfiguration userRolesConfig = defaultConfig
+            .entryTtl(Duration.ofMinutes(10));
+
+        // 運算資料 - 平均數據（30 分鐘）
+        RedisCacheConfiguration aquarkDataAvgConfig = defaultConfig
+            .entryTtl(Duration.ofMinutes(30));
+
+        LOGGER.info("Redis 快取配置完成 - 預設 TTL: {} 小時, users: 2 小時, skills: 24 小時, roles: 6 小時, functions: 24 小時", cacheTtlHours);
 
         return RedisCacheManager.builder(connectionFactory)
             .cacheDefaults(defaultConfig)
             .withCacheConfiguration("users", usersConfig)
             .withCacheConfiguration("alertCheckLimit", alertCheckLimitConfig)
             .withCacheConfiguration("aquarkData", aquarkDataConfig)
+            .withCacheConfiguration("skills", skillsConfig)
+            .withCacheConfiguration("skillLevels", skillLevelsConfig)
+            .withCacheConfiguration("roles", rolesConfig)
+            .withCacheConfiguration("roleFunctions", roleFunctionsConfig)
+            .withCacheConfiguration("functions", functionsConfig)
+            .withCacheConfiguration("companies", companiesConfig)
+            .withCacheConfiguration("jobPostings", jobPostingsConfig)
+            .withCacheConfiguration("projectSkills", projectSkillsConfig)
+            .withCacheConfiguration("projectMemberSkills", projectSkillsConfig)
+            .withCacheConfiguration("userProjects", userProjectsConfig)
+            .withCacheConfiguration("currentUserSkills", currentUserSkillsConfig)
+            .withCacheConfiguration("userJobLinks", userJobLinksConfig)
+            .withCacheConfiguration("userRoles", userRolesConfig)
+            .withCacheConfiguration("aquarkDataAvg", aquarkDataAvgConfig)
             .build();
     }
 
