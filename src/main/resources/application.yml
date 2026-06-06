@@ -43,3 +43,9 @@ redis:
 
 superuser:
   key: ${SUPERUSER_KEY:genAdminKey}
+
+gemini:
+  api:
+    key: ${GEMINI_API_KEY:}
+    url: ${GEMINI_API_URL:https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent}
+    model: ${GEMINI_MODEL:gemini-2.0-flash}

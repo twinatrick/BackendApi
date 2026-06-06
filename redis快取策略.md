@@ -214,7 +214,7 @@ void deleteRole(RoleOutVo roleOutVo);
     @CacheEvict(value = "roleFunctions", allEntries = true),
     @CacheEvict(value = "roles", allEntries = true)
 })
-void roleBindFunction(...);
+void roleBindFunction(String roleId, List<String> functionIds);
 
 @Caching(evict = {
     @CacheEvict(value = "userRoles", key = "#userId"),
@@ -481,20 +481,25 @@ void deleteLimitEntity(AlertCheckLimit entity);
 
 ```java
 // 需新增的快取名稱空間
-.withCacheConfiguration("skills", defaultConfig.entryTtl(Duration.ofHours(24)))
-.withCacheConfiguration("skillLevels", defaultConfig.entryTtl(Duration.ofHours(24)))
-.withCacheConfiguration("roles", defaultConfig.entryTtl(Duration.ofHours(6)))
-.withCacheConfiguration("roleFunctions", defaultConfig.entryTtl(Duration.ofHours(6)))
-.withCacheConfiguration("functions", defaultConfig.entryTtl(Duration.ofHours(24)))
-.withCacheConfiguration("companies", defaultConfig.entryTtl(Duration.ofHours(6)))
-.withCacheConfiguration("jobPostings", defaultConfig.entryTtl(Duration.ofHours(1)))
-.withCacheConfiguration("projectSkills", defaultConfig.entryTtl(Duration.ofMinutes(30)))
-.withCacheConfiguration("projectMemberSkills", defaultConfig.entryTtl(Duration.ofMinutes(30)))
-.withCacheConfiguration("userProjects", defaultConfig.entryTtl(Duration.ofMinutes(10)))
-.withCacheConfiguration("currentUserSkills", defaultConfig.entryTtl(Duration.ofMinutes(10)))
-.withCacheConfiguration("userJobLinks", defaultConfig.entryTtl(Duration.ofMinutes(10)))
-.withCacheConfiguration("userRoles", defaultConfig.entryTtl(Duration.ofMinutes(10)))
-.withCacheConfiguration("aquarkDataAvg", defaultConfig.entryTtl(Duration.ofMinutes(30)))
+function redisCacheManager(RedisConnectionFactory connectionFactory) {
+
+    return RedisCacheManager.builder(connectionFactory)
+            .cacheDefaults(defaultConfig)
+            .withCacheConfiguration("skills", defaultConfig.entryTtl(Duration.ofHours(24)))
+            .withCacheConfiguration("skillLevels", defaultConfig.entryTtl(Duration.ofHours(24)))
+            .withCacheConfiguration("roles", defaultConfig.entryTtl(Duration.ofHours(6)))
+            .withCacheConfiguration("roleFunctions", defaultConfig.entryTtl(Duration.ofHours(6)))
+            .withCacheConfiguration("functions", defaultConfig.entryTtl(Duration.ofHours(24)))
+            .withCacheConfiguration("companies", defaultConfig.entryTtl(Duration.ofHours(6)))
+            .withCacheConfiguration("jobPostings", defaultConfig.entryTtl(Duration.ofHours(1)))
+            .withCacheConfiguration("projectSkills", defaultConfig.entryTtl(Duration.ofMinutes(30)))
+            .withCacheConfiguration("projectMemberSkills", defaultConfig.entryTtl(Duration.ofMinutes(30)))
+            .withCacheConfiguration("userProjects", defaultConfig.entryTtl(Duration.ofMinutes(10)))
+            .withCacheConfiguration("currentUserSkills", defaultConfig.entryTtl(Duration.ofMinutes(10)))
+            .withCacheConfiguration("userJobLinks", defaultConfig.entryTtl(Duration.ofMinutes(10)))
+            .withCacheConfiguration("userRoles", defaultConfig.entryTtl(Duration.ofMinutes(10)))
+            .withCacheConfiguration("aquarkDataAvg", defaultConfig.entryTtl(Duration.ofMinutes(30)));
+}
 ```
 
 ---

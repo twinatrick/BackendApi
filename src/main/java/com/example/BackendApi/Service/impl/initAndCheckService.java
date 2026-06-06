@@ -141,7 +141,6 @@ public class initAndCheckService implements IInitAndCheckService {
                 insertFunctionByList(functionListStr,"");
             }
         }
-        functionList = functionService.getFunction();
         RoleOutVo role = roleService.getRoleByName("admin");
         if (role != null) {
             var parentIds = functionList.stream()
