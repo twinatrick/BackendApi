@@ -71,6 +71,7 @@ public class UserController {
     }
 
     @GetMapping("/getAllUser")
+    @RequirePermission({"System", "User", "View"})
     @ApiOperationOk(summary = "Get all users", description = "Returns all users with their roles and permissions.")
     public ResponseType<List<UserVo>> getAllUser() {
         return new ResponseType<>(0, userService.getAllUsersVo());
@@ -104,6 +105,7 @@ public class UserController {
     }
     
     @PostMapping("/search")
+    @RequirePermission({"System", "User", "View"})
     @ApiOperationOk(summary = "Search users with pagination", description = "搜尋使用者並回傳分頁結果，支援多種查詢條件與排序")
     public ResponseType<PageResult<UserVo>> searchUsers(@Valid @RequestBody UserSearchQuery query) {
         PageResult<UserVo> result = userService.searchUsers(query);

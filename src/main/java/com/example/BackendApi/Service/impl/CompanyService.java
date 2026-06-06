@@ -29,8 +29,10 @@ public class CompanyService implements ICompanyService {
     public CompanyVo createCompany(CreateCompanyRequest request) {
         Company company = new Company();
         company.setName(request.getName());
-        company.setWebsite(request.getWebsite());
         company.setDescription(request.getDescription());
+        for (String url : request.getWebsites()) {
+            company.addWebsite(url);
+        }
         company = companyDataAccess.save(company);
         return companyMapper.toVo(company);
     }
@@ -67,8 +69,11 @@ public class CompanyService implements ICompanyService {
         if (request.getName() != null) {
             company.setName(request.getName());
         }
-        if (request.getWebsite() != null) {
-            company.setWebsite(request.getWebsite());
+        if (request.getWebsites() != null) {
+            company.getWebsites().clear();
+            for (String url : request.getWebsites()) {
+                company.addWebsite(url);
+            }
         }
         if (request.getDescription() != null) {
             company.setDescription(request.getDescription());

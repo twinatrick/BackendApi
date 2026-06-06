@@ -133,8 +133,30 @@ public class initAndCheckService implements IInitAndCheckService {
         allFunctionList.add(new ArrayList<>( List.of("System", "ProjectManagement", "Edit")));
         allFunctionList.add(new ArrayList<>( List.of("System", "ProjectManagement", "EditAll")));
 
+        allFunctionList.add(new ArrayList<>( List.of("System", "Company", "View")));
+        allFunctionList.add(new ArrayList<>( List.of("System", "Company", "Edit")));
+        allFunctionList.add(new ArrayList<>( List.of("System", "JobPosting", "View")));
+        allFunctionList.add(new ArrayList<>( List.of("System", "JobPosting", "Edit")));
+        allFunctionList.add(new ArrayList<>( List.of("System", "JobPosting", "Scrape")));
+        allFunctionList.add(new ArrayList<>( List.of("System", "UserJobLink", "View")));
+        allFunctionList.add(new ArrayList<>( List.of("System", "UserJobLink", "Edit")));
+        allFunctionList.add(new ArrayList<>( List.of("System", "User", "Edit")));
+        allFunctionList.add(new ArrayList<>( List.of("System", "Function", "View")));
+        allFunctionList.add(new ArrayList<>( List.of("System", "Function", "Edit")));
+        allFunctionList.add(new ArrayList<>( List.of("System", "Role", "View")));
+        allFunctionList.add(new ArrayList<>( List.of("System", "Role", "Edit")));
 
-
+        allFunctionList.add(new ArrayList<>( List.of("System", "Skill", "View")));
+        allFunctionList.add(new ArrayList<>( List.of("System", "Skill", "Edit")));
+        allFunctionList.add(new ArrayList<>( List.of("System", "SkillLevel", "View")));
+        allFunctionList.add(new ArrayList<>( List.of("System", "SkillLevel", "Edit")));
+        allFunctionList.add(new ArrayList<>( List.of("System", "PersonalSkill", "Edit")));
+        allFunctionList.add(new ArrayList<>( List.of("System", "AlertLimit", "View")));
+        allFunctionList.add(new ArrayList<>( List.of("System", "AlertLimit", "Edit")));
+        allFunctionList.add(new ArrayList<>( List.of("System", "AquarkData", "View")));
+        allFunctionList.add(new ArrayList<>( List.of("System", "Project", "View")));
+        allFunctionList.add(new ArrayList<>( List.of("System", "Project", "Edit")));
+        allFunctionList.add(new ArrayList<>( List.of("System", "Project", "PersonalEdit")));
 
         for (List<String> functionListStr : allFunctionList) {
             if (!checkIsExist(functionListStr.get(0), functionListStr.get(1), functionListStr.get(2))) {

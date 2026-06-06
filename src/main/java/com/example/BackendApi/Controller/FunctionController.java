@@ -1,5 +1,6 @@
 package com.example.BackendApi.Controller;
 
+import com.example.BackendApi.Annotation.RequirePermission;
 import com.example.BackendApi.Dto.Vo.Search.FunctionSearchQuery;
 import com.example.BackendApi.Dto.Vo.Common.PageResult;
 import com.example.BackendApi.Service.IFunctionService;
@@ -25,6 +26,7 @@ public class FunctionController {
     }
 
     @PostMapping("/add")
+    @RequirePermission({"System", "Function", "Edit"})
     @ApiOperationBadRequest(summary = "Add function", description = "Creates a new function entry.")
     public ResponseType<?> addFunction(@RequestBody FunctionVo function) {
         functionService.addFunction(function);
@@ -32,6 +34,7 @@ public class FunctionController {
     }
 
     @PostMapping("/update")
+    @RequirePermission({"System", "Function", "Edit"})
     @ApiOperationBadRequest(summary = "Update function", description = "Updates an existing function.")
     public ResponseType<String> updateFunction(@RequestBody FunctionVo function) {
         functionService.updateFunction(function);
@@ -39,6 +42,7 @@ public class FunctionController {
     }
 
     @PostMapping("/delete")
+    @RequirePermission({"System", "Function", "Edit"})
     @ApiOperationBadRequest(summary = "Delete function", description = "Deletes a function.")
     public ResponseType<String> deleteFunction(@RequestBody FunctionVo function) {
         functionService.deleteFunction(function);
@@ -46,12 +50,14 @@ public class FunctionController {
     }
 
     @GetMapping("/get")
+    @RequirePermission({"System", "Function", "View"})
     @ApiOperationOk(summary = "Get functions", description = "Returns all functions.")
     public ResponseType<List<FunctionVo>> getFunction() {
         return ResponseType.Success(functionService.getFunction(), "Functions fetched successfully");
     }
 
     @PostMapping("/saveAllFunction")
+    @RequirePermission({"System", "Function", "Edit"})
     @ApiOperationBadRequest(summary = "Save function changes", description = "Applies function deletions and saves new or updated functions.")
     public ResponseType<?> saveAllFunction(@RequestBody FunctionTransVo function) {
         functionService.deleteFunction(function.getDeleteFunction());
@@ -61,6 +67,7 @@ public class FunctionController {
     }
     
     @PostMapping("/search")
+    @RequirePermission({"System", "Function", "View"})
     @ApiOperationOk(summary = "Search functions with pagination", description = "搜尋功能並回傳分頁結果，支援多種查詢條件與排序")
     public ResponseType<PageResult<FunctionVo>> searchFunctions(@Valid @RequestBody FunctionSearchQuery query) {
         PageResult<FunctionVo> result = functionService.searchFunctions(query);
