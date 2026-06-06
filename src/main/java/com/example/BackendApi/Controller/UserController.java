@@ -15,6 +15,8 @@ import com.example.BackendApi.Dto.Vo.UserSkillBindRequest;
 import com.example.BackendApi.Dto.Vo.ResponseType;
 import com.example.BackendApi.Dto.Vo.UserVo;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,6 +29,8 @@ import java.util.UUID;
 @ApiControllerTag(name = "Users", description = "Backend API endpoints - User management")
 public class UserController {
 
+    private static final Logger log = LoggerFactory.getLogger(UserController.class);
+
     @Autowired
     private IUserService userService;
 
@@ -35,6 +39,7 @@ public class UserController {
 
 
     @PostMapping(value = "/create")
+    @RequirePermission({"System", "ProjectManagement", "EditAll"})
     @ApiOperationBadRequest(summary = "Create user", description = "Creates a new user account.")
     public boolean createUser(@RequestBody UserVo user) {
         userService.createUser(user);
@@ -72,6 +77,7 @@ public class UserController {
     }
 
     @PostMapping("/saveUser")
+    @RequirePermission({"System", "ProjectManagement", "Edit"})
     @ApiOperationBadRequest(summary = "Save user with roles", description = "Updates a user and their role assignments.")
     public ResponseType<String> saveUser(@RequestBody UserVo user) {
         userService.saveUserWithRole(user);
@@ -86,12 +92,14 @@ public class UserController {
     )
     public ResponseType<String> rebindUserRoles(
             @PathVariable String userId,
-            @RequestBody UserRoleRebindRequest request) {
+            @Valid @RequestBody UserRoleRebindRequest request) {
         UUID userUuid = UUID.fromString(userId);
         List<String> roleIds = request.getRoleIds() == null
                 ? List.of()
                 : request.getRoleIds();
+        log.info("Rebinding user {} roles to {} roles", userUuid, roleIds.size());
         userService.rebindUserRoles(userUuid, roleIds);
+        log.info("Rebound user {} roles successfully", userUuid);
         return ResponseType.Success("User roles rebound successfully");
     }
     

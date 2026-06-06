@@ -1,5 +1,6 @@
 package com.example.BackendApi.Dto.Vo;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -8,6 +9,9 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 public class SkillLevelBindingItem {
+    @NotBlank(message = "skillId must not be blank")
     private String skillId;
+
+    @NotBlank(message = "skillLevelId must not be blank")
     private String skillLevelId;
 }

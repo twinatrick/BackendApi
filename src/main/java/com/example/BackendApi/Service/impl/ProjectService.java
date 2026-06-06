@@ -1,6 +1,8 @@
 package com.example.BackendApi.Service.impl;
 
+import com.example.BackendApi.Dto.Vo.MemberSkillLevelVo;
 import com.example.BackendApi.Dto.Vo.PersonalProjectRequest;
+import com.example.BackendApi.Dto.Vo.ProjectMemberSkillVo;
 import com.example.BackendApi.Dto.Vo.ProjectSkillVo;
 import com.example.BackendApi.Dto.Vo.Search.ProjectSearchQuery;
 import com.example.BackendApi.Dto.Vo.Common.PageResult;
@@ -25,10 +27,14 @@ import com.example.BackendApi.Dto.Vo.ProjectVo;
 import com.example.BackendApi.Entity.Project;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.LinkedHashSet;
@@ -67,6 +73,10 @@ public class ProjectService implements IProjectService {
      */
     @Transactional
     @Override
+    @Caching(evict = {
+        @CacheEvict(value = "userProjects", allEntries = true),
+        @CacheEvict(value = "projectSkills", allEntries = true)
+    })
     public ProjectVo addProject(ProjectVo projectVo) {
         Project project = projectMapper.toEntity(projectVo);
         if (project.getId() != null) {
@@ -93,6 +103,10 @@ public class ProjectService implements IProjectService {
      */
     @Transactional
     @Override
+    @Caching(evict = {
+        @CacheEvict(value = "userProjects", allEntries = true),
+        @CacheEvict(value = "projectSkills", allEntries = true)
+    })
     public void updateProject(ProjectVo projectVo) {
         Project project = projectMapper.toEntity(projectVo);
         if (project.getId() == null) {
@@ -154,6 +168,7 @@ public class ProjectService implements IProjectService {
      * @return 所有專案列表
      */
     @Override
+    @Cacheable(value = "userProjects", unless = "#result == null || #result.isEmpty()")
     public List<ProjectVo> getProject() {
         return projectDataAccess.findAll().stream().map(projectMapper::toVo).toList();
     }
@@ -164,6 +179,10 @@ public class ProjectService implements IProjectService {
      */
     @Transactional
     @Override
+    @Caching(evict = {
+        @CacheEvict(value = "userProjects", allEntries = true),
+        @CacheEvict(value = "projectSkills", allEntries = true)
+    })
     public void deleteProject(ProjectVo projectVo) {
         Project project = projectMapper.toEntity(projectVo);
         if (project.getId() == null) {
@@ -207,6 +226,7 @@ public class ProjectService implements IProjectService {
     }
     
     @Override
+    @Cacheable(value = "userProjects", key = "'current:' + @currentUser.id", unless = "#result == null || #result.isEmpty()")
     public List<ProjectVo> getCurrentUserProjects() {
         if (currentUser == null || currentUser.getId() == null) {
             throw new IllegalStateException("未找到當前登入的使用者");
@@ -254,6 +274,7 @@ public class ProjectService implements IProjectService {
     }
     
     @Override
+    @Cacheable(value = "projectSkills", key = "#projectId", unless = "#result == null || #result.isEmpty()")
     public List<ProjectSkillVo> getProjectSkills(UUID projectId) {
         if (projectId == null) {
             throw new IllegalArgumentException("Project ID must not be null");
@@ -301,6 +322,10 @@ public class ProjectService implements IProjectService {
 
     @Transactional
     @Override
+    @Caching(evict = {
+        @CacheEvict(value = "userProjects", allEntries = true),
+        @CacheEvict(value = "projectSkills", allEntries = true)
+    })
     public ProjectVo addPersonalProject(PersonalProjectRequest request) {
         // 驗證輸入
         if (request.getName() == null || request.getName().trim().isEmpty()) {
@@ -330,6 +355,10 @@ public class ProjectService implements IProjectService {
     
     @Transactional
     @Override
+    @Caching(evict = {
+        @CacheEvict(value = "userProjects", allEntries = true),
+        @CacheEvict(value = "projectSkills", allEntries = true)
+    })
     public void updatePersonalProject(UUID projectId, PersonalProjectRequest request) {
         // 驗證輸入
         if (projectId == null) {
@@ -360,6 +389,10 @@ public class ProjectService implements IProjectService {
     
     @Transactional
     @Override
+    @Caching(evict = {
+        @CacheEvict(value = "userProjects", allEntries = true),
+        @CacheEvict(value = "projectSkills", allEntries = true)
+    })
     public void deletePersonalProject(UUID projectId) {
         // 驗證輸入
         if (projectId == null) {
@@ -395,6 +428,7 @@ public class ProjectService implements IProjectService {
 
     @Transactional
     @Override
+    @CacheEvict(value = "projectSkills", allEntries = true)
     public void bindPersonalProjectSkill(UUID projectId, UUID skillId, UUID skillLevelId) {
         UUID currentUserId = requireCurrentUserId();
         validateBindingInput(projectId, skillId, skillLevelId);
@@ -418,6 +452,7 @@ public class ProjectService implements IProjectService {
 
     @Transactional
     @Override
+    @CacheEvict(value = "projectSkills", allEntries = true)
     public void updatePersonalProjectSkillLevel(UUID projectId, UUID skillId, UUID skillLevelId) {
         UUID currentUserId = requireCurrentUserId();
         validateBindingInput(projectId, skillId, skillLevelId);
@@ -434,6 +469,7 @@ public class ProjectService implements IProjectService {
 
     @Transactional
     @Override
+    @CacheEvict(value = "projectSkills", allEntries = true)
     public void unbindPersonalProjectSkill(UUID projectId, UUID skillId) {
         UUID currentUserId = requireCurrentUserId();
         if (projectId == null || skillId == null) {
@@ -451,6 +487,7 @@ public class ProjectService implements IProjectService {
 
     @Transactional
     @Override
+    @CacheEvict(value = "projectSkills", allEntries = true)
     public void rebindProjectSkills(UUID projectId, Map<UUID, UUID> skillLevelMapping) {
         if (projectId == null) {
             throw new IllegalArgumentException("Key must not be null");
@@ -497,6 +534,7 @@ public class ProjectService implements IProjectService {
 
     @Transactional
     @Override
+    @CacheEvict(value = "projectSkills", allEntries = true)
     public void rebindPersonalProjectSkills(UUID projectId, Map<UUID, UUID> skillLevelMapping) {
         UUID currentUserId = requireCurrentUserId();
         if (projectId == null) {
@@ -593,7 +631,57 @@ public class ProjectService implements IProjectService {
     }
 
     @Override
+    public List<ProjectMemberSkillVo> getProjectMemberSkills(UUID projectId) {
+        if (projectId == null) {
+            throw new IllegalArgumentException("Project ID must not be null");
+        }
+
+        if (!projectDataAccess.existsById(projectId)) {
+            throw new IllegalArgumentException("Project not found");
+        }
+
+        Map<UUID, List<UserProjectSkill>> bindingsByUser = userProjectSkillDataAccess.findByProjectId(projectId)
+                .stream()
+                .collect(Collectors.groupingBy(binding -> binding.getUser().getId()));
+
+        return userProjectDataAccess.findByProjectId(projectId).stream()
+                .map(userProject -> {
+                    User user = userProject.getUser();
+                    ProjectMemberSkillVo vo = new ProjectMemberSkillVo();
+                    vo.setUserId(user.getId().toString());
+                    vo.setUserEmail(user.getEmail());
+
+                    List<MemberSkillLevelVo> skills = bindingsByUser
+                            .getOrDefault(user.getId(), List.of())
+                            .stream()
+                            .map(this::toMemberSkillLevelVo)
+                            .collect(Collectors.toCollection(ArrayList::new));
+                    vo.setSkills(skills);
+                    return vo;
+                })
+                .collect(Collectors.toList());
+    }
+
+    private MemberSkillLevelVo toMemberSkillLevelVo(UserProjectSkill binding) {
+        MemberSkillLevelVo vo = new MemberSkillLevelVo();
+        vo.setSkillId(binding.getSkill().getId().toString());
+        vo.setSkillName(binding.getSkill().getName());
+
+        SkillLevel level = binding.getSkillLevel();
+        if (level != null) {
+            vo.setSkillLevelId(level.getId().toString());
+            vo.setLevelTitle(level.getTitle());
+            vo.setLevelValue(level.getLevelValue());
+        }
+        return vo;
+    }
+
+    @Override
     @Transactional
+    @Caching(evict = {
+        @CacheEvict(value = "projectSkills", allEntries = true),
+        @CacheEvict(value = "userProjects", allEntries = true)
+    })
     public void rebindProjectMemberSkills(UUID projectId, Map<UUID, Map<UUID, UUID>> memberSkillsMap) {
         if (projectId == null) {
             throw new IllegalArgumentException("Project ID must not be null");

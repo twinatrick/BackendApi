@@ -10,6 +10,8 @@ import com.example.BackendApi.Mapper.FunctionMapper;
 import com.example.BackendApi.Dto.Vo.FunctionVo;
 import com.example.BackendApi.Entity.Function;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
@@ -30,6 +32,7 @@ public class FunctionService implements IFunctionService {
     private final FunctionMapper functionMapper;
 
     @Override
+    @CacheEvict(value = "functions", allEntries = true)
     public FunctionVo addFunction(FunctionVo functionVo) {
         Function function = functionMapper.toEntity(functionVo);
         if (function.getId() != null) {
@@ -49,11 +52,13 @@ public class FunctionService implements IFunctionService {
     }
 
     @Override
+    @Cacheable(value = "functions", unless = "#result == null || #result.isEmpty()")
     public List<FunctionVo> getFunction() {
         return functionDataAccess.findAll().stream().map(functionMapper::toVo).toList();
     }
 
     @Override
+    @CacheEvict(value = "functions", allEntries = true)
     public void updateFunction(FunctionVo functionVo) {
         Function function = functionMapper.toEntity(functionVo);
         if (function.getId() == null) {
@@ -67,6 +72,7 @@ public class FunctionService implements IFunctionService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "functions", allEntries = true)
     public void deleteFunction(FunctionVo functionVo) {
         Function function = functionMapper.toEntity(functionVo);
         if (function.getId() == null) {
@@ -78,6 +84,7 @@ public class FunctionService implements IFunctionService {
     }
     @Transactional
     @Override
+    @CacheEvict(value = "functions", allEntries = true)
     public void deleteFunction(List<FunctionVo> function) {
         if (function.isEmpty()) {
             return;
@@ -91,6 +98,7 @@ public class FunctionService implements IFunctionService {
 
     @Transactional
     @Override
+    @CacheEvict(value = "functions", allEntries = true)
     public void saveFunction(List<FunctionVo> function) {
         if (function.isEmpty()) {
             return;
@@ -103,6 +111,7 @@ public class FunctionService implements IFunctionService {
     }
     @Transactional
     @Override
+    @CacheEvict(value = "functions", allEntries = true)
     public List<FunctionVo> saveFunctionNewChild(List<FunctionVo> function) {
         Date date= new Date();
         Sort sort = Sort.by(Sort.Direction.ASC, "sort");
@@ -134,6 +143,7 @@ public class FunctionService implements IFunctionService {
         return functionDataAccess.findAll(sort).stream().map(functionMapper::toVo).toList();
     }
     @Override
+    @Cacheable(value = "functions", key = "#id", unless = "#result == null")
     public FunctionVo getFunctionById(String id) {
         UUID uuid = mapUuid(id);
         if (uuid == null) {
@@ -145,12 +155,14 @@ public class FunctionService implements IFunctionService {
         return functionMapper.toVo(function);
     }
         @Override
+        @Cacheable(value = "functions", key = "'byname:' + #name", unless = "#result == null")
         public FunctionVo getFunctionByName(String name) {
             Function function = functionDataAccess.findFunctionByName(name);
             return function == null ? null : functionMapper.toVo(function);
         }
 
         @Override
+        @Cacheable(value = "functions", key = "'bynameparent:' + #name + ':' + #parent", unless = "#result == null")
         public FunctionVo getFunctionByNameAndParent(String name, String parent) {
             List<Function> functionList = functionDataAccess.findFunctionByNameAndParent(name, parent);
             if (functionList.isEmpty()) {

@@ -1,5 +1,6 @@
 package com.example.BackendApi.Dto.Vo;
 
+import jakarta.validation.constraints.NotEmpty;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -11,5 +12,7 @@ import java.util.List;
 @NoArgsConstructor
 public class UserRoleRebindRequest {
     private String userId;
+
+    @NotEmpty(message = "roleIds must not be empty")
     private List<String> roleIds;
 }

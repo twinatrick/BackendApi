@@ -17,6 +17,9 @@ import com.example.BackendApi.Entity.RoleFunction;
 import com.example.BackendApi.Entity.User;
 import com.example.BackendApi.Entity.UserRole;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -43,6 +46,7 @@ public class RoleService implements IRoleService {
     private final UserMapper userMapper;
 
     @Override
+    @CacheEvict(value = "roles", allEntries = true)
     public RoleOutVo addRole(RoleOutVo roleOutVo) {
         Role role = roleMapper.toEntity(roleOutVo);
         Role exampleRole = new Role();
@@ -62,6 +66,10 @@ public class RoleService implements IRoleService {
 
     @Transactional
     @Override
+    @Caching(evict = {
+        @CacheEvict(value = "roles", allEntries = true),
+        @CacheEvict(value = "functions", allEntries = true)
+    })
     public RoleOutVo addRoleWithFunctions(RoleOutVo roleOutVo) {
         RoleOutVo savedRole = addRole(roleOutVo);
         syncRoleFunctions(savedRole.getId(), roleOutVo.getFunctionIds());
@@ -69,11 +77,13 @@ public class RoleService implements IRoleService {
     }
 
     @Override
+    @Cacheable(value = "roles", unless = "#result == null || #result.isEmpty()")
     public List<RoleOutVo> getRole() {
         return roleDataAccess.findAll().stream().map(roleMapper::toVo).toList();
     }
 
     @Override
+    @Cacheable(value = "roles", key = "#roleId", unless = "#result == null")
     public RoleOutVo getRoleById(String roleId) {
         UUID roleUuid = mapUuid(roleId);
         if (roleUuid == null) {
@@ -86,6 +96,10 @@ public class RoleService implements IRoleService {
     }
 
     @Override
+    @Caching(evict = {
+        @CacheEvict(value = "roles", allEntries = true),
+        @CacheEvict(value = "functions", allEntries = true)
+    })
     public RoleOutVo updateRole(RoleOutVo roleOutVo) {
         Role role = roleMapper.toEntity(roleOutVo);
         if (role.getId() == null) {
@@ -103,6 +117,10 @@ public class RoleService implements IRoleService {
 
     @Transactional
     @Override
+    @Caching(evict = {
+        @CacheEvict(value = "roles", allEntries = true),
+        @CacheEvict(value = "functions", allEntries = true)
+    })
     public RoleOutVo updateRoleWithFunctions(RoleOutVo roleOutVo) {
         RoleOutVo updatedRole = updateRole(roleOutVo);
         syncRoleFunctions(updatedRole.getId(), roleOutVo.getFunctionIds());
@@ -111,6 +129,10 @@ public class RoleService implements IRoleService {
 
     @Transactional
     @Override
+    @Caching(evict = {
+        @CacheEvict(value = "roles", allEntries = true),
+        @CacheEvict(value = "functions", allEntries = true)
+    })
     public void deleteRole(RoleOutVo roleOutVo) {
         Role role = roleMapper.toEntity(roleOutVo);
         if (role.getId() == null) {
@@ -129,6 +151,10 @@ public class RoleService implements IRoleService {
     }
     @Transactional
     @Override
+    @Caching(evict = {
+        @CacheEvict(value = "roles", allEntries = true),
+        @CacheEvict(value = "functions", allEntries = true)
+    })
     public void roleBindFunction(String roleId, List<String> functionIds) {
         UUID roleUuid = mapUuid(roleId);
         if (roleUuid == null) {
@@ -153,6 +179,10 @@ public class RoleService implements IRoleService {
 
     @Transactional
     @Override
+    @Caching(evict = {
+        @CacheEvict(value = "roles", allEntries = true),
+        @CacheEvict(value = "functions", allEntries = true)
+    })
     public void functionBindRole(String functionId, List<String> roleIds) {
         UUID functionUuid = mapUuid(functionId);
         if (functionUuid == null) {
@@ -178,6 +208,10 @@ public class RoleService implements IRoleService {
 
     @Transactional
     @Override
+    @Caching(evict = {
+        @CacheEvict(value = "roles", allEntries = true),
+        @CacheEvict(value = "userRoles", allEntries = true)
+    })
     public void roleBindUser(String roleId, List<String> userIds) {
         UUID roleUuid = mapUuid(roleId);
         if (roleUuid == null) {
@@ -226,6 +260,10 @@ public class RoleService implements IRoleService {
 
     @Transactional
     @Override
+    @Caching(evict = {
+        @CacheEvict(value = "roles", allEntries = true),
+        @CacheEvict(value = "userRoles", allEntries = true)
+    })
     public void userBindRole(String userId, List<String> roleIds) {
         UUID userUuid = mapUuid(userId);
         if (userUuid == null) {
@@ -290,6 +328,10 @@ public class RoleService implements IRoleService {
     }
     @Transactional
     @Override
+    @Caching(evict = {
+        @CacheEvict(value = "roles", allEntries = true),
+        @CacheEvict(value = "userRoles", allEntries = true)
+    })
     public void roleUnbindUser(String roleId, List<String> userIds) {
         UUID roleUuid = mapUuid(roleId);
         if (roleUuid == null) {
@@ -307,6 +349,10 @@ public class RoleService implements IRoleService {
     }
     @Transactional
     @Override
+    @Caching(evict = {
+        @CacheEvict(value = "roles", allEntries = true),
+        @CacheEvict(value = "userRoles", allEntries = true)
+    })
     public void userUnbindRole(String userId, List<String> roleIds) {
         UUID userUuid = mapUuid(userId);
         if (userUuid == null) {
@@ -324,6 +370,10 @@ public class RoleService implements IRoleService {
     }
     @Transactional
     @Override
+    @Caching(evict = {
+        @CacheEvict(value = "roles", allEntries = true),
+        @CacheEvict(value = "userRoles", allEntries = true)
+    })
     public void userUnbindAllRole(String userId) {
         UUID userUuid = mapUuid(userId);
         if (userUuid == null) {
@@ -338,6 +388,10 @@ public class RoleService implements IRoleService {
     }
     @Transactional
     @Override
+    @Caching(evict = {
+        @CacheEvict(value = "roles", allEntries = true),
+        @CacheEvict(value = "functions", allEntries = true)
+    })
     public void roleUnbindFunction(String roleId, List<String> functionIds) {
         UUID roleUuid = mapUuid(roleId);
         if (roleUuid == null) {
@@ -356,6 +410,10 @@ public class RoleService implements IRoleService {
 
     @Transactional
     @Override
+    @Caching(evict = {
+        @CacheEvict(value = "roles", allEntries = true),
+        @CacheEvict(value = "functions", allEntries = true)
+    })
     public void functionUnbindRole(String functionId, List<String> roleIds) {
         UUID functionUuid = mapUuid(functionId);
         if (functionUuid == null) {
@@ -374,6 +432,7 @@ public class RoleService implements IRoleService {
 
 
     @Override
+    @Cacheable(value = "roles", key = "'functions:' + #roleId", unless = "#result == null || #result.isEmpty()")
     public List<FunctionVo> getFunctionByRole(String roleId) {
         UUID roleUuid = mapUuid(roleId);
         if (roleUuid == null) {
@@ -419,6 +478,7 @@ public class RoleService implements IRoleService {
     }
 
     @Override
+    @Cacheable(value = "roles", key = "'byuser:' + #userId", unless = "#result == null || #result.isEmpty()")
     public List<RoleOutVo> getRoleByUser(String userId) {
         UUID userUuid = mapUuid(userId);
         if (userUuid == null) {
@@ -433,6 +493,7 @@ public class RoleService implements IRoleService {
                 .toList();
     }
     @Override
+    @Cacheable(value = "roles", key = "'byname:' + #name", unless = "#result == null")
     public RoleOutVo getRoleByName(String name){
         Role role = roleDataAccess.findRoleByName(name);
         return role == null ? null : roleMapper.toVo(role);
