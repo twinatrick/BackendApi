@@ -42,7 +42,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 JwtClaims claims = jwtAuthenticationToken.verifyJWT(token);
                 String email = (String) claims.getClaimValue("email");
 
-                if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                    if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                     UserDetails userDetails = userDetailsService.loadUserByUsername(email);
 
                     UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
@@ -50,6 +50,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
                     SecurityContextHolder.getContext().setAuthentication(authentication);
+
+                    if (userDetails instanceof CustomUserDetails customUser) {
+                        request.setAttribute("user", customUser.getUser());
+                    }
                 }
             }
         } catch (InvalidJwtException e) {
