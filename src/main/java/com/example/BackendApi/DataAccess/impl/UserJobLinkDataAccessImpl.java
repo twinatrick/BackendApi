@@ -1,0 +1,57 @@
+package com.example.BackendApi.DataAccess.impl;
+
+import com.example.BackendApi.DataAccess.IUserJobLinkDataAccess;
+import com.example.BackendApi.Entity.UserJobLink;
+import com.example.BackendApi.Repository.UserJobLinkRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+@Component
+@RequiredArgsConstructor
+public class UserJobLinkDataAccessImpl implements IUserJobLinkDataAccess {
+
+    private final UserJobLinkRepository userJobLinkRepository;
+
+    @Override
+    public UserJobLink save(UserJobLink userJobLink) {
+        return userJobLinkRepository.save(userJobLink);
+    }
+
+    @Override
+    public List<UserJobLink> findAll() {
+        return userJobLinkRepository.findAll();
+    }
+
+    @Override
+    public Optional<UserJobLink> findById(UUID id) {
+        return userJobLinkRepository.findById(id);
+    }
+
+    @Override
+    public boolean existsById(UUID id) {
+        return userJobLinkRepository.existsById(id);
+    }
+
+    @Override
+    public void deleteById(UUID id) {
+        userJobLinkRepository.deleteById(id);
+    }
+
+    @Override
+    public List<UserJobLink> findByUserId(UUID userId) {
+        return userJobLinkRepository.findAll().stream()
+                .filter(link -> link.getUser().getId().equals(userId))
+                .toList();
+    }
+
+    @Override
+    public List<UserJobLink> findByJobPostingId(UUID jobPostingId) {
+        return userJobLinkRepository.findAll().stream()
+                .filter(link -> link.getJobPosting().getId().equals(jobPostingId))
+                .toList();
+    }
+}
