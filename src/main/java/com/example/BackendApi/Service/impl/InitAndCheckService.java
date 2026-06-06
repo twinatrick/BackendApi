@@ -121,7 +121,6 @@ public class InitAndCheckService implements IInitAndCheckService {
 
     @Override
     public void checkFunctionBindDefaultRole() {
-        List<FunctionVo> functionList = functionService.getFunction();
         List<List<String>> allFunctionList = new ArrayList<>();
         allFunctionList.add(new ArrayList<>( List.of("System", "User", "View")));
         allFunctionList.add(new ArrayList<>( List.of("System", "RolePermission", "View")));
@@ -163,6 +162,7 @@ public class InitAndCheckService implements IInitAndCheckService {
                 insertFunctionByList(functionListStr,"");
             }
         }
+        List<FunctionVo> functionList = functionService.getFunction();
         RoleOutVo role = roleService.getRoleByName("admin");
         if (role != null) {
             var parentIds = functionList.stream()

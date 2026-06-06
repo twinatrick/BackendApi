@@ -1,6 +1,8 @@
 package com.example.BackendApi.DataAccess;
 
+import com.example.BackendApi.Dto.Vo.Search.JobPostingSearchQuery;
 import com.example.BackendApi.Entity.JobPosting;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
 import java.util.Optional;
@@ -19,4 +21,6 @@ public interface IJobPostingDataAccess {
     void deleteById(UUID id);
 
     List<JobPosting> findByCompanyId(UUID companyId);
+
+    Page<JobPosting> searchJobPostings(JobPostingSearchQuery query);
 }
