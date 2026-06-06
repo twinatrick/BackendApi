@@ -8,6 +8,7 @@ import com.example.BackendApi.Dto.Vo.CreateCompanyRequest;
 import com.example.BackendApi.Dto.Vo.ResponseType;
 import com.example.BackendApi.Dto.Vo.UpdateCompanyRequest;
 import com.example.BackendApi.Service.ICompanyService;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -32,7 +33,7 @@ public class CompanyController {
 
     @PostMapping("/add")
     @ApiOperationBadRequest(summary = "新增公司", description = "建立一間新的公司。")
-    public ResponseType<CompanyVo> addCompany(@RequestBody CreateCompanyRequest request) {
+    public ResponseType<CompanyVo> addCompany(@Valid @RequestBody CreateCompanyRequest request) {
         return ResponseType.Success(companyService.createCompany(request), "公司新增成功");
     }
 

@@ -1,12 +1,13 @@
 package com.example.BackendApi.Service;
 
+import com.example.BackendApi.Dto.Vo.CreateJobPostingRequest;
 import com.example.BackendApi.Dto.Vo.JobPostingVo;
 
 import java.util.List;
 
 public interface IJobPostingService {
 
-    JobPostingVo createJobPosting(JobPostingVo jobPostingVo);
+    JobPostingVo createJobPosting(CreateJobPostingRequest request);
 
     List<JobPostingVo> getAllJobPostings();
 

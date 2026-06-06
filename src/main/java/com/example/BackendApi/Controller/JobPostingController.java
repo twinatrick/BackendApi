@@ -3,9 +3,11 @@ package com.example.BackendApi.Controller;
 import com.example.BackendApi.Annotation.OpenApi.ApiControllerTag;
 import com.example.BackendApi.Annotation.OpenApi.ApiOperationBadRequest;
 import com.example.BackendApi.Annotation.OpenApi.ApiOperationOk;
+import com.example.BackendApi.Dto.Vo.CreateJobPostingRequest;
 import com.example.BackendApi.Dto.Vo.JobPostingVo;
 import com.example.BackendApi.Dto.Vo.ResponseType;
 import com.example.BackendApi.Service.IJobPostingService;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -30,8 +32,8 @@ public class JobPostingController {
 
     @PostMapping("/add")
     @ApiOperationBadRequest(summary = "新增職缺", description = "手動新增一筆職缺。")
-    public ResponseType<JobPostingVo> addJobPosting(@RequestBody JobPostingVo jobPostingVo) {
-        return ResponseType.Success(jobPostingService.createJobPosting(jobPostingVo), "職缺新增成功");
+    public ResponseType<JobPostingVo> addJobPosting(@Valid @RequestBody CreateJobPostingRequest request) {
+        return ResponseType.Success(jobPostingService.createJobPosting(request), "職缺新增成功");
     }
 
     @GetMapping("/get")
