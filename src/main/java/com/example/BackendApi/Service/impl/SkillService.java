@@ -294,6 +294,7 @@ public class SkillService implements ISkillService {
 
     @Transactional
     @Override
+    @CacheEvict(value = "currentUserSkills", allEntries = true)
     public void rebindUserSkills(UUID userId, Map<UUID, UUID> skillLevelMapping) {
         if (userId == null) {
             throw new IllegalArgumentException("Key must not be null");
