@@ -17,4 +17,6 @@ public interface IUserProjectDataAccess {
     void deleteByUserIdAndProjectId(UUID userId, UUID projectId);
     
     List<UserProject> findByUserId(UUID userId);
+
+    List<UserProject> findByProjectId(UUID projectId);
 }

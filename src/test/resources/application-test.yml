@@ -1,3 +1,7 @@
+app:
+  init:
+    enabled: false
+
 spring:
   # 測試環境數據庫配置 - 使用內存 H2 數據庫
   datasource:

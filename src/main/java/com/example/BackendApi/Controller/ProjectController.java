@@ -1,6 +1,6 @@
 package com.example.BackendApi.Controller;
 
-import com.example.BackendApi.Dto.Vo.Search.ProjectSearchQuery;
+import com.example.BackendApi.Dto.Vo.Search         .ProjectSearchQuery;
 import com.example.BackendApi.Dto.Vo.Common.PageResult;
 import com.example.BackendApi.Dto.Vo.PersonalProjectSkillBindRequest;
 import com.example.BackendApi.Dto.Vo.PersonalProjectSkillLevelRequest;
@@ -11,6 +11,7 @@ import com.example.BackendApi.Annotation.RequirePermission;
 import com.example.BackendApi.Annotation.OpenApi.ApiControllerTag;
 import com.example.BackendApi.Annotation.OpenApi.ApiOperationBadRequest;
 import com.example.BackendApi.Annotation.OpenApi.ApiOperationOk;
+import com.example.BackendApi.Dto.Vo.ProjectMemberSkillVo;
 import com.example.BackendApi.Dto.Vo.ProjectSkillBindRequest;
 import com.example.BackendApi.Dto.Vo.ProjectSkillVo;
 import com.example.BackendApi.Dto.Vo.ProjectVo;
@@ -73,6 +74,17 @@ public class ProjectController {
     public ResponseType<List<ProjectSkillVo>> getProjectSkills(@PathVariable UUID projectId) {
         List<ProjectSkillVo> skills = projectService.getProjectSkills(projectId);
         return ResponseType.Success(skills, "Project skills fetched successfully");
+    }
+
+    @GetMapping("/{projectId}/member-skills")
+    @RequirePermission({"System", "ProjectManagement", "EditAll"})
+    @ApiOperationOk(
+            summary = "Get project member skills",
+            description = "取得專案所有成員在此專案中的技能等級綁定，供編輯專案時回填既有資料"
+    )
+    public ResponseType<List<ProjectMemberSkillVo>> getProjectMemberSkills(@PathVariable UUID projectId) {
+        List<ProjectMemberSkillVo> members = projectService.getProjectMemberSkills(projectId);
+        return ResponseType.Success(members, "Project member skills fetched successfully");
     }
     
     @PostMapping("/search")

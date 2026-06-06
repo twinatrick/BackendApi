@@ -89,6 +89,9 @@ void saveUserWithRole(UserVo userVo);
 
 @CacheEvict(value = "users", allEntries = true)
 void rebindUserRoles(UUID userId, List<String> roleIds);
+
+@CacheEvict(value = "userProjects", allEntries = true)
+void rebindUserProjects(UUID userId, List<UUID> projectIds);
 ```
 
 #### 不建議快取的方法
@@ -163,6 +166,9 @@ void updatePersonalSkillLevel(UUID skillId, UUID skillLevelId);
     @CacheEvict(value = "currentUserSkills", allEntries = true)
 })
 void deletePersonalSkill(UUID skillId);
+
+@CacheEvict(value = "currentUserSkills", allEntries = true)
+void rebindUserSkills(UUID userId, List<UserSkillBindingRequest> bindings);
 ```
 
 ---
