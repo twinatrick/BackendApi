@@ -3,6 +3,7 @@ package com.example.BackendApi.Service.impl;
 import com.example.BackendApi.Crawler.impl.CompositeJobCrawler;
 import com.example.BackendApi.DataAccess.ICompanyDataAccess;
 import com.example.BackendApi.DataAccess.IJobPostingDataAccess;
+import com.example.BackendApi.Dto.Vo.CreateJobPostingRequest;
 import com.example.BackendApi.Dto.Vo.JobPostingVo;
 import com.example.BackendApi.Entity.Company;
 import com.example.BackendApi.Entity.JobPosting;
@@ -36,13 +37,19 @@ public class JobPostingService implements IJobPostingService {
     @Override
     @Transactional
     @CacheEvict(value = "jobPostings", allEntries = true)
-    public JobPostingVo createJobPosting(JobPostingVo jobPostingVo) {
-        JobPosting jobPosting = jobPostingMapper.toEntity(jobPostingVo);
-        if (jobPostingVo.getCompanyId() != null) {
-            Company company = companyDataAccess.findById(UUID.fromString(jobPostingVo.getCompanyId()))
-                    .orElseThrow(() -> new IllegalArgumentException("Company not found"));
-            jobPosting.setCompany(company);
-        }
+    public JobPostingVo createJobPosting(CreateJobPostingRequest request) {
+        Company company = companyDataAccess.findById(UUID.fromString(request.getCompanyId()))
+                .orElseThrow(() -> new IllegalArgumentException("Company not found"));
+
+        JobPosting jobPosting = new JobPosting();
+        jobPosting.setCompany(company);
+        jobPosting.setTitle(request.getTitle());
+        jobPosting.setUrl(request.getUrl());
+        jobPosting.setDescription(request.getDescription());
+        jobPosting.setRequirements(request.getRequirements());
+        jobPosting.setResponsibilities(request.getResponsibilities());
+        jobPosting.setSalaryRange(request.getSalaryRange());
+        jobPosting.setPostedDate(request.getPostedDate());
         jobPosting = jobPostingDataAccess.save(jobPosting);
         return jobPostingMapper.toVo(jobPosting);
     }
