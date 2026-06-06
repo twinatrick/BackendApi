@@ -246,6 +246,43 @@ erDiagram
     }
 ```
 
+#### 5. 公司與職缺管理模組 🆕
+
+```mermaid
+erDiagram
+    COMPANY ||--o{ JOB_POSTING : "has"
+    USER ||--o{ USER_JOB_LINK : "saves"
+    JOB_POSTING ||--o{ USER_JOB_LINK : "linked"
+    
+    COMPANY {
+        uuid id PK
+        string name
+        string website
+        string description
+    }
+    
+    JOB_POSTING {
+        uuid id PK
+        uuid company_id FK
+        string title
+        string url
+        text description
+        text requirements
+        text responsibilities
+        string salary_range
+        date posted_date
+        text gemini_analysis
+    }
+    
+    USER_JOB_LINK {
+        uuid id PK
+        uuid user_id FK
+        uuid job_posting_id FK
+        text user_notes
+        constraint "UK(user_id,job_posting_id)"
+    }
+```
+
 **核心資料表說明**：
 
 | 資料表 | 類型 | 用途 | 唯一約束 |
@@ -262,6 +299,9 @@ erDiagram
 | `project_skill` | 關聯表 | 專案技能需求 | (project_id, skill_id) |
 | `user_project` | 關聯表 | 專案成員 | (user_id, project_id) |
 | `user_project_skill` | 關聯表 | 🆕 專案成員技能（使用者在特定專案的技能等級） | (user_id, project_id, skill_id) |
+| `company` | 主實體 | 公司/企業資訊 | - |
+| `job_posting` | 主實體 | 職缺資訊（含 Gemini 分析結果） | - |
+| `user_job_link` | 關聯表 | 使用者儲存的職缺（個人收藏） | (user_id, job_posting_id) |
 
 **資料模型設計特點**：
 - ✅ 所有 Entity 繼承 `BaseEntity`，自動擁有 `id` (UUID)、審計欄位 (`created_by`, `created_time`, `updated_by`, `updated_time`)
@@ -284,6 +324,10 @@ erDiagram
 | **jose4j** | JWT 處理 | 支援 JWS/JWE 標準、API 設計清晰、安全性高 |
 | **MapStruct** | DTO 映射 | 編譯期產生程式碼、效能優於反射、型別安全 |
 | **Lombok** | 程式碼簡化 | 減少 getter/setter/constructor 樣板程式碼 |
+| **Jsoup** | HTML 解析與網頁爬蟲 | 輕量級靜態頁面爬取，支援 CSS Selector 與 DOM 操作，適合結構化頁面 |
+| **Selenium** | 動態網頁爬蟲 | 瀏覽器自動化工具，處理 JavaScript 渲染頁面，作為 Jsoup 的 fallback |
+| **Gemini API** | AI 智能分析 | Google Gemini REST API，用於從爬取內容中結構化萃取職缺資訊 |
+| **Gson** | JSON 序列化 | Google 官方 JSON 庫，用於 Gemini API 請求/回應處理 |
 | **Docker Compose** | 本地開發環境 | 一鍵啟動所有依賴服務、環境一致性高 |
 | **JUnit 5 + Mockito** | 測試框架 | 業界標準、支援參數化測試、Mock 功能完善 |
 | **JaCoCo** | 覆蓋率工具 | 與 Maven 無縫整合、支援 XML/HTML 報告 |
@@ -298,6 +342,9 @@ erDiagram
 | **技能管理模組** | 技能/等級 CRUD、個人/專案維度技能管理 | `/skill/*` |
 | **角色與功能模組** | 角色/功能 CRUD、雙向綁定、階層式功能選單 | `/role/*`, `/function/*` |
 | **管理者綁定模組** | 統一管理使用者-專案、使用者-技能、專案-技能、專案成員技能等多對多綁定關係，採用完整覆蓋式 API 設計 | `/admin/bindings/*` |
+| **公司管理模組** | 公司 CRUD，作為職缺的隸屬企業 | `/company/*` |
+| **職缺管理模組** | 職缺 CRUD、依公司查詢、爬蟲結果儲存 | `/job-posting/*` |
+| **爬蟲分析模組** | Jsoup/Selenium 複合爬蟲抓取公司網站 + Gemini API 智能分析職缺資訊 | `內部服務` |
 | **告警通知模組** | 定時拉取外部資料、閾值比對、Kafka 非同步推送、WebSocket 即時通知 | `/alertCheckLimit/*` |
 | **資料查詢模組** | Aquark 感測器資料查詢、動態條件過濾、Redis 快取 | `/aquarkData/*` |
 
@@ -355,6 +402,7 @@ DataAccess 層將資料存取邏輯從 Service 中分離，便於測試與替換
 - [x] **CI/CD 管線**: 整合 GitHub Actions，自動化測試、建置、部署
 - [x] **管理者綁定 API 重構**: 統一 Rebind API 設計，完整覆蓋語意，Diff 策略最佳化
 - [x] **專案成員技能管理**: 新增 `user_project_skill` 表，支援專案維度技能管理
+- [x] **職缺爬蟲與 AI 分析**: 整合 Jsoup/Selenium 複合爬蟲 + Gemini API 智能萃取，支援公司/職缺/使用者收藏 CRUD
 - [ ] **監控與日誌**: 引入 Micrometer + Prometheus + Grafana，集中化日誌管理
 - [ ] **效能優化**: 資料庫查詢優化、連線池調整、虛擬執行緒應用
 - [ ] **API 版本管理**: 引入 URI/Header 版本控制，向後相容
@@ -411,6 +459,7 @@ Kafka 對外廣播主機可用 `KAFKA_ADVERTISED_HOST` 控制：
 - PostgreSQL：`localhost:5432`
 - Redis：`localhost:6379`
 - Kafka：`localhost:9092`
+- Gemini API：需設定 `GEMINI_API_KEY` 環境變數（`.env` 或系統環境變數），API 端點預設 `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent`
 
 可在 `compose.yaml` 查看各服務連線設定。
 
