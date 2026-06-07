@@ -37,6 +37,20 @@ kafka:
   consumer:
     group-id: ${KAFKA_CONSUMER_GROUP_ID:myGroup}
 
+cache:
+  bloom-filter:
+    default-expected-insertions: 10000
+    default-false-probability: 0.01
+    overrides:
+      users:
+        expected-insertions: 50000
+        false-probability: 0.001
+      skills:
+        expected-insertions: 50000
+        false-probability: 0.001
+  ttl-jitter:
+    max-offset: 0.3
+
 redis:
   cache:
     ttl-hours: ${REDIS_CACHE_TTL_HOURS:1}

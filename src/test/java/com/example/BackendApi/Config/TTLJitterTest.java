@@ -12,6 +12,10 @@ class TTLJitterTest {
 
     private final RedisConfig redisConfig = new RedisConfig();
 
+    TTLJitterTest() {
+        redisConfig.setJitterMaxOffset(0.3);
+    }
+
     @Test
     void jitter_MinimumValue_EqualsBase() {
         Duration base = Duration.ofMinutes(10);
