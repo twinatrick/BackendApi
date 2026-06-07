@@ -14,7 +14,7 @@ public class BloomFilterProperties {
 
     private long defaultExpectedInsertions = 10000L;
 
-    private double defaultFalseProbability = 0.01;
+    private double defaultFalseProbability = 0.001;
 
     private Map<String, BloomFilterConfig> overrides = new HashMap<>();
 
