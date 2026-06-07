@@ -20,7 +20,10 @@ import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
+import org.redisson.config.Config;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.SerializationException;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
@@ -66,6 +69,25 @@ public class RedisConfig implements CachingConfigurer {
         config.setPort(port);
         
         return new LettuceConnectionFactory(config);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(RedissonClient.class)
+    public RedissonClient redissonClient() {
+        String host = resolveRedisHost();
+        LOGGER.info("初始化 Redisson 連線池 - {}:{}", host, port);
+
+        Config config = new Config();
+        config.useSingleServer()
+                .setAddress("redis://" + host + ":" + port)
+                .setConnectionPoolSize(64)
+                .setConnectionMinimumIdleSize(24)
+                .setIdleConnectionTimeout(10000)
+                .setConnectTimeout(10000)
+                .setRetryAttempts(3)
+                .setRetryInterval(1500);
+
+        return Redisson.create(config);
     }
 
     @Bean
