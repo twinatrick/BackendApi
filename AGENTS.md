@@ -23,6 +23,7 @@
   - **Coverage**: `./mvnw jacoco:report`。Jacoco 覆蓋率報告位於 `target/site/jacoco/index.html`。
   - **Coverage Rules**: 專案設定了最低 80% 的覆蓋率要求 (`BUNDLE` 級別)。注意：多數的對外介面與資料存取層 (Controller,
     Entity, Dto, mapper 等) 在 `pom.xml` 中被設定排除覆蓋率計算。
+  - **Commit Rule**: 當 `./mvnw test` 未全部通過時，**禁止 commit**。必須先確認測試全部通過（Failures: 0, Errors: 0），才能執行 git commit。
   - **Mockito Warning**: 測試已在 Maven Surefire 中設定 `-XX:+EnableDynamicAgentLoading` 來消除 Java 21 下的警告。
 
 ## Architecture & Code Conventions

@@ -3,6 +3,12 @@ app:
     enabled: false
 
 spring:
+  autoconfigure:
+    exclude: org.redisson.spring.starter.RedissonAutoConfigurationV2
+  redis:
+    host: localhost
+    port: 6379
+
   # 測試環境數據庫配置 - 使用內存 H2 數據庫
   datasource:
     url: jdbc:h2:mem:testdb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;NON_KEYWORDS=KEY

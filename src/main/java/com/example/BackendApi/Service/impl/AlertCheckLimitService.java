@@ -26,7 +26,7 @@ public class AlertCheckLimitService implements IAlertCheckLimitService {
     private final AlertCheckLimitMapper alertCheckLimitMapper;
 
     @Override
-    @Cacheable(value = "alertCheckLimit",key = "#tableName + '.' + #column" )
+    @Cacheable(value = "alertCheckLimit", key = "#tableName + '.' + #column", sync = true)
     public AlertCheckLimitVo getLimit(String tableName, String column) {
         AlertCheckLimit limit = getLimitEntity(tableName, column);
         return limit == null ? null : alertCheckLimitMapper.toVo(limit);

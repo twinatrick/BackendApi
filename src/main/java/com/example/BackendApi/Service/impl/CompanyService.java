@@ -38,7 +38,7 @@ public class CompanyService implements ICompanyService {
     }
 
     @Override
-    @Cacheable(value = "companies", unless = "#result == null || #result.isEmpty()")
+    @Cacheable(value = "companies", sync = true)
     public List<CompanyVo> getAllCompanies() {
         return companyDataAccess.findAll().stream()
                 .map(companyMapper::toVo)
@@ -46,7 +46,7 @@ public class CompanyService implements ICompanyService {
     }
 
     @Override
-    @Cacheable(value = "companies", key = "#id", unless = "#result == null")
+    @Cacheable(value = "companies", key = "#id", sync = true)
     public CompanyVo getCompanyById(String id) {
         UUID uuid = mapUuid(id);
         if (uuid == null) {
