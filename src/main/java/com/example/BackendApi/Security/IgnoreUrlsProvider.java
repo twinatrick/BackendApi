@@ -41,6 +41,7 @@ public class IgnoreUrlsProvider implements InitializingBean {
         
         // Also add swagger and error page urls
         ignoredUrls.add("/swagger-ui/**");
+        ignoredUrls.add("/swagger-ui.html");
         ignoredUrls.add("/v3/api-docs/**");
         ignoredUrls.add("/swagger-resources/**");
         ignoredUrls.add("/webjars/**");
