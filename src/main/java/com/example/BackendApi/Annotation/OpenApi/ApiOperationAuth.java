@@ -3,6 +3,7 @@ package com.example.BackendApi.Annotation.OpenApi;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.core.annotation.AliasFor;
 
 import java.lang.annotation.Documented;
@@ -20,6 +21,7 @@ import java.lang.annotation.Target;
         @ApiResponse(responseCode = "401", description = "Unauthorized"),
         @ApiResponse(responseCode = "500", description = "Server error")
 })
+@SecurityRequirement(name = "Bearer Authentication")
 public @interface ApiOperationAuth {
     @AliasFor(annotation = Operation.class, attribute = "summary")
     String summary();
