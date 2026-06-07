@@ -164,7 +164,7 @@ public class RedisConfig implements CachingConfigurer {
             @Override
             public void handleCacheGetError(RuntimeException exception, Cache cache, Object key) {
                 if (exception instanceof SerializationException se) {
-                    LOGGER.warn("Redis 反序列化失敗，清除快取 [{}] key: {}", cache.getName(), key, se);
+                    LOGGER.warn("Redis 反序列化失敗，清除快取 [{}] key: {}", cache.getName(), key);
                     cache.evict(key);
                     return;
                 }

@@ -10,7 +10,7 @@ import com.example.BackendApi.Dto.Vo.Search.JobPostingSearchQuery;
 import com.example.BackendApi.Entity.Company;
 import com.example.BackendApi.Entity.JobPosting;
 import com.example.BackendApi.Mapper.JobPostingMapper;
-import com.example.BackendApi.Service.IGeminiService;
+import com.example.BackendApi.Service.impl.CompositeAiService;
 import com.example.BackendApi.Service.IJobPostingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,7 +36,7 @@ public class JobPostingService implements IJobPostingService {
     private final ICompanyDataAccess companyDataAccess;
     private final JobPostingMapper jobPostingMapper;
     private final CompositeJobCrawler jobCrawler;
-    private final IGeminiService geminiService;
+    private final CompositeAiService compositeAiService;
 
     @Override
     @Transactional
@@ -180,12 +180,12 @@ public class JobPostingService implements IJobPostingService {
             try {
                 htmlContent = jobCrawler.crawl(url);
             } catch (Exception e) {
-                log.warn("Failed to crawl URL {}: {}", url, e.getMessage());
+                log.warn("Failed to crawl URL {}: {}", url, e.toString());
                 continue;
             }
 
-            List<Map<String, String>> analyzedJobs = geminiService.analyzeJobPostings(company.getName(), htmlContent);
-            log.info("Gemini returned {} jobs from URL: {}", analyzedJobs.size(), url);
+            List<Map<String, String>> analyzedJobs = compositeAiService.analyzeJobPostings(company.getName(), htmlContent);
+            log.info("AI service returned {} jobs from URL: {}", analyzedJobs.size(), url);
 
             List<JobPosting> existingJobs = jobPostingDataAccess.findByCompanyId(uuid);
 
@@ -218,7 +218,7 @@ public class JobPostingService implements IJobPostingService {
                     allSavedJobs.add(jobPostingMapper.toVo(jobPosting));
                     log.info("Created new job: {} for company: {}", title, company.getName());
                 } catch (Exception e) {
-                    log.error("Failed to process job posting for company: {}", company.getName(), e);
+                    log.error("Failed to process job posting for company: {}: {}", company.getName(), e.toString());
                 }
             }
         }
@@ -248,7 +248,7 @@ public class JobPostingService implements IJobPostingService {
             try {
                 scrapeAndAnalyzeJobs(company.getId().toString());
             } catch (Exception e) {
-                log.error("Failed to scrape company: {}", company.getName(), e);
+                log.error("Failed to scrape company: {}", company.getName());
             }
         }
     }

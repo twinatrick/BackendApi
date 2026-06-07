@@ -1,6 +1,7 @@
 package com.example.BackendApi.Util;
 
 import com.example.BackendApi.Service.IApiFetcher;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.io.BufferedReader;
@@ -10,11 +11,12 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+@Slf4j
 @Component
 public class CallApi implements IApiFetcher {
     @Override
     public String get(String urlStr) throws IOException {
-        System.out.println("CallApi.callApi");
+        log.debug("CallApi.callApi");
         URL url = new URL(urlStr);
         HttpURLConnection con = (HttpURLConnection) url.openConnection();
         con.setRequestMethod("GET");

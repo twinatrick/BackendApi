@@ -11,12 +11,14 @@ import com.example.BackendApi.Dto.Vo.AquarkUse.aquarkApiReturnVo;
 import com.example.BackendApi.Dto.Vo.AquarkUse.AquarkDataRaw;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CheckApiService implements ICheckApiService {
@@ -39,12 +41,12 @@ public class CheckApiService implements ICheckApiService {
                 "https://app.aquark.com.tw/api/raw/Angle2024/240708",
                 "https://app.aquark.com.tw/api/raw/Angle2024/240709",
                 "https://app.aquark.com.tw/api/raw/Angle2024/240710");
-        System.out.println("CheckApiService.getAquarkApiData");
+        log.debug("CheckApiService.getAquarkApiData");
         List<AquarkDataRaw> aquarkDataRawList = new ArrayList<>();
         for (String url : urlList) {
             String result = getApiOnlyUrl(url);
             aquarkApiReturnVo aquarkApiReturnVo =objectMapper.readValue(result, aquarkApiReturnVo.class);
-            System.out.println("aquarkApiReturnVo Raw size:"+(aquarkApiReturnVo.getRaw().size()));
+            log.debug("aquarkApiReturnVo Raw size: {}", aquarkApiReturnVo.getRaw().size());
             aquarkDataRawList.addAll(aquarkApiReturnVo.getRaw().stream().map(RowData::transToDbData).toList());
 
         }

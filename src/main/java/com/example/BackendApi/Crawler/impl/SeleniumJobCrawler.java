@@ -2,57 +2,77 @@ package com.example.BackendApi.Crawler.impl;
 
 import com.example.BackendApi.Crawler.IJobCrawler;
 import io.github.bonigarcia.wdm.WebDriverManager;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.springframework.stereotype.Component;
 
-/**
- * Selenium-based crawler for dynamic web pages.
- * Suitable for websites that rely on JavaScript for content rendering.
- */
 @Slf4j
 @Component
 public class SeleniumJobCrawler implements IJobCrawler {
 
     private static final int PAGE_LOAD_TIMEOUT_MS = 30000;
+    private static final int RETRY_DELAY_MS = 3000;
+    private static final int MAX_RETRIES = 1;
+    private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
+
+    private ChromeOptions chromeOptions;
+
+    @PostConstruct
+    public void init() {
+        WebDriverManager.chromedriver().setup();
+        chromeOptions = new ChromeOptions();
+        chromeOptions.addArguments("--headless");
+        chromeOptions.addArguments("--no-sandbox");
+        chromeOptions.addArguments("--disable-dev-shm-usage");
+        chromeOptions.addArguments("--disable-gpu");
+        chromeOptions.addArguments("--window-size=1920,1080");
+        chromeOptions.addArguments("--disable-blink-features=AutomationControlled");
+        chromeOptions.addArguments("--user-agent=" + USER_AGENT);
+        log.info("Selenium ChromeDriver initialized");
+    }
 
     @Override
     public String crawl(String url) {
-        WebDriver driver = null;
-        try {
-            WebDriverManager.chromedriver().setup();
+        RuntimeException lastException = null;
 
-            ChromeOptions options = new ChromeOptions();
-            options.addArguments("--headless");
-            options.addArguments("--no-sandbox");
-            options.addArguments("--disable-dev-shm-usage");
-            options.addArguments("--disable-gpu");
-            options.addArguments("--window-size=1920,1080");
-            options.addArguments("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
-
-            driver = new ChromeDriver(options);
-            driver.manage().timeouts().pageLoadTimeout(java.time.Duration.ofMillis(PAGE_LOAD_TIMEOUT_MS));
-
-            log.info("Crawling URL with Selenium: {}", url);
-            driver.get(url);
-
-            // Wait for dynamic content to load
+        for (int attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+            WebDriver driver = null;
             try {
-                Thread.sleep(3000);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
+                if (attempt > 0) {
+                    log.warn("Retrying Selenium crawl (attempt {}/{}): {}", attempt + 1, MAX_RETRIES + 1, url);
+                    Thread.sleep(RETRY_DELAY_MS);
+                }
 
-            return driver.getPageSource();
-        } catch (Exception e) {
-            log.error("Failed to crawl URL with Selenium: {}", url, e);
-            throw new RuntimeException("Failed to crawl URL: " + url, e);
-        } finally {
-            if (driver != null) {
-                driver.quit();
+                driver = new ChromeDriver(chromeOptions);
+                driver.manage().timeouts().pageLoadTimeout(java.time.Duration.ofMillis(PAGE_LOAD_TIMEOUT_MS));
+
+                log.info("Crawling URL with Selenium: {}", url);
+                driver.get(url);
+
+                try {
+                    Thread.sleep(3000);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+
+                return driver.getPageSource();
+            } catch (Exception e) {
+                log.warn("Selenium crawl failed (attempt {}/{}): {}", attempt + 1, MAX_RETRIES + 1, url);
+                lastException = new RuntimeException("Failed to crawl URL with Selenium: " + url, e);
+            } finally {
+                if (driver != null) {
+                    try {
+                        driver.quit();
+                    } catch (Exception e) {
+                        log.warn("Failed to quit Selenium driver");
+                    }
+                }
             }
         }
+
+        throw lastException;
     }
 }

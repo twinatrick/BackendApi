@@ -7,6 +7,8 @@ import org.jose4j.jwt.consumer.JwtConsumer;
 import org.jose4j.jwt.consumer.JwtConsumerBuilder;
 import org.jose4j.keys.HmacKey;
 import org.jose4j.lang.JoseException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -17,6 +19,9 @@ import java.util.HashMap;
 
 @Component // 確保 Spring 可以管理這個 Filter
 public class JwtAuthenticationToken {
+
+    private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationToken.class);
+
     @Value("${jwt.secret.use}")
     private String jwtSecret; // 從配置中讀取 JWT Secret
 
@@ -84,8 +89,10 @@ public class JwtAuthenticationToken {
             JwtClaims jwtClaims = jwtConsumer.processToClaims(token);
             return jwtClaims;
         }catch (InvalidJwtException e) {
+            log.warn("JWT 驗證失敗: {}", e.toString());
             throw e;
         }catch (Exception e){
+            log.error("JWT 驗證異常", e);
             throw e;
         }
     }

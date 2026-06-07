@@ -3,11 +3,13 @@ package com.example.BackendApi.Service.impl;
 import com.example.BackendApi.Dto.Vo.Common.AlarmMessage;
 import com.example.BackendApi.Service.IAlarmPublisher;
 import com.example.BackendApi.Service.IAlarmService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Slf4j
 @Service
 public class AlarmService implements IAlarmService {
 
@@ -21,6 +23,7 @@ public class AlarmService implements IAlarmService {
         try {
             alarmPublisher.publish(alarmMessage);
         } catch (Exception e) {
+            log.warn("告警消息發送失敗: {}", e.toString());
             alarmMessage.get(0).setMessage("告警消息發送失敗：" + e.getMessage());
         }
 
@@ -33,6 +36,6 @@ public class AlarmService implements IAlarmService {
 
     private void logAlarm(AlarmMessage alarmMessage) {
         // 實作：記錄到日誌系統
-        System.out.println("記錄告警：" + alarmMessage.getMessage());
+        log.info("記錄告警：{}", alarmMessage.getMessage());
     }
 }

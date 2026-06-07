@@ -63,3 +63,22 @@ gemini:
     key: ${GEMINI_API_KEY:}
     url: ${GEMINI_API_URL:https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent}
     model: ${GEMINI_MODEL:gemini-2.0-flash}
+
+deepseek:
+  api:
+    key: ${DEEPSEEK_API_KEY:}
+    url: ${DEEPSEEK_API_URL:https://api.deepseek.com/chat/completions}
+    model: ${DEEPSEEK_MODEL:deepseek-v4-flash}
+
+groq:
+  api:
+    key: ${GROQ_API_KEY:}
+    url: ${GROQ_API_URL:https://api.groq.com/openai/v1/chat/completions}
+    model: ${GROQ_MODEL:llama-3.3-70b-versatile}
+
+github:
+  models:
+    api:
+      key: ${GITHUB_MODELS_API_KEY:}
+      url: ${GITHUB_MODELS_API_URL:https://models.inference.ai.azure.com/chat/completions}
+      model: ${GITHUB_MODELS_MODEL:gpt-4o-mini}

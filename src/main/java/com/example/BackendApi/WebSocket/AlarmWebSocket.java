@@ -3,6 +3,7 @@ package com.example.BackendApi.WebSocket;
 import com.example.BackendApi.Dto.Vo.Common.AlarmMessage;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.websocket.OnClose;
+import lombok.extern.slf4j.Slf4j;
 import jakarta.websocket.OnOpen;
 import jakarta.websocket.Session;
 import jakarta.websocket.server.ServerEndpoint;
@@ -13,6 +14,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+@Slf4j
 @Component
 @ServerEndpoint("/ws/alarm")
 public class AlarmWebSocket {
@@ -56,7 +58,7 @@ public class AlarmWebSocket {
             // 然後由 Redis 監聽器去呼叫 localBroadcast(msg)，就能完美橫向擴充！
 
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("序列化告警訊息失敗", e);
         }
     }
 

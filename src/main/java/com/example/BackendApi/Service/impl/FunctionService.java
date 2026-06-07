@@ -10,6 +10,7 @@ import com.example.BackendApi.Mapper.FunctionMapper;
 import com.example.BackendApi.Dto.Vo.FunctionVo;
 import com.example.BackendApi.Entity.Function;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Example;
@@ -24,6 +25,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class FunctionService implements IFunctionService {
@@ -141,8 +143,8 @@ public class FunctionService implements IFunctionService {
         if (!saveFunction.isEmpty()) {
             functionDataAccess.saveAll(saveFunction);
         }
-        System.out.println("GrandParentId.size=" + GrandParentId.size() + "\n");
-        System.out.println("saveFunctionNewChildTime=" + (( new Date().getTime() - date.getTime())/1000) + "\n");
+        log.debug("GrandParentId.size={}", GrandParentId.size());
+        log.debug("saveFunctionNewChildTime={}s", (new Date().getTime() - date.getTime()) / 1000);
         return functionDataAccess.findAll(sort).stream().map(functionMapper::toVo).toList();
     }
     @Override

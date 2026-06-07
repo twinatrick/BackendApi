@@ -6,11 +6,9 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 
@@ -19,14 +17,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Primary AI service implementation using Google Gemini REST API.
- */
 @Slf4j
-@Service
-public class GeminiService implements IAiService {
+public abstract class BaseOpenAiService implements IAiService {
 
-    private static final int MAX_RETRIES = 2;
+    protected static final int MAX_RETRIES = 2;
 
     private static final String SYSTEM_INSTRUCTION = "你是一個專業的職缺分析助手，請嚴格遵守以下規則：\n" +
             "1. 只回傳純 JSON 陣列，不可包含 Markdown 程式碼區塊、說明文字或任何前綴後綴。\n" +
@@ -41,19 +35,12 @@ public class GeminiService implements IAiService {
             "4. 所有欄位內容請以繁體中文填寫。\n" +
             "5. 範例：[{\"title\":\"軟體工程師\",\"url\":\"https://...\",\"description\":\"開發後端服務\",\"requirements\":\"熟悉Java\",\"responsibilities\":\"API開發\",\"salaryRange\":\"面議\"}]";
 
-    private final RestTemplate restTemplate;
-    private final Gson gson;
+    protected final RestTemplate restTemplate = new RestTemplate();
+    protected final Gson gson = new Gson();
 
-    @Value("${gemini.api.key}")
-    private String apiKey;
-
-    @Value("${gemini.api.url}")
-    private String apiUrl;
-
-    public GeminiService() {
-        this.restTemplate = new RestTemplate();
-        this.gson = new Gson();
-    }
+    protected abstract String getApiKey();
+    protected abstract String getApiUrl();
+    protected abstract String getModelName();
 
     @Override
     public List<Map<String, String>> analyzeJobPostings(String companyName, String htmlContent) {
@@ -63,7 +50,7 @@ public class GeminiService implements IAiService {
 
         String userPrompt = String.format("""
                 公司名稱: %s
-                
+
                 HTML 內容:
                 %s
                 """, companyName, truncatedHtml);
@@ -83,16 +70,16 @@ public class GeminiService implements IAiService {
 
                 HttpHeaders headers = new HttpHeaders();
                 headers.setContentType(MediaType.APPLICATION_JSON);
+                headers.setBearerAuth(getApiKey());
 
                 HttpEntity<String> request = new HttpEntity<>(requestBody, headers);
 
-                String url = apiUrl + "?key=" + apiKey;
-                log.info("Calling Gemini API for company: {} (attempt {}/{})", companyName, attempt + 1, MAX_RETRIES + 1);
+                log.info("Calling {} API for company: {} (attempt {}/{})", getModelName(), companyName, attempt + 1, MAX_RETRIES + 1);
 
-                String response = restTemplate.postForObject(url, request, String.class);
+                String response = restTemplate.postForObject(getApiUrl(), request, String.class);
 
                 if (response == null) {
-                    log.warn("Gemini API returned null response for company: {} (attempt {})", companyName, attempt + 1);
+                    log.warn("{} API returned null response for company: {} (attempt {})", getModelName(), companyName, attempt + 1);
                     continue;
                 }
 
@@ -100,101 +87,74 @@ public class GeminiService implements IAiService {
                 List<Map<String, String>> result = parseResponse(response);
 
                 if (isValidJobList(result)) return result;
-                log.warn("Gemini response format invalid for company: {} (attempt {})", companyName, attempt + 1);
+                log.warn("{} response format invalid for company: {} (attempt {})", getModelName(), companyName, attempt + 1);
 
             } catch (Exception e) {
                 if (e instanceof HttpStatusCodeException) {
                     int status = ((HttpStatusCodeException) e).getStatusCode().value();
                     if (status == 429) {
-                        log.warn("Gemini API token不足 (429 Too Many Requests) for company: {}", companyName);
+                        log.warn("{} API token不足 (429 Too Many Requests) for company: {}", getModelName(), companyName);
                         return List.of();
                     }
                 }
-                log.error("Failed to call Gemini API for company: {} (attempt {})", companyName, attempt + 1);
+                log.error("Failed to call {} API for company: {} (attempt {})", getModelName(), companyName, attempt + 1);
             }
         }
         return List.of();
     }
 
-    private String buildRequestBody(String prompt) {
+    protected String buildRequestBody(String prompt) {
         JsonObject requestBody = new JsonObject();
+        requestBody.addProperty("model", getModelName());
 
-        // System instruction
-        JsonObject systemInstruction = new JsonObject();
-        JsonArray systemParts = new JsonArray();
-        JsonObject systemPart = new JsonObject();
-        systemPart.addProperty("text", SYSTEM_INSTRUCTION);
-        systemParts.add(systemPart);
-        systemInstruction.add("parts", systemParts);
-        requestBody.add("system_instruction", systemInstruction);
+        JsonArray messages = new JsonArray();
 
-        // User content
-        JsonArray contents = new JsonArray();
-        JsonObject content = new JsonObject();
-        content.addProperty("role", "user");
-        JsonArray parts = new JsonArray();
-        JsonObject part = new JsonObject();
-        part.addProperty("text", prompt);
-        parts.add(part);
-        content.add("parts", parts);
-        contents.add(content);
-        requestBody.add("contents", contents);
+        JsonObject systemMessage = new JsonObject();
+        systemMessage.addProperty("role", "system");
+        systemMessage.addProperty("content", SYSTEM_INSTRUCTION);
+        messages.add(systemMessage);
 
-        // Generation config
-        JsonObject generationConfig = new JsonObject();
-        generationConfig.addProperty("temperature", 0.1);
-        generationConfig.addProperty("maxOutputTokens", 8192);
-        requestBody.add("generationConfig", generationConfig);
+        JsonObject userMessage = new JsonObject();
+        userMessage.addProperty("role", "user");
+        userMessage.addProperty("content", prompt);
+        messages.add(userMessage);
+
+        requestBody.add("messages", messages);
+        requestBody.addProperty("temperature", 0.1);
+        requestBody.addProperty("max_tokens", 8192);
 
         return gson.toJson(requestBody);
     }
 
     private String buildRetryRequestBody(String prompt, String modelResponse, String correction) {
         JsonObject requestBody = new JsonObject();
+        requestBody.addProperty("model", getModelName());
 
-        JsonObject systemInstruction = new JsonObject();
-        JsonArray systemParts = new JsonArray();
-        JsonObject systemPart = new JsonObject();
-        systemPart.addProperty("text", SYSTEM_INSTRUCTION);
-        systemParts.add(systemPart);
-        systemInstruction.add("parts", systemParts);
-        requestBody.add("system_instruction", systemInstruction);
+        JsonArray messages = new JsonArray();
 
-        JsonArray contents = new JsonArray();
+        JsonObject systemMessage = new JsonObject();
+        systemMessage.addProperty("role", "system");
+        systemMessage.addProperty("content", SYSTEM_INSTRUCTION);
+        messages.add(systemMessage);
 
-        JsonObject userContent1 = new JsonObject();
-        userContent1.addProperty("role", "user");
-        JsonArray userParts1 = new JsonArray();
-        JsonObject userPart1 = new JsonObject();
-        userPart1.addProperty("text", prompt);
-        userParts1.add(userPart1);
-        userContent1.add("parts", userParts1);
-        contents.add(userContent1);
+        JsonObject userMessage = new JsonObject();
+        userMessage.addProperty("role", "user");
+        userMessage.addProperty("content", prompt);
+        messages.add(userMessage);
 
-        JsonObject modelContent = new JsonObject();
-        modelContent.addProperty("role", "model");
-        JsonArray modelParts = new JsonArray();
-        JsonObject modelPart = new JsonObject();
-        modelPart.addProperty("text", modelResponse);
-        modelParts.add(modelPart);
-        modelContent.add("parts", modelParts);
-        contents.add(modelContent);
+        JsonObject assistantMessage = new JsonObject();
+        assistantMessage.addProperty("role", "assistant");
+        assistantMessage.addProperty("content", modelResponse);
+        messages.add(assistantMessage);
 
-        JsonObject userContent2 = new JsonObject();
-        userContent2.addProperty("role", "user");
-        JsonArray userParts2 = new JsonArray();
-        JsonObject userPart2 = new JsonObject();
-        userPart2.addProperty("text", correction);
-        userParts2.add(userPart2);
-        userContent2.add("parts", userParts2);
-        contents.add(userContent2);
+        JsonObject correctionMessage = new JsonObject();
+        correctionMessage.addProperty("role", "user");
+        correctionMessage.addProperty("content", correction);
+        messages.add(correctionMessage);
 
-        requestBody.add("contents", contents);
-
-        JsonObject generationConfig = new JsonObject();
-        generationConfig.addProperty("temperature", 0.1);
-        generationConfig.addProperty("maxOutputTokens", 8192);
-        requestBody.add("generationConfig", generationConfig);
+        requestBody.add("messages", messages);
+        requestBody.addProperty("temperature", 0.1);
+        requestBody.addProperty("max_tokens", 8192);
 
         return gson.toJson(requestBody);
     }
@@ -214,47 +174,42 @@ public class GeminiService implements IAiService {
     private String extractTextFromRawResponse(String rawResponse) {
         try {
             JsonObject obj = gson.fromJson(rawResponse, JsonObject.class);
-            JsonArray candidates = obj.getAsJsonArray("candidates");
-            if (candidates != null && candidates.size() > 0) {
-                JsonObject content = candidates.get(0).getAsJsonObject().getAsJsonObject("content");
-                if (content != null) {
-                    JsonArray parts = content.getAsJsonArray("parts");
-                    if (parts != null && parts.size() > 0) {
-                        JsonElement text = parts.get(0).getAsJsonObject().get("text");
-                        if (text != null) return text.getAsString();
-                    }
+            JsonArray choices = obj.getAsJsonArray("choices");
+            if (choices != null && choices.size() > 0) {
+                JsonObject message = choices.get(0).getAsJsonObject().getAsJsonObject("message");
+                if (message != null) {
+                    JsonElement content = message.get("content");
+                    if (content != null) return content.getAsString();
                 }
             }
         } catch (Exception e) {
-            log.warn("Failed to extract text from Gemini raw response");
+            log.warn("Failed to extract text from {} raw response", getModelName());
         }
         return rawResponse;
     }
 
-    private List<Map<String, String>> parseResponse(String response) {
+    protected List<Map<String, String>> parseResponse(String response) {
         try {
             JsonObject responseObj = gson.fromJson(response, JsonObject.class);
-            JsonArray candidates = responseObj.getAsJsonArray("candidates");
-            if (candidates == null || candidates.size() == 0) {
-                log.warn("No candidates found in Gemini response");
+            JsonArray choices = responseObj.getAsJsonArray("choices");
+            if (choices == null || choices.size() == 0) {
+                log.warn("No choices found in {} response", getModelName());
                 return List.of();
             }
 
-            JsonObject firstCandidate = candidates.get(0).getAsJsonObject();
-            JsonObject content = firstCandidate.getAsJsonObject("content");
-            JsonArray parts = content.getAsJsonArray("parts");
-            if (parts == null || parts.size() == 0) {
-                log.warn("No parts found in Gemini response candidate");
+            JsonObject firstChoice = choices.get(0).getAsJsonObject();
+            JsonObject message = firstChoice.getAsJsonObject("message");
+            if (message == null) {
+                log.warn("No message found in {} response choice", getModelName());
                 return List.of();
             }
 
-            String text = parts.get(0).getAsJsonObject().get("text").getAsString();
+            String text = message.get("content").getAsString();
 
-            // Extract JSON array from text
             int start = text.indexOf('[');
             int end = text.lastIndexOf(']');
             if (start == -1 || end == -1 || end <= start) {
-                log.warn("No JSON array found in Gemini response text: {}", text);
+                log.warn("No JSON array found in {} response text: {}", getModelName(), text);
                 return List.of();
             }
 
@@ -274,7 +229,7 @@ public class GeminiService implements IAiService {
 
             return result;
         } catch (Exception e) {
-            log.error("Failed to parse Gemini response");
+            log.error("Failed to parse {} response", getModelName());
             return List.of();
         }
     }
