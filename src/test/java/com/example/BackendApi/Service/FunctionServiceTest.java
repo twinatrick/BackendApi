@@ -165,6 +165,7 @@ class FunctionServiceTest {
         updateVo.setId(testId.toString());
         updateVo.setName("Test Function");
 
+        when(functionDataAccess.findById(testId)).thenReturn(Optional.of(testFunction));
         when(functionDataAccess.save(any(Function.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         functionService.updateFunction(updateVo);
@@ -196,6 +197,23 @@ class FunctionServiceTest {
         });
 
         assertEquals("Name must not be null", exception.getMessage());
+        verify(functionDataAccess, never()).save(any());
+    }
+
+    @Test
+    void testUpdateFunction_NonExistentId_ThrowsException() {
+        FunctionVo updateVo = new FunctionVo();
+        UUID nonExistentId = UUID.randomUUID();
+        updateVo.setId(nonExistentId.toString());
+        updateVo.setName("Non-existent Function");
+
+        when(functionDataAccess.findById(nonExistentId)).thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            functionService.updateFunction(updateVo);
+        });
+
+        assertEquals("Function not found", exception.getMessage());
         verify(functionDataAccess, never()).save(any());
     }
 

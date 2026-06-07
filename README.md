@@ -359,6 +359,8 @@ DataAccess 層將資料存取邏輯從 Service 中分離，便於測試與替換
 
 - 使用 Spring Cache 抽象層，以 `@Cacheable` / `@CachePut` / `@CacheEvict` 管理
 - Redis 採用 JSON 序列化，支援多型型別
+- 自訂 `CacheErrorHandler`：當 Redis 反序列化失敗時自動清除該快取鍵值，
+  讓下次請求回退至資料庫查詢，避免服務中斷
 - 全 Service 層已加入快取註解，分為三層級 TTL 策略（詳見 `redis快取策略.md`）：
     - **參考資料**（24h）：skills、skillLevels、functions
     - **業務資料**（1-6h）：roles（6h）、companies（6h）、jobPostings（1h）
@@ -376,6 +378,8 @@ DataAccess 層將資料存取邏輯從 Service 中分離，便於測試與替換
 - JWT 驗證失敗直接回傳 401，不進入業務邏輯
 - 通過驗證後將 CustomUserDetails 物件注入 `SecurityContextHolder` 供後續存取
 - 利用 `IgnoreUrlsProvider` 動態掃描 `@Ingnore` 註解，自動配置 `permitAll()` 規則，並保留原本簡潔的開發體驗
+- 透過 `@RequirePermission({"System", "Function", "View"})` 註解在 Controller 方法上，宣告「模組 + 功能 + 操作」三層權限，
+  由 AOP 攔截器自動檢查當前使用者的角色是否具備對應功能權限
 - 登入機制改用 Spring Security 內建之 `AuthenticationManager` 處理密碼比對
 - 密碼儲存與驗證改用 `DelegatingPasswordEncoder`：預設使用 `bcrypt` 進行加密 (新密碼會帶有 `{bcrypt}` 前綴)
   ，同時向下相容舊資料庫中未帶前綴的裸 bcrypt 密碼，保有未來無縫切換其他加密演算法 (如 Argon2) 的擴充彈性

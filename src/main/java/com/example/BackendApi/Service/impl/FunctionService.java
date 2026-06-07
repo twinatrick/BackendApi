@@ -66,7 +66,7 @@ public class FunctionService implements IFunctionService {
         } else if (function.getName() == null) {
             throw new IllegalArgumentException("Name must not be null");
         }
-        if (!functionDataAccess.existsById(function.getId())) {
+        if (functionDataAccess.findById(function.getId()).isEmpty()) {
             throw new IllegalArgumentException("Function not found");
         }
         functionDataAccess.save(function);
