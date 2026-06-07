@@ -63,6 +63,10 @@ public class CachePenetrationProtectionCache implements Cache {
             return () -> null;
         }
 
+        if (!bloomFilterService.mightContain(name, cacheKey)) {
+            return null;
+        }
+
         ValueWrapper result = delegate.get(key);
         if (result != null && result.get() instanceof NullValue) {
             return () -> null;
@@ -76,6 +80,10 @@ public class CachePenetrationProtectionCache implements Cache {
         String cacheKey = toCacheKey(key);
 
         if (Boolean.TRUE.equals(stringRedisTemplate.hasKey(nullKey(cacheKey)))) {
+            return null;
+        }
+
+        if (!bloomFilterService.mightContain(name, cacheKey)) {
             return null;
         }
 
