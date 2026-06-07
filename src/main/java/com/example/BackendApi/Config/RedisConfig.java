@@ -48,6 +48,13 @@ public class RedisConfig implements CachingConfigurer {
     @Value("${redis.cache.ttl-hours:1}")
     private long cacheTtlHours;
 
+    @Value("${cache.ttl-jitter.max-offset:0.3}")
+    private double jitterMaxOffset;
+
+    void setJitterMaxOffset(double jitterMaxOffset) {
+        this.jitterMaxOffset = jitterMaxOffset;
+    }
+
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
         String host = resolveRedisHost();
@@ -121,7 +128,7 @@ public class RedisConfig implements CachingConfigurer {
     }
 
     Duration withJitter(Duration base) {
-        double jitter = ThreadLocalRandom.current().nextDouble(0, 0.3);
+        double jitter = ThreadLocalRandom.current().nextDouble(0, jitterMaxOffset);
         return base.plus(Duration.ofMillis((long) (base.toMillis() * jitter)));
     }
 

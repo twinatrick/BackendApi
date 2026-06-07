@@ -112,6 +112,58 @@ class CachePenetrationProtectionCacheTest {
     }
 
     @Test
+    void get_WhenHasKeyThrows_DegradesGracefully() {
+        when(stringRedisTemplate.hasKey(nullKey)).thenThrow(new RuntimeException("Redis down"));
+
+        Cache.ValueWrapper result = cache.get(testKey);
+
+        assertNull(result);
+        verify(delegate).get(testKey);
+    }
+
+    @Test
+    void get_WhenBloomFilterThrows_DegradesGracefully() {
+        when(stringRedisTemplate.hasKey(nullKey)).thenReturn(false);
+        when(bloomFilterService.mightContain(cacheName, testKey)).thenThrow(new RuntimeException("BF down"));
+
+        Cache.ValueWrapper result = cache.get(testKey);
+
+        assertNull(result);
+        verify(delegate).get(testKey);
+    }
+
+    @Test
+    void get_WhenHasKeyThrowsAndDelegateReturnsValue_ReturnsValue() {
+        String expectedValue = "real-value";
+        when(stringRedisTemplate.hasKey(nullKey)).thenThrow(new RuntimeException("Redis down"));
+        when(delegate.get(testKey)).thenReturn(() -> expectedValue);
+
+        Cache.ValueWrapper result = cache.get(testKey);
+
+        assertNotNull(result);
+        assertEquals(expectedValue, result.get());
+    }
+
+    @Test
+    void put_WhenSetNullMarkerThrows_StillEvictsDelegate() {
+        doThrow(new RuntimeException("Redis down")).when(valueOps).set(eq(nullKey), anyString(), any(Duration.class));
+
+        cache.put(testKey, null);
+
+        verify(delegate).evict(testKey);
+    }
+
+    @Test
+    void put_WhenBloomFilterAddThrows_StillPutsToDelegate() {
+        doThrow(new RuntimeException("BF down")).when(bloomFilterService).add(cacheName, testKey);
+        String value = "real-value";
+
+        cache.put(testKey, value);
+
+        verify(delegate).put(testKey, value);
+    }
+
+    @Test
     void put_WithNullValue_StoresNullMarkerAndEvictsDelegate() {
         cache.put(testKey, null);
 
@@ -137,6 +189,15 @@ class CachePenetrationProtectionCacheTest {
         cache.evict(testKey);
 
         verify(stringRedisTemplate).delete(nullKey);
+        verify(delegate).evict(testKey);
+    }
+
+    @Test
+    void evict_WhenDeleteThrows_StillEvictsDelegate() {
+        doThrow(new RuntimeException("Redis down")).when(stringRedisTemplate).delete(nullKey);
+
+        cache.evict(testKey);
+
         verify(delegate).evict(testKey);
     }
 

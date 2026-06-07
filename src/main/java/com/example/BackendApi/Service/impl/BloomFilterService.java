@@ -1,5 +1,6 @@
 package com.example.BackendApi.Service.impl;
 
+import com.example.BackendApi.Config.BloomFilterProperties;
 import com.example.BackendApi.Service.IBloomFilterService;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
@@ -15,16 +16,15 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 public class BloomFilterService implements IBloomFilterService {
 
-    private static final double DEFAULT_FALSE_PROBABILITY = 0.01;
-
-    private static final long DEFAULT_EXPECTED_INSERTIONS = 10000L;
-
     private final RedissonClient redissonClient;
+
+    private final BloomFilterProperties bloomFilterProperties;
 
     private final Map<String, RBloomFilter<String>> filters = new ConcurrentHashMap<>();
 
-    public BloomFilterService(RedissonClient redissonClient) {
+    public BloomFilterService(RedissonClient redissonClient, BloomFilterProperties bloomFilterProperties) {
         this.redissonClient = redissonClient;
+        this.bloomFilterProperties = bloomFilterProperties;
     }
 
     public boolean mightContain(String cacheName, String key) {
@@ -63,9 +63,11 @@ public class BloomFilterService implements IBloomFilterService {
         return filters.computeIfAbsent(cacheName, name -> {
             RBloomFilter<String> filter = redissonClient.getBloomFilter("bloom:" + name);
             if (!filter.isExists()) {
-                filter.tryInit(DEFAULT_EXPECTED_INSERTIONS, DEFAULT_FALSE_PROBABILITY);
+                long expectedInsertions = bloomFilterProperties.getExpectedInsertions(name);
+                double falseProbability = bloomFilterProperties.getFalseProbability(name);
+                filter.tryInit(expectedInsertions, falseProbability);
                 log.info("初始化布隆過濾器 [bloom:{}] - 預期資料量: {}, 誤判率: {}",
-                        name, DEFAULT_EXPECTED_INSERTIONS, DEFAULT_FALSE_PROBABILITY);
+                        name, expectedInsertions, falseProbability);
             }
             return filter;
         });

@@ -59,11 +59,11 @@ public class CachePenetrationProtectionCache implements Cache {
     public ValueWrapper get(Object key) {
         String cacheKey = toCacheKey(key);
 
-        if (Boolean.TRUE.equals(stringRedisTemplate.hasKey(nullKey(cacheKey)))) {
+        if (hasNullMarker(cacheKey)) {
             return () -> null;
         }
 
-        if (!bloomFilterService.mightContain(name, cacheKey)) {
+        if (!bloomFilterMightContain(cacheKey)) {
             return null;
         }
 
@@ -79,11 +79,11 @@ public class CachePenetrationProtectionCache implements Cache {
     public <T> T get(Object key, Class<T> type) {
         String cacheKey = toCacheKey(key);
 
-        if (Boolean.TRUE.equals(stringRedisTemplate.hasKey(nullKey(cacheKey)))) {
+        if (hasNullMarker(cacheKey)) {
             return null;
         }
 
-        if (!bloomFilterService.mightContain(name, cacheKey)) {
+        if (!bloomFilterMightContain(cacheKey)) {
             return null;
         }
 
@@ -99,7 +99,7 @@ public class CachePenetrationProtectionCache implements Cache {
     public <T> T get(Object key, Callable<T> valueLoader) {
         String cacheKey = toCacheKey(key);
 
-        if (Boolean.TRUE.equals(stringRedisTemplate.hasKey(nullKey(cacheKey)))) {
+        if (hasNullMarker(cacheKey)) {
             return null;
         }
 
@@ -130,14 +130,18 @@ public class CachePenetrationProtectionCache implements Cache {
                     put(key, value);
                     return value;
                 } finally {
-                    lock.unlock();
+                    try {
+                        lock.unlock();
+                    } catch (Exception e) {
+                        log.warn("解鎖異常 [{}] key [{}]: {}", name, key, e.toString());
+                    }
                 }
             }
 
             for (int i = 0; i < 4; i++) {
                 TimeUnit.MILLISECONDS.sleep(25 * (i + 1));
 
-                if (Boolean.TRUE.equals(stringRedisTemplate.hasKey(nullKey(cacheKey)))) {
+                if (hasNullMarker(cacheKey)) {
                     return null;
                 }
 
@@ -152,10 +156,13 @@ public class CachePenetrationProtectionCache implements Cache {
             }
 
             return valueLoader.call();
-        } catch (RuntimeException e) {
-            throw e;
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            log.warn("快取 [{}] key [{}] 鎖/重試異常，降級直接載入: {}", name, key, e.toString());
+            try {
+                return valueLoader.call();
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
         }
     }
 
@@ -164,12 +171,12 @@ public class CachePenetrationProtectionCache implements Cache {
         String cacheKey = toCacheKey(key);
 
         if (value == null) {
-            stringRedisTemplate.opsForValue().set(nullKey(cacheKey), "NULL_MARKER", nullValueTtl);
+            setNullMarker(cacheKey);
             delegate.evict(key);
             return;
         }
 
-        bloomFilterService.add(name, cacheKey);
+        addToBloomFilter(cacheKey);
         delegate.put(key, value);
     }
 
@@ -189,7 +196,7 @@ public class CachePenetrationProtectionCache implements Cache {
     @Override
     public void evict(Object key) {
         String cacheKey = toCacheKey(key);
-        stringRedisTemplate.delete(nullKey(cacheKey));
+        deleteNullMarker(cacheKey);
         delegate.evict(key);
     }
 
@@ -197,6 +204,48 @@ public class CachePenetrationProtectionCache implements Cache {
     public void clear() {
         log.warn("CachePenetrationProtectionCache.clear() called for [{}] - null markers may not be fully cleared", name);
         delegate.clear();
+    }
+
+    private boolean hasNullMarker(String cacheKey) {
+        try {
+            return Boolean.TRUE.equals(stringRedisTemplate.hasKey(nullKey(cacheKey)));
+        } catch (Exception e) {
+            log.warn("null marker 檢查異常 [{}] key [{}]: {}", name, cacheKey, e.toString());
+            return false;
+        }
+    }
+
+    private boolean bloomFilterMightContain(String cacheKey) {
+        try {
+            return bloomFilterService.mightContain(name, cacheKey);
+        } catch (Exception e) {
+            log.warn("BloomFilter 檢查異常 [{}] key [{}]: {}", name, cacheKey, e.toString());
+            return true;
+        }
+    }
+
+    private void setNullMarker(String cacheKey) {
+        try {
+            stringRedisTemplate.opsForValue().set(nullKey(cacheKey), "NULL_MARKER", nullValueTtl);
+        } catch (Exception e) {
+            log.warn("null marker 寫入異常 [{}] key [{}]: {}", name, cacheKey, e.toString());
+        }
+    }
+
+    private void deleteNullMarker(String cacheKey) {
+        try {
+            stringRedisTemplate.delete(nullKey(cacheKey));
+        } catch (Exception e) {
+            log.warn("null marker 刪除異常 [{}] key [{}]: {}", name, cacheKey, e.toString());
+        }
+    }
+
+    private void addToBloomFilter(String cacheKey) {
+        try {
+            bloomFilterService.add(name, cacheKey);
+        } catch (Exception e) {
+            log.warn("BloomFilter 新增異常 [{}] key [{}]: {}", name, cacheKey, e.toString());
+        }
     }
 
     private String nullKey(String key) {
