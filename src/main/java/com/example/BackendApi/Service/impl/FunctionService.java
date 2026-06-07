@@ -52,7 +52,7 @@ public class FunctionService implements IFunctionService {
     }
 
     @Override
-    @Cacheable(value = "functions", unless = "#result == null || #result.isEmpty()")
+    @Cacheable(value = "functions", sync = true)
     public List<FunctionVo> getFunction() {
         return functionDataAccess.findAll().stream().map(functionMapper::toVo).toList();
     }
@@ -146,7 +146,7 @@ public class FunctionService implements IFunctionService {
         return functionDataAccess.findAll(sort).stream().map(functionMapper::toVo).toList();
     }
     @Override
-    @Cacheable(value = "functions", key = "#id", unless = "#result == null")
+    @Cacheable(value = "functions", key = "#id", sync = true)
     public FunctionVo getFunctionById(String id) {
         UUID uuid = mapUuid(id);
         if (uuid == null) {
@@ -158,14 +158,14 @@ public class FunctionService implements IFunctionService {
         return functionMapper.toVo(function);
     }
         @Override
-        @Cacheable(value = "functions", key = "'byname:' + #name", unless = "#result == null")
+        @Cacheable(value = "functions", key = "'byname:' + #name", sync = true)
         public FunctionVo getFunctionByName(String name) {
             Function function = functionDataAccess.findFunctionByName(name);
             return function == null ? null : functionMapper.toVo(function);
         }
 
         @Override
-        @Cacheable(value = "functions", key = "'bynameparent:' + #name + ':' + #parent", unless = "#result == null")
+        @Cacheable(value = "functions", key = "'bynameparent:' + #name + ':' + #parent", sync = true)
         public FunctionVo getFunctionByNameAndParent(String name, String parent) {
             List<Function> functionList = functionDataAccess.findFunctionByNameAndParent(name, parent);
             if (functionList.isEmpty()) {

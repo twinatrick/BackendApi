@@ -77,13 +77,13 @@ public class RoleService implements IRoleService {
     }
 
     @Override
-    @Cacheable(value = "roles", unless = "#result == null || #result.isEmpty()")
+    @Cacheable(value = "roles", sync = true)
     public List<RoleOutVo> getRole() {
         return roleDataAccess.findAll().stream().map(roleMapper::toVo).toList();
     }
 
     @Override
-    @Cacheable(value = "roles", key = "#roleId", unless = "#result == null")
+    @Cacheable(value = "roles", key = "#roleId", sync = true)
     public RoleOutVo getRoleById(String roleId) {
         UUID roleUuid = mapUuid(roleId);
         if (roleUuid == null) {
@@ -432,7 +432,7 @@ public class RoleService implements IRoleService {
 
 
     @Override
-    @Cacheable(value = "roles", key = "'functions:' + #roleId", unless = "#result == null || #result.isEmpty()")
+    @Cacheable(value = "roles", key = "'functions:' + #roleId", sync = true)
     public List<FunctionVo> getFunctionByRole(String roleId) {
         UUID roleUuid = mapUuid(roleId);
         if (roleUuid == null) {
@@ -478,7 +478,7 @@ public class RoleService implements IRoleService {
     }
 
     @Override
-    @Cacheable(value = "roles", key = "'byuser:' + #userId", unless = "#result == null || #result.isEmpty()")
+    @Cacheable(value = "roles", key = "'byuser:' + #userId", sync = true)
     public List<RoleOutVo> getRoleByUser(String userId) {
         UUID userUuid = mapUuid(userId);
         if (userUuid == null) {
@@ -493,7 +493,7 @@ public class RoleService implements IRoleService {
                 .toList();
     }
     @Override
-    @Cacheable(value = "roles", key = "'byname:' + #name", unless = "#result == null")
+    @Cacheable(value = "roles", key = "'byname:' + #name", sync = true)
     public RoleOutVo getRoleByName(String name){
         Role role = roleDataAccess.findRoleByName(name);
         return role == null ? null : roleMapper.toVo(role);

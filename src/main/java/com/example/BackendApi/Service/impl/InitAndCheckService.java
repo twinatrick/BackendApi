@@ -162,6 +162,8 @@ public class InitAndCheckService implements IInitAndCheckService {
                 insertFunctionByList(functionListStr,"");
             }
         }
+
+
         List<FunctionVo> functionList = functionService.getFunction();
         RoleOutVo role = roleService.getRoleByName("admin");
         if (role != null) {
@@ -170,8 +172,8 @@ public class InitAndCheckService implements IInitAndCheckService {
                     .filter(p -> p != null && !p.isBlank())
                     .collect(java.util.stream.Collectors.toSet());
             List<String> leafFunctionIds = functionList.stream()
-                    .filter(f -> !parentIds.contains(f.getId()))
                     .map(FunctionVo::getId)
+                    .filter(id -> !parentIds.contains(id))
                     .toList();
             roleService.roleBindFunction(role.getId().toString(), leafFunctionIds);
         }

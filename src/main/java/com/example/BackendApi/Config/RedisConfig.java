@@ -1,5 +1,6 @@
 package com.example.BackendApi.Config;
 
+import com.example.BackendApi.Service.IBloomFilterService;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
@@ -13,16 +14,21 @@ import org.springframework.cache.interceptor.CacheErrorHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
-import org.springframework.data.redis.cache.RedisCacheManager;
+import org.springframework.data.redis.cache.RedisCacheWriter;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.redisson.api.RedissonClient;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.SerializationException;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 import java.time.Duration;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Configuration
 @EnableCaching
@@ -56,22 +62,24 @@ public class RedisConfig implements CachingConfigurer {
     }
 
     @Bean
-    public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory) {
-        // 配置 ObjectMapper 支援多態類型
+    public CachePenetrationProtectionCacheManager cacheManager(
+            RedisConnectionFactory connectionFactory,
+            StringRedisTemplate stringRedisTemplate,
+            IBloomFilterService bloomFilterService,
+            NullValueTtlProperties nullValueTtlProperties,
+            RedissonClient redissonClient) {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.activateDefaultTyping(
             LaissezFaireSubTypeValidator.instance,
             ObjectMapper.DefaultTyping.NON_FINAL,
             JsonTypeInfo.As.PROPERTY
         );
-        
-        // 建立 JSON 序列化器
-        GenericJackson2JsonRedisSerializer jsonSerializer = 
+
+        GenericJackson2JsonRedisSerializer jsonSerializer =
             new GenericJackson2JsonRedisSerializer(objectMapper);
 
-        // 預設快取配置（從 application.yml 讀取，預設 1 小時）
         RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
-            .entryTtl(Duration.ofHours(cacheTtlHours))
+            .entryTtl(withJitter(Duration.ofHours(cacheTtlHours)))
             .serializeKeysWith(
                 RedisSerializationContext.SerializationPair.fromSerializer(
                     new StringRedisSerializer()
@@ -81,94 +89,40 @@ public class RedisConfig implements CachingConfigurer {
                 RedisSerializationContext.SerializationPair.fromSerializer(jsonSerializer)
             );
 
-        // 使用者快取配置（2 小時）
-        RedisCacheConfiguration usersConfig = defaultConfig
-            .entryTtl(Duration.ofHours(2));
+        Map<String, RedisCacheConfiguration> cacheConfigs = new HashMap<>();
 
-        // AlertCheckLimit 快取配置（與預設相同，1 小時）
-        RedisCacheConfiguration alertCheckLimitConfig = defaultConfig
-            .entryTtl(Duration.ofHours(cacheTtlHours));
+        cacheConfigs.put("users", defaultConfig.entryTtl(withJitter(Duration.ofHours(2))));
+        cacheConfigs.put("alertCheckLimit", defaultConfig.entryTtl(withJitter(Duration.ofHours(cacheTtlHours))));
+        cacheConfigs.put("aquarkData", defaultConfig.entryTtl(withJitter(Duration.ofHours(cacheTtlHours))));
+        cacheConfigs.put("skills", defaultConfig.entryTtl(withJitter(Duration.ofHours(24))));
+        cacheConfigs.put("skillLevels", defaultConfig.entryTtl(withJitter(Duration.ofHours(24))));
+        cacheConfigs.put("roles", defaultConfig.entryTtl(withJitter(Duration.ofHours(6))));
+        cacheConfigs.put("roleFunctions", defaultConfig.entryTtl(withJitter(Duration.ofHours(6))));
+        cacheConfigs.put("functions", defaultConfig.entryTtl(withJitter(Duration.ofHours(24))));
+        cacheConfigs.put("companies", defaultConfig.entryTtl(withJitter(Duration.ofHours(6))));
+        cacheConfigs.put("jobPostings", defaultConfig.entryTtl(withJitter(Duration.ofHours(1))));
+        cacheConfigs.put("projectSkills", defaultConfig.entryTtl(withJitter(Duration.ofMinutes(30))));
+        cacheConfigs.put("projectMemberSkills", defaultConfig.entryTtl(withJitter(Duration.ofMinutes(30))));
+        cacheConfigs.put("userProjects", defaultConfig.entryTtl(withJitter(Duration.ofMinutes(10))));
+        cacheConfigs.put("currentUserSkills", defaultConfig.entryTtl(withJitter(Duration.ofMinutes(10))));
+        cacheConfigs.put("userJobLinks", defaultConfig.entryTtl(withJitter(Duration.ofMinutes(10))));
+        cacheConfigs.put("userRoles", defaultConfig.entryTtl(withJitter(Duration.ofMinutes(10))));
+        cacheConfigs.put("aquarkDataAvg", defaultConfig.entryTtl(withJitter(Duration.ofMinutes(30))));
 
-        // AquarkData 快取配置（與預設相同，1 小時）
-        RedisCacheConfiguration aquarkDataConfig = defaultConfig
-            .entryTtl(Duration.ofHours(cacheTtlHours));
+        LOGGER.info("Redis 快取配置完成 - 預設 TTL: {} 小時 (含亂數偏移)", cacheTtlHours);
 
-        // 參考資料 - 技能（24 小時）
-        RedisCacheConfiguration skillsConfig = defaultConfig
-            .entryTtl(Duration.ofHours(24));
+        RedisCacheWriter cacheWriter = RedisCacheWriter.nonLockingRedisCacheWriter(connectionFactory);
 
-        // 參考資料 - 技能等級（24 小時）
-        RedisCacheConfiguration skillLevelsConfig = defaultConfig
-            .entryTtl(Duration.ofHours(24));
+        return new CachePenetrationProtectionCacheManager(
+            cacheWriter, defaultConfig, cacheConfigs,
+            stringRedisTemplate, bloomFilterService, nullValueTtlProperties,
+            redissonClient
+        );
+    }
 
-        // 參考資料 - 角色（6 小時）
-        RedisCacheConfiguration rolesConfig = defaultConfig
-            .entryTtl(Duration.ofHours(6));
-
-        // 參考資料 - 角色功能（6 小時）
-        RedisCacheConfiguration roleFunctionsConfig = defaultConfig
-            .entryTtl(Duration.ofHours(6));
-
-        // 參考資料 - 功能（24 小時）
-        RedisCacheConfiguration functionsConfig = defaultConfig
-            .entryTtl(Duration.ofHours(24));
-
-        // 業務資料 - 公司（6 小時）
-        RedisCacheConfiguration companiesConfig = defaultConfig
-            .entryTtl(Duration.ofHours(6));
-
-        // 業務資料 - 職缺（1 小時）
-        RedisCacheConfiguration jobPostingsConfig = defaultConfig
-            .entryTtl(Duration.ofHours(1));
-
-        // 業務資料 - 專案技能（30 分鐘）
-        RedisCacheConfiguration projectSkillsConfig = defaultConfig
-            .entryTtl(Duration.ofMinutes(30));
-
-        // 使用者資料 - 目前使用者專案（10 分鐘）
-        RedisCacheConfiguration userProjectsConfig = defaultConfig
-            .entryTtl(Duration.ofMinutes(10));
-
-        // 使用者資料 - 目前使用者技能（10 分鐘）
-        RedisCacheConfiguration currentUserSkillsConfig = defaultConfig
-            .entryTtl(Duration.ofMinutes(10));
-
-        // 使用者資料 - 使用者職缺連結（10 分鐘）
-        RedisCacheConfiguration userJobLinksConfig = defaultConfig
-            .entryTtl(Duration.ofMinutes(10));
-
-        // 使用者資料 - 使用者角色（10 分鐘）
-        RedisCacheConfiguration userRolesConfig = defaultConfig
-            .entryTtl(Duration.ofMinutes(10));
-
-        // 運算資料 - 平均數據（30 分鐘）
-        RedisCacheConfiguration aquarkDataAvgConfig = defaultConfig
-            .entryTtl(Duration.ofMinutes(30));
-
-        LOGGER.info("Redis 快取配置完成 - 預設 TTL: {} 小時, users: 2 小時, skills: 24 小時, roles: 6 小時, functions: 24 小時", cacheTtlHours);
-
-        RedisCacheManager cacheManager = RedisCacheManager.builder(connectionFactory)
-            .cacheDefaults(defaultConfig)
-            .withCacheConfiguration("users", usersConfig)
-            .withCacheConfiguration("alertCheckLimit", alertCheckLimitConfig)
-            .withCacheConfiguration("aquarkData", aquarkDataConfig)
-            .withCacheConfiguration("skills", skillsConfig)
-            .withCacheConfiguration("skillLevels", skillLevelsConfig)
-            .withCacheConfiguration("roles", rolesConfig)
-            .withCacheConfiguration("roleFunctions", roleFunctionsConfig)
-            .withCacheConfiguration("functions", functionsConfig)
-            .withCacheConfiguration("companies", companiesConfig)
-            .withCacheConfiguration("jobPostings", jobPostingsConfig)
-            .withCacheConfiguration("projectSkills", projectSkillsConfig)
-            .withCacheConfiguration("projectMemberSkills", projectSkillsConfig)
-            .withCacheConfiguration("userProjects", userProjectsConfig)
-            .withCacheConfiguration("currentUserSkills", currentUserSkillsConfig)
-            .withCacheConfiguration("userJobLinks", userJobLinksConfig)
-            .withCacheConfiguration("userRoles", userRolesConfig)
-            .withCacheConfiguration("aquarkDataAvg", aquarkDataAvgConfig)
-            .build();
-
-        return cacheManager;
+    Duration withJitter(Duration base) {
+        double jitter = ThreadLocalRandom.current().nextDouble(0, 0.3);
+        return base.plus(Duration.ofMillis((long) (base.toMillis() * jitter)));
     }
 
     /**

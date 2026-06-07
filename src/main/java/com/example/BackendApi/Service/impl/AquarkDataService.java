@@ -141,7 +141,7 @@ public class AquarkDataService implements IAquarkDataService {
 
     }
 
-    @Cacheable(value = "aquarkData", key = "#aquarkDataRaw.station_id + '_' + #aquarkDataRaw.trans_time", unless = "#result == null")
+    @Cacheable(value = "aquarkData", key = "#aquarkDataRaw.station_id + '_' + #aquarkDataRaw.trans_time", sync = true)
     @Override
     public AquarkDataRaw getAquarkData(AquarkDataRaw aquarkDataRaw) {
         AquarkData aquarkData = aquarkDataMapper.toEntity(aquarkDataRaw);

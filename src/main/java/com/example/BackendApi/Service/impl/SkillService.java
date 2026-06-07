@@ -170,7 +170,7 @@ public class SkillService implements ISkillService {
     }
 
     @Override
-    @Cacheable(value = "skills", unless = "#result == null || #result.isEmpty()")
+    @Cacheable(value = "skills", sync = true)
     public List<SkillVo> getSkill() {
         return skillDataAccess.findAll().stream().map(skillMapper::toVo).toList();
     }
@@ -230,7 +230,7 @@ public class SkillService implements ISkillService {
     }
 
     @Override
-    @Cacheable(value = "skills", unless = "#result == null || #result.isEmpty()")
+    @Cacheable(value = "skills", sync = true)
     public List<SkillLevelVo> getSkillLevels(String skillId) {
         UUID skillUuid = mapUuid(skillId);
         if (skillUuid == null) {
@@ -469,7 +469,7 @@ public class SkillService implements ISkillService {
     }
     
     @Override
-    @Cacheable(value = "currentUserSkills", unless = "#result == null")
+    @Cacheable(value = "currentUserSkills", sync = true)
     public List<CurrentUserSkillVo> getCurrentUserSkills() {
         List<CurrentUserSkillVo> result = new ArrayList<>();
         Set<UUID> seenSkillIds = new HashSet<>();

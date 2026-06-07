@@ -467,40 +467,81 @@ void deleteLimitEntity(AlertCheckLimit entity);
 | **級聯清除** | `@Caching(evict = {...})` | 功能/角色變更時同時清除多個快取 |
 | **TTL 自動過期** | `entryTtl(Duration.ofHours(n))` | 所有快取的最終保障 |
 
-### 快取穿透防護
-- 所有 `@Cacheable` 搭配 `unless = "#result == null"`，避免快取空值
-- 參考資料使用 `unless = "#result.isEmpty()"`，避免快取空列表
+### 快取穿透防護（已實作）
 
-### 快取雪崩防護
-- 不同層級資料使用不同 TTL，避免同時過期
-- 參考資料 TTL 較長（6~24h），業務資料適中（30min~6h），使用者資料較短（10min）
+採用雙層防護機制：
+
+#### 第一層：空值快取（Null Value Caching）
+- 自訂 `CachePenetrationProtectionCache` 包裝 `RedisCache`
+- 當 DB 查詢結果為 null 時，存入 `NullValue` 佔位物件（短 TTL，預設 5 分鐘）
+- `get()` 時自動判讀 `NullValue` 並轉換為 null 回傳
+- 所有 `@Cacheable` 已移除 `unless = "#result == null"` 條件
+
+#### 第二層：布隆過濾器（Bloom Filter）— 僅寫入路徑
+- 基於 **Redisson RBloomFilter** 實作（`IBloomFilterService`）
+- 每個 cache namespace 獨立過濾器，Redis key 格式：`bloom:{cacheName}`
+- 預期資料量：10,000，誤判率：1%
+- 啟動時透過 `BloomFilterInitializer` 從 DB 預先填充
+- 資料新增/更新（`put()`）時自動加入過濾器
+- **不參與讀取路徑**：因 SimpleKey.EMPTY 與名稱型 key（如 `'byname:admin'`）非 UUID 格式，BF 無法涵蓋，讀取防護依賴空值快取 + 分散式鎖
+- 優點：分散式儲存於 Redis，多實例共享；持久化不遺失
+
+#### 流程示意
+```
+請求 key → CachePenetrationProtectionCache.get(key)
+  ├─ ① 空值快取命中？ → YES → 回傳 null (快取命中)
+  └─ ② 正常快取查找 → 命中 → 回傳值 / 未命中 → DB → 寫入快取
+                                                          ├─ result ≠ null → 寫入 Redis + BF.add(key)
+                                                          └─ result = null  → 寫入空值標記 (short TTL)
+```
+
+### 快取雪崩防護（已實作）
+
+採用三層防護機制：
+
+#### 第一層：TTL 隨機化
+- 所有 cache 的 TTL 在基礎值上加入 **0~30% 的亂數偏移**
+- 例：`userProjects` 基礎 10 分鐘 → 實際 10~13 分鐘隨機
+- 每個 key 獨立過期，不再集體失效
+- 實作於 `RedisConfig.withJitter()`
+
+#### 第二層：分散式鎖（Redis RLock）
+- 當 `@Cacheable(sync=true)` 觸發 `get(key, valueLoader)` 時
+- 使用 Redisson `RLock("lock:cache:{name}:{key}")` 進行分散式鎖定
+- **只允許一個執行緒查 DB**，其他執行緒等待 200ms 後直接查 DB（防止死鎖）
+- 跨 Docker 實例也有效
+- 實作於 `CachePenetrationProtectionCache.get(key, valueLoader)`
+
+#### 第三層：`@Cacheable(sync = true)`
+- 所有 30 處 `@Cacheable` 已加入 `sync = true`
+- 觸發 Spring Cache 的 `get(key, valueLoader)` 路徑
+- 與分散式鎖配合，形成多層防護
+
+#### 防護流程
+```
+多個請求同時打到同一過期的 key
+  ├─ ① 只有第一個成功取得 RLock
+  │    ├─ 雙重檢查快取（double-check）
+  │    └─ valueLoader.call() 查 DB → 寫入快取 → 回傳
+  ├─ ② 其他請求
+  │    ├─ 鎖競爭失敗 → 等待 200ms
+  │    └─ 雙重檢查快取 → 命中 → 回傳 (無 DB 查詢)
+  └─ ③ 鎖超時 (200ms) → 降級直接查 DB（防止死鎖）
+```
 
 ---
 
-## 八、RedisConfig 擴充配置
+## 八、相關檔案說明
 
-```java
-// 需新增的快取名稱空間
-function redisCacheManager(RedisConnectionFactory connectionFactory) {
-
-    return RedisCacheManager.builder(connectionFactory)
-            .cacheDefaults(defaultConfig)
-            .withCacheConfiguration("skills", defaultConfig.entryTtl(Duration.ofHours(24)))
-            .withCacheConfiguration("skillLevels", defaultConfig.entryTtl(Duration.ofHours(24)))
-            .withCacheConfiguration("roles", defaultConfig.entryTtl(Duration.ofHours(6)))
-            .withCacheConfiguration("roleFunctions", defaultConfig.entryTtl(Duration.ofHours(6)))
-            .withCacheConfiguration("functions", defaultConfig.entryTtl(Duration.ofHours(24)))
-            .withCacheConfiguration("companies", defaultConfig.entryTtl(Duration.ofHours(6)))
-            .withCacheConfiguration("jobPostings", defaultConfig.entryTtl(Duration.ofHours(1)))
-            .withCacheConfiguration("projectSkills", defaultConfig.entryTtl(Duration.ofMinutes(30)))
-            .withCacheConfiguration("projectMemberSkills", defaultConfig.entryTtl(Duration.ofMinutes(30)))
-            .withCacheConfiguration("userProjects", defaultConfig.entryTtl(Duration.ofMinutes(10)))
-            .withCacheConfiguration("currentUserSkills", defaultConfig.entryTtl(Duration.ofMinutes(10)))
-            .withCacheConfiguration("userJobLinks", defaultConfig.entryTtl(Duration.ofMinutes(10)))
-            .withCacheConfiguration("userRoles", defaultConfig.entryTtl(Duration.ofMinutes(10)))
-            .withCacheConfiguration("aquarkDataAvg", defaultConfig.entryTtl(Duration.ofMinutes(30)));
-}
-```
+| 檔案 | 說明 |
+|------|------|
+| `Service/IBloomFilterService.java` | 布隆過濾器服務介面 |
+| `Service/impl/BloomFilterService.java` | 布隆過濾器實作（Redisson RBloomFilter） |
+| `Config/BloomFilterInitializer.java` | 啟動時從 DB 填充過濾器 |
+| `Config/CachePenetrationProtectionCache.java` | 自訂 Cache 包裝（BF + Null Value） |
+| `Config/CachePenetrationProtectionCacheManager.java` | 自訂 CacheManager |
+| `Config/NullValueTtlProperties.java` | 空值 TTL 配置屬性 |
+| `Util/NullValue.java` | 可序列化的空值佔位 POJO |
 
 ---
 
@@ -513,3 +554,5 @@ function redisCacheManager(RedisConnectionFactory connectionFactory) {
 | **Phase 2 - 業務** | 實作 Company、JobPosting、Project 快取 | 3 個 Service |
 | **Phase 3 - 使用者** | 實作 UserJobLink、UserProjects、CurrentUserSkills 快取 | 3 個 Service |
 | **Phase 4 - 優化** | 實作 AquarkData 平均運算快取 | 1 個 Service |
+| **Phase 5 - 穿透防護** | 實作 Bloom Filter + Null Value 雙層快取穿透防護 ✅ | 9 Service + RedisConfig |
+| **Phase 6 - 雪崩防護** | TTL 隨機化 + 分散式鎖 + sync=true ✅ | 9 Service + RedisConfig + Cache |
