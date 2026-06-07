@@ -3,8 +3,10 @@ package com.example.BackendApi.Service.impl;
 import com.example.BackendApi.Crawler.impl.CompositeJobCrawler;
 import com.example.BackendApi.DataAccess.ICompanyDataAccess;
 import com.example.BackendApi.DataAccess.IJobPostingDataAccess;
+import com.example.BackendApi.Dto.Vo.Common.PageResult;
 import com.example.BackendApi.Dto.Vo.CreateJobPostingRequest;
 import com.example.BackendApi.Dto.Vo.JobPostingVo;
+import com.example.BackendApi.Dto.Vo.Search.JobPostingSearchQuery;
 import com.example.BackendApi.Entity.Company;
 import com.example.BackendApi.Entity.JobPosting;
 import com.example.BackendApi.Mapper.JobPostingMapper;
@@ -15,9 +17,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -159,38 +163,149 @@ public class JobPostingService implements IJobPostingService {
         Company company = companyDataAccess.findById(uuid)
                 .orElseThrow(() -> new IllegalArgumentException("Company not found"));
 
-        log.info("Starting job scraping for company: {} ({})", company.getName(), company.getWebsite());
+        if (company.getWebsites() == null || company.getWebsites().isEmpty()) {
+            log.warn("Company {} has no websites to scrape", company.getName());
+            return List.of();
+        }
 
-        // Step 1: Crawl the company website
-        String htmlContent = jobCrawler.crawl(company.getWebsite());
+        log.info("Starting job scraping for company: {} ({} websites)", company.getName(), company.getWebsites().size());
 
-        // Step 2: Send to Gemini for analysis
-        List<Map<String, String>> analyzedJobs = geminiService.analyzeJobPostings(company.getName(), htmlContent);
+        List<JobPostingVo> allSavedJobs = new ArrayList<>();
 
-        log.info("Gemini analysis returned {} job postings for company: {}", analyzedJobs.size(), company.getName());
+        for (var companyWebsite : company.getWebsites()) {
+            String url = companyWebsite.getUrl();
+            log.info("Crawling website: {}", url);
 
-        // Step 3: Save analyzed jobs to database
-        List<JobPostingVo> savedJobs = new ArrayList<>();
-        for (Map<String, String> jobData : analyzedJobs) {
+            String htmlContent;
             try {
-                JobPosting jobPosting = new JobPosting();
-                jobPosting.setCompany(company);
-                jobPosting.setTitle(jobData.getOrDefault("title", "Unknown Title"));
-                jobPosting.setUrl(jobData.getOrDefault("url", ""));
-                jobPosting.setDescription(jobData.getOrDefault("description", ""));
-                jobPosting.setRequirements(jobData.getOrDefault("requirements", ""));
-                jobPosting.setResponsibilities(jobData.getOrDefault("responsibilities", ""));
-                jobPosting.setSalaryRange(jobData.getOrDefault("salaryRange", ""));
-
-                jobPosting = jobPostingDataAccess.save(jobPosting);
-                savedJobs.add(jobPostingMapper.toVo(jobPosting));
+                htmlContent = jobCrawler.crawl(url);
             } catch (Exception e) {
-                log.error("Failed to save job posting for company: {}", company.getName(), e);
+                log.warn("Failed to crawl URL {}: {}", url, e.getMessage());
+                continue;
+            }
+
+            List<Map<String, String>> analyzedJobs = geminiService.analyzeJobPostings(company.getName(), htmlContent);
+            log.info("Gemini returned {} jobs from URL: {}", analyzedJobs.size(), url);
+
+            List<JobPosting> existingJobs = jobPostingDataAccess.findByCompanyId(uuid);
+
+            for (Map<String, String> jobData : analyzedJobs) {
+                try {
+                    String title = jobData.getOrDefault("title", "Unknown Title");
+                    String salaryRange = jobData.getOrDefault("salaryRange", "");
+
+                    JobPosting matched = findMatch(existingJobs, title, salaryRange);
+                    if (matched != null) {
+                        boolean updated = updateIfChanged(matched, jobData);
+                        if (updated) {
+                            jobPostingDataAccess.save(matched);
+                            allSavedJobs.add(jobPostingMapper.toVo(matched));
+                            log.info("Updated job: {} for company: {}", title, company.getName());
+                        }
+                        continue;
+                    }
+
+                    JobPosting jobPosting = new JobPosting();
+                    jobPosting.setCompany(company);
+                    jobPosting.setTitle(title);
+                    jobPosting.setUrl(jobData.getOrDefault("url", ""));
+                    jobPosting.setDescription(jobData.getOrDefault("description", ""));
+                    jobPosting.setRequirements(jobData.getOrDefault("requirements", ""));
+                    jobPosting.setResponsibilities(jobData.getOrDefault("responsibilities", ""));
+                    jobPosting.setSalaryRange(salaryRange);
+
+                    jobPosting = jobPostingDataAccess.save(jobPosting);
+                    allSavedJobs.add(jobPostingMapper.toVo(jobPosting));
+                    log.info("Created new job: {} for company: {}", title, company.getName());
+                } catch (Exception e) {
+                    log.error("Failed to process job posting for company: {}", company.getName(), e);
+                }
             }
         }
 
-        log.info("Successfully saved {} job postings for company: {}", savedJobs.size(), company.getName());
-        return savedJobs;
+        company.setLastScrapedAt(LocalDate.now());
+        companyDataAccess.save(company);
+
+        log.info("Completed scraping for company: {}, total saved/updated: {}", company.getName(), allSavedJobs.size());
+        return allSavedJobs;
+    }
+
+    @Override
+    @Transactional
+    @Caching(evict = {
+        @CacheEvict(value = "jobPostings", allEntries = true),
+        @CacheEvict(value = "companies", allEntries = true)
+    })
+    public void scrapeAndAnalyzeAllCompanies() {
+        List<Company> allCompanies = companyDataAccess.findAll();
+        LocalDate today = LocalDate.now();
+
+        for (Company company : allCompanies) {
+            if (today.equals(company.getLastScrapedAt())) {
+                log.info("Skip company {}: already scraped today", company.getName());
+                continue;
+            }
+            try {
+                scrapeAndAnalyzeJobs(company.getId().toString());
+            } catch (Exception e) {
+                log.error("Failed to scrape company: {}", company.getName(), e);
+            }
+        }
+    }
+
+    @Override
+    @Cacheable(value = "jobPostings", key = "'search:' + #query.toString()", unless = "#result == null || #result.content.isEmpty()")
+    public PageResult<JobPostingVo> searchJobPostings(JobPostingSearchQuery query) {
+        Page<JobPosting> page = jobPostingDataAccess.searchJobPostings(query);
+        List<JobPostingVo> content = page.getContent().stream()
+                .map(jobPostingMapper::toVo)
+                .toList();
+        return PageResult.of(page, content);
+    }
+
+    private JobPosting findMatch(List<JobPosting> existingJobs, String title, String salaryRange) {
+        if (title == null || title.isBlank()) {
+            return null;
+        }
+        for (JobPosting jp : existingJobs) {
+            boolean titleMatch = title.equalsIgnoreCase(jp.getTitle());
+            boolean salaryMatch = (salaryRange == null || salaryRange.isBlank())
+                    || (jp.getSalaryRange() != null && jp.getSalaryRange().equals(salaryRange));
+            if (titleMatch && salaryMatch) {
+                return jp;
+            }
+        }
+        return null;
+    }
+
+    private boolean updateIfChanged(JobPosting existing, Map<String, String> newData) {
+        boolean changed = false;
+        String newUrl = newData.getOrDefault("url", "");
+        if (!newUrl.equals(existing.getUrl() != null ? existing.getUrl() : "")) {
+            existing.setUrl(newUrl);
+            changed = true;
+        }
+        String newDesc = newData.getOrDefault("description", "");
+        if (!newDesc.equals(existing.getDescription() != null ? existing.getDescription() : "")) {
+            existing.setDescription(newDesc);
+            changed = true;
+        }
+        String newReq = newData.getOrDefault("requirements", "");
+        if (!newReq.equals(existing.getRequirements() != null ? existing.getRequirements() : "")) {
+            existing.setRequirements(newReq);
+            changed = true;
+        }
+        String newResp = newData.getOrDefault("responsibilities", "");
+        if (!newResp.equals(existing.getResponsibilities() != null ? existing.getResponsibilities() : "")) {
+            existing.setResponsibilities(newResp);
+            changed = true;
+        }
+        String newSalary = newData.getOrDefault("salaryRange", "");
+        if (!newSalary.equals(existing.getSalaryRange() != null ? existing.getSalaryRange() : "")) {
+            existing.setSalaryRange(newSalary);
+            changed = true;
+        }
+        return changed;
     }
 
     private UUID mapUuid(String id) {

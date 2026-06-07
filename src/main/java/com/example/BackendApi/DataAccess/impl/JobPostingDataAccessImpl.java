@@ -1,9 +1,14 @@
 package com.example.BackendApi.DataAccess.impl;
 
 import com.example.BackendApi.DataAccess.IJobPostingDataAccess;
+import com.example.BackendApi.DataAccess.specification.JobPostingSpecification;
+import com.example.BackendApi.Dto.Vo.Search.JobPostingSearchQuery;
 import com.example.BackendApi.Entity.JobPosting;
 import com.example.BackendApi.Repository.JobPostingRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -46,5 +51,16 @@ public class JobPostingDataAccessImpl implements IJobPostingDataAccess {
         return jobPostingRepository.findAll().stream()
                 .filter(jp -> jp.getCompany().getId().equals(companyId))
                 .toList();
+    }
+
+    @Override
+    public Page<JobPosting> searchJobPostings(JobPostingSearchQuery query) {
+        Sort sort = Sort.by(
+                "asc".equalsIgnoreCase(query.getNormalizedSortDir())
+                        ? Sort.Direction.ASC : Sort.Direction.DESC,
+                query.getSortBy()
+        );
+        PageRequest pageRequest = PageRequest.of(query.getPage(), query.getSize(), sort);
+        return jobPostingRepository.findAll(JobPostingSpecification.buildSpecification(query), pageRequest);
     }
 }
