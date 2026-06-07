@@ -128,6 +128,11 @@ public class CachePenetrationProtectionCache implements Cache {
 
             for (int i = 0; i < 4; i++) {
                 TimeUnit.MILLISECONDS.sleep(25 * (i + 1));
+
+                if (Boolean.TRUE.equals(stringRedisTemplate.hasKey(nullKey(cacheKey)))) {
+                    return null;
+                }
+
                 ValueWrapper fallbackCheck = delegate.get(key);
                 if (fallbackCheck != null) {
                     Object v = fallbackCheck.get();
@@ -151,7 +156,8 @@ public class CachePenetrationProtectionCache implements Cache {
         String cacheKey = toCacheKey(key);
 
         if (value == null) {
-            stringRedisTemplate.opsForValue().set(nullKey(cacheKey), "", nullValueTtl);
+            stringRedisTemplate.opsForValue().set(nullKey(cacheKey), "NULL_MARKER", nullValueTtl);
+            delegate.evict(key);
             return;
         }
 

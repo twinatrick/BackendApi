@@ -298,7 +298,8 @@ class CacheAvalancheTest {
         String result = cache.get(testKey, valueLoader);
         assertNull(result);
         assertEquals(1, loadCount.get());
-        verify(valueOps).set(eq(nullKey), eq(""), any(Duration.class));
+        verify(valueOps).set(eq(nullKey), eq("NULL_MARKER"), any(Duration.class));
+        verify(delegate).evict(testKey);
     }
 
     @Test

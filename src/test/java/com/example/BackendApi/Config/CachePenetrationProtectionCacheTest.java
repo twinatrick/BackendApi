@@ -100,10 +100,11 @@ class CachePenetrationProtectionCacheTest {
     }
 
     @Test
-    void put_WithNullValue_StoresNullMarker() {
+    void put_WithNullValue_StoresNullMarkerAndEvictsDelegate() {
         cache.put(testKey, null);
 
-        verify(valueOps).set(nullKey, "", nullTtl);
+        verify(valueOps).set(nullKey, "NULL_MARKER", nullTtl);
+        verify(delegate).evict(testKey);
         verify(delegate, never()).put(any(), any());
         verify(bloomFilterService, never()).add(anyString(), anyString());
     }
