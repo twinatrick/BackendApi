@@ -28,7 +28,10 @@ public class BloomFilterService implements IBloomFilterService {
     }
 
     public boolean mightContain(String cacheName, String key) {
-        RBloomFilter<String> filter = getOrCreate(cacheName);
+        RBloomFilter<String> filter = filters.get(cacheName);
+        if (filter == null) {
+            return true;
+        }
         return filter.contains(key);
     }
 

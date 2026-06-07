@@ -32,6 +32,7 @@ class BloomFilterServiceTest {
         when(bloomFilter.contains("existing-key")).thenReturn(true);
 
         BloomFilterService service = new BloomFilterService(redissonClient);
+        service.count("test-cache"); // 讓 filter 先被快取到本機
         assertTrue(service.mightContain("test-cache", "existing-key"));
     }
 
@@ -42,6 +43,7 @@ class BloomFilterServiceTest {
         when(bloomFilter.contains("unknown-key")).thenReturn(false);
 
         BloomFilterService service = new BloomFilterService(redissonClient);
+        service.count("test-cache"); // 讓 filter 先被快取到本機
         assertFalse(service.mightContain("test-cache", "unknown-key"));
     }
 
@@ -75,7 +77,7 @@ class BloomFilterServiceTest {
         when(bloomFilter.isExists()).thenReturn(false);
 
         BloomFilterService service = new BloomFilterService(redissonClient);
-        service.mightContain("new-cache", "key");
+        service.count("new-cache");
 
         verify(bloomFilter).tryInit(10000L, 0.01);
     }
@@ -86,8 +88,8 @@ class BloomFilterServiceTest {
         when(bloomFilter.isExists()).thenReturn(true);
 
         BloomFilterService service = new BloomFilterService(redissonClient);
-        service.mightContain("existing-cache", "key1");
-        service.mightContain("existing-cache", "key2");
+        service.count("existing-cache"); // 首次調用 → 快取 filter
+        service.count("existing-cache"); // 第二次調用 → 複用 filter
 
         verify(bloomFilter, never()).tryInit(anyLong(), anyDouble());
     }

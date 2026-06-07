@@ -50,6 +50,7 @@ class CachePenetrationProtectionCacheTest {
     @BeforeEach
     void setUp() {
         when(stringRedisTemplate.opsForValue()).thenReturn(valueOps);
+        when(bloomFilterService.mightContain(cacheName, testKey)).thenReturn(true);
         cache = new CachePenetrationProtectionCache(
                 cacheName, delegate, stringRedisTemplate,
                 bloomFilterService, redissonClient, nullTtl);
@@ -63,6 +64,17 @@ class CachePenetrationProtectionCacheTest {
 
         assertNotNull(result);
         assertNull(result.get());
+        verify(delegate, never()).get(any());
+    }
+
+    @Test
+    void get_WhenBloomFilterSaysNo_ReturnsNullWithoutQueryingDelegate() {
+        when(stringRedisTemplate.hasKey(nullKey)).thenReturn(false);
+        when(bloomFilterService.mightContain(cacheName, testKey)).thenReturn(false);
+
+        Cache.ValueWrapper result = cache.get(testKey);
+
+        assertNull(result);
         verify(delegate, never()).get(any());
     }
 
