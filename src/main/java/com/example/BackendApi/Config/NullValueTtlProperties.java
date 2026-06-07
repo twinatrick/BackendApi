@@ -13,7 +13,7 @@ import java.util.Map;
 @ConfigurationProperties(prefix = "cache.penetration")
 public class NullValueTtlProperties {
 
-    private Duration defaultNullTtl = Duration.ofMinutes(5);
+    private Duration defaultNullTtl = Duration.ofMinutes(3);
 
     private Map<String, Duration> nullTtlOverrides = new HashMap<>();
 

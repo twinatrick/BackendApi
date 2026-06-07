@@ -103,6 +103,10 @@ public class CachePenetrationProtectionCache implements Cache {
             return null;
         }
 
+        if (!bloomFilterMightContain(cacheKey)) {
+            return null;
+        }
+
         ValueWrapper cached = delegate.get(key);
         if (cached != null) {
             Object value = cached.get();
@@ -176,6 +180,7 @@ public class CachePenetrationProtectionCache implements Cache {
             return;
         }
 
+        deleteNullMarker(cacheKey);
         addToBloomFilter(cacheKey);
         delegate.put(key, value);
     }

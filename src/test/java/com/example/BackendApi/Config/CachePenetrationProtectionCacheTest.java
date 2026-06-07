@@ -179,6 +179,7 @@ class CachePenetrationProtectionCacheTest {
 
         cache.put(testKey, value);
 
+        verify(stringRedisTemplate).delete(nullKey);
         verify(bloomFilterService).add(cacheName, testKey);
         verify(delegate).put(testKey, value);
         verify(valueOps, never()).set(anyString(), anyString(), any(Duration.class));

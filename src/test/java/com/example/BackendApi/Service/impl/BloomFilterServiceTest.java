@@ -82,7 +82,7 @@ class BloomFilterServiceTest {
         BloomFilterService service = new BloomFilterService(redissonClient, defaultProps);
         service.count("new-cache");
 
-        verify(bloomFilter).tryInit(10000L, 0.01);
+        verify(bloomFilter).tryInit(10000L, 0.001);
     }
 
     @Test

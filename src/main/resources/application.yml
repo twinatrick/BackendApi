@@ -40,7 +40,7 @@ kafka:
 cache:
   bloom-filter:
     default-expected-insertions: 10000
-    default-false-probability: 0.01
+    default-false-probability: 0.001
     overrides:
       users:
         expected-insertions: 50000
