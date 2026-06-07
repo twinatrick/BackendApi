@@ -21,4 +21,7 @@ public interface FunctionRepository extends JpaRepository<Function, UUID>, JpaSp
 
     @Query("select f from Function f where f.name = ?1 and f.parent = ?2")
     List<Function> findFunctionByNameAndParent(String name, String parent);
+
+    @Query("SELECT f.id FROM Function f")
+    List<UUID> findAllIds();
 }

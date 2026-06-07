@@ -16,4 +16,7 @@ public interface SkillRepository extends JpaRepository<Skill, UUID>, JpaSpecific
     @Modifying
     @Query("delete from Skill s where s.id = :skillId")
     void deleteByIdHard(@Param("skillId") UUID skillId);
+
+    @Query("SELECT s.id FROM Skill s")
+    List<UUID> findAllIds();
 }

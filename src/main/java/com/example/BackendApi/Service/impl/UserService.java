@@ -52,8 +52,8 @@ public class UserService implements IUserService {
     private final PasswordEncoder passwordEncoder;
     private final User currentUser;
     @Caching(put = {
-        @CachePut(value = "users", key = "#result.id", unless = "#result == null"),
-        @CachePut(value = "users", key = "#result.email", unless = "#result == null")
+        @CachePut(value = "users", key = "#result.id"),
+        @CachePut(value = "users", key = "#result.email")
     })
     @Override
     public UserVo createUser(UserVo userVo) {
@@ -73,7 +73,7 @@ public class UserService implements IUserService {
     public List<UserVo> getUserByEmail(String email) {
         return userDataAccess.findByEmail(email).map(userMapper::toVo).map(List::of).orElseGet(List::of);
     }
-    @Cacheable(value = "users", key = "#email", unless = "#result == null")
+    @Cacheable(value = "users", key = "#email", sync = true)
     @Override
     public UserVo getOnlyUserByEmail(String email) {
         User user = userDataAccess.findByEmail(email).orElseThrow(
@@ -81,7 +81,7 @@ public class UserService implements IUserService {
         );
         return userMapper.toVo(user);
     }
-    @Cacheable(value = "users", key = "#id", unless = "#result == null")
+    @Cacheable(value = "users", key = "#id", sync = true)
     @Override
     public UserVo getUserById(String id) {
         UUID userId = mapUuid(id);
@@ -95,8 +95,8 @@ public class UserService implements IUserService {
     }
 
     @Caching(put = {
-        @CachePut(value = "users", key = "#result.id", unless = "#result == null"),
-        @CachePut(value = "users", key = "#result.email", unless = "#result == null")
+        @CachePut(value = "users", key = "#result.id"),
+        @CachePut(value = "users", key = "#result.email")
     })
     @Override
     public UserVo saveUser(UserVo userVo) {

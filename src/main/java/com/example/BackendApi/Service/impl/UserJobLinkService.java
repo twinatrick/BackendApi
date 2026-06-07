@@ -53,7 +53,7 @@ public class UserJobLinkService implements IUserJobLinkService {
     }
 
     @Override
-    @Cacheable(value = "userJobLinks", unless = "#result == null || #result.isEmpty()")
+    @Cacheable(value = "userJobLinks", sync = true)
     public List<UserJobLinkVo> getAllUserJobLinks() {
         return userJobLinkDataAccess.findAll().stream()
                 .map(userJobLinkMapper::toVo)
@@ -61,7 +61,7 @@ public class UserJobLinkService implements IUserJobLinkService {
     }
 
     @Override
-    @Cacheable(value = "userJobLinks", key = "#id", unless = "#result == null")
+    @Cacheable(value = "userJobLinks", key = "#id", sync = true)
     public UserJobLinkVo getUserJobLinkById(String id) {
         UUID uuid = mapUuid(id);
         if (uuid == null) {
@@ -87,7 +87,7 @@ public class UserJobLinkService implements IUserJobLinkService {
     }
 
     @Override
-    @Cacheable(value = "userJobLinks", key = "'byuser:' + #userId", unless = "#result == null || #result.isEmpty()")
+    @Cacheable(value = "userJobLinks", key = "'byuser:' + #userId", sync = true)
     public List<UserJobLinkVo> getUserJobLinksByUserId(String userId) {
         UUID uuid = mapUuid(userId);
         if (uuid == null) {
@@ -99,7 +99,7 @@ public class UserJobLinkService implements IUserJobLinkService {
     }
 
     @Override
-    @Cacheable(value = "userJobLinks", key = "'byjob:' + #jobPostingId", unless = "#result == null || #result.isEmpty()")
+    @Cacheable(value = "userJobLinks", key = "'byjob:' + #jobPostingId", sync = true)
     public List<UserJobLinkVo> getUserJobLinksByJobPostingId(String jobPostingId) {
         UUID uuid = mapUuid(jobPostingId);
         if (uuid == null) {
@@ -149,7 +149,7 @@ public class UserJobLinkService implements IUserJobLinkService {
     }
 
     @Override
-    @Cacheable(value = "userJobLinks", key = "'currentuser:' + #currentUserId", unless = "#result == null || #result.isEmpty()")
+    @Cacheable(value = "userJobLinks", key = "'currentuser:' + #currentUserId", sync = true)
     public List<UserJobLinkVo> getCurrentUserJobLinks(String currentUserId) {
         return getUserJobLinksByUserId(currentUserId);
     }

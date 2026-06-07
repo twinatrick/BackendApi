@@ -59,7 +59,7 @@ public class JobPostingService implements IJobPostingService {
     }
 
     @Override
-    @Cacheable(value = "jobPostings", unless = "#result == null || #result.isEmpty()")
+    @Cacheable(value = "jobPostings", sync = true)
     public List<JobPostingVo> getAllJobPostings() {
         return jobPostingDataAccess.findAll().stream()
                 .map(jobPostingMapper::toVo)
@@ -67,7 +67,7 @@ public class JobPostingService implements IJobPostingService {
     }
 
     @Override
-    @Cacheable(value = "jobPostings", key = "#id", unless = "#result == null")
+    @Cacheable(value = "jobPostings", key = "#id", sync = true)
     public JobPostingVo getJobPostingById(String id) {
         UUID uuid = mapUuid(id);
         if (uuid == null) {
@@ -137,7 +137,7 @@ public class JobPostingService implements IJobPostingService {
     }
 
     @Override
-    @Cacheable(value = "jobPostings", key = "'bycompany:' + #companyId", unless = "#result == null || #result.isEmpty()")
+    @Cacheable(value = "jobPostings", key = "'bycompany:' + #companyId", sync = true)
     public List<JobPostingVo> getJobPostingsByCompanyId(String companyId) {
         UUID uuid = mapUuid(companyId);
         if (uuid == null) {
@@ -254,7 +254,7 @@ public class JobPostingService implements IJobPostingService {
     }
 
     @Override
-    @Cacheable(value = "jobPostings", key = "'search:' + #query.toString()", unless = "#result == null || #result.content.isEmpty()")
+    @Cacheable(value = "jobPostings", key = "'search:' + #query.toString()", sync = true)
     public PageResult<JobPostingVo> searchJobPostings(JobPostingSearchQuery query) {
         Page<JobPosting> page = jobPostingDataAccess.searchJobPostings(query);
         List<JobPostingVo> content = page.getContent().stream()

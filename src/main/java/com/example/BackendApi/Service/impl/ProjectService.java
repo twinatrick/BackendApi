@@ -168,7 +168,7 @@ public class ProjectService implements IProjectService {
      * @return 所有專案列表
      */
     @Override
-    @Cacheable(value = "userProjects", unless = "#result == null || #result.isEmpty()")
+    @Cacheable(value = "userProjects", sync = true)
     public List<ProjectVo> getProject() {
         return projectDataAccess.findAll().stream().map(projectMapper::toVo).toList();
     }
@@ -226,7 +226,7 @@ public class ProjectService implements IProjectService {
     }
     
     @Override
-    @Cacheable(value = "userProjects", key = "'current:' + @currentUser.id", unless = "#result == null || #result.isEmpty()")
+    @Cacheable(value = "userProjects", key = "'current:' + @currentUser.id", sync = true)
     public List<ProjectVo> getCurrentUserProjects() {
         if (currentUser == null || currentUser.getId() == null) {
             throw new IllegalStateException("未找到當前登入的使用者");
@@ -274,7 +274,7 @@ public class ProjectService implements IProjectService {
     }
     
     @Override
-    @Cacheable(value = "projectSkills", key = "#projectId", unless = "#result == null || #result.isEmpty()")
+    @Cacheable(value = "projectSkills", key = "#projectId", sync = true)
     public List<ProjectSkillVo> getProjectSkills(UUID projectId) {
         if (projectId == null) {
             throw new IllegalArgumentException("Project ID must not be null");

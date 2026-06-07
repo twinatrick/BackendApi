@@ -13,4 +13,7 @@ public interface RoleRepository extends JpaRepository<Role, UUID>, JpaSpecificat
     List<Role> findRoleByIdIn(List<UUID> ids);
 
     Role findRoleByName(String name);
+
+    @Query("SELECT r.id FROM Role r")
+    List<UUID> findAllIds();
 }
