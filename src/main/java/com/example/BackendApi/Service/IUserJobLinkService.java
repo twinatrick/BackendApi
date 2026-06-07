@@ -17,4 +17,10 @@ public interface IUserJobLinkService {
     List<UserJobLinkVo> getUserJobLinksByUserId(String userId);
 
     List<UserJobLinkVo> getUserJobLinksByJobPostingId(String jobPostingId);
+
+    UserJobLinkVo addJobToCurrentUser(String currentUserId, String jobPostingId);
+
+    void removeJobFromCurrentUser(String currentUserId, String jobPostingId);
+
+    List<UserJobLinkVo> getCurrentUserJobLinks(String currentUserId);
 }

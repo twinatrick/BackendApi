@@ -7,6 +7,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.cache.Cache;
+import org.springframework.cache.annotation.CachingConfigurer;
+import org.springframework.cache.interceptor.CacheErrorHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
@@ -16,13 +19,14 @@ import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
+import org.springframework.data.redis.serializer.SerializationException;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 import java.time.Duration;
 
 @Configuration
 @EnableCaching
-public class RedisConfig {
+public class RedisConfig implements CachingConfigurer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RedisConfig.class);
 
@@ -143,7 +147,7 @@ public class RedisConfig {
 
         LOGGER.info("Redis 快取配置完成 - 預設 TTL: {} 小時, users: 2 小時, skills: 24 小時, roles: 6 小時, functions: 24 小時", cacheTtlHours);
 
-        return RedisCacheManager.builder(connectionFactory)
+        RedisCacheManager cacheManager = RedisCacheManager.builder(connectionFactory)
             .cacheDefaults(defaultConfig)
             .withCacheConfiguration("users", usersConfig)
             .withCacheConfiguration("alertCheckLimit", alertCheckLimitConfig)
@@ -163,12 +167,44 @@ public class RedisConfig {
             .withCacheConfiguration("userRoles", userRolesConfig)
             .withCacheConfiguration("aquarkDataAvg", aquarkDataAvgConfig)
             .build();
+
+        return cacheManager;
     }
 
     /**
      * 智慧判斷 Redis 連線位址
      * 模仿 KafkaConfig 的 resolveBootstrapServers() 邏輯
      */
+    @Override
+    public CacheErrorHandler errorHandler() {
+        return new CacheErrorHandler() {
+            @Override
+            public void handleCacheGetError(RuntimeException exception, Cache cache, Object key) {
+                if (exception instanceof SerializationException se) {
+                    LOGGER.warn("Redis 反序列化失敗，清除快取 [{}] key: {}", cache.getName(), key, se);
+                    cache.evict(key);
+                    return;
+                }
+                throw exception;
+            }
+
+            @Override
+            public void handleCachePutError(RuntimeException exception, Cache cache, Object key, Object value) {
+                throw exception;
+            }
+
+            @Override
+            public void handleCacheEvictError(RuntimeException exception, Cache cache, Object key) {
+                throw exception;
+            }
+
+            @Override
+            public void handleCacheClearError(RuntimeException exception, Cache cache) {
+                throw exception;
+            }
+        };
+    }
+
     private String resolveRedisHost() {
         if (configuredHost != null && !configuredHost.isBlank()) {
             LOGGER.info("Redis host 來自配置: {}", configuredHost);

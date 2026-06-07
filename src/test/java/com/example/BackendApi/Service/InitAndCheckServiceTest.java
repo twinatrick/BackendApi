@@ -4,7 +4,7 @@ import com.example.BackendApi.Dto.Vo.AlertCheckLimitVo;
 import com.example.BackendApi.Dto.Vo.FunctionVo;
 import com.example.BackendApi.Dto.Vo.RoleOutVo;
 import com.example.BackendApi.Dto.Vo.UserVo;
-import com.example.BackendApi.Service.impl.initAndCheckService;
+import com.example.BackendApi.Service.impl.InitAndCheckService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -43,7 +43,7 @@ class InitAndCheckServiceTest {
     private IUserService userService;
 
     @InjectMocks
-    private initAndCheckService initAndCheckService;
+    private InitAndCheckService initAndCheckService;
 
     private RoleOutVo adminRole;
     private RoleOutVo userRole;
@@ -334,7 +334,7 @@ class InitAndCheckServiceTest {
         FunctionVo threeLayer = new FunctionVo();
         threeLayer.setId("id3");
 
-        when(functionService.getFunction()).thenReturn(Collections.emptyList(), List.of(oneLayer, twoLayer, threeLayer));
+        when(functionService.getFunction()).thenReturn(List.of(oneLayer, twoLayer, threeLayer));
         when(functionService.getFunctionByName(anyString())).thenReturn(null);
         when(functionService.getFunctionByNameAndParent(anyString(), anyString())).thenReturn(null);
         
@@ -349,7 +349,7 @@ class InitAndCheckServiceTest {
         initAndCheckService.checkFunctionBindDefaultRole();
 
         // Assert
-        verify(functionService, times(2)).getFunction();
+        verify(functionService, times(1)).getFunction();
         verify(roleService, times(1)).getRoleByName("admin");
         verify(roleService, times(1)).roleBindFunction(eq(adminRole.getId().toString()), anyList());
     }

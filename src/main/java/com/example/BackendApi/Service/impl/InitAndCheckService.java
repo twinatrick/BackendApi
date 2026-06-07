@@ -13,7 +13,7 @@ import java.util.Arrays;
 import java.util.List;
 
 @Service
-public class initAndCheckService implements IInitAndCheckService {
+public class InitAndCheckService implements IInitAndCheckService {
     @Autowired
     private IRoleService roleService;
 
@@ -121,7 +121,6 @@ public class initAndCheckService implements IInitAndCheckService {
 
     @Override
     public void checkFunctionBindDefaultRole() {
-        List<FunctionVo> functionList = functionService.getFunction();
         List<List<String>> allFunctionList = new ArrayList<>();
         allFunctionList.add(new ArrayList<>( List.of("System", "User", "View")));
         allFunctionList.add(new ArrayList<>( List.of("System", "RolePermission", "View")));
@@ -133,14 +132,37 @@ public class initAndCheckService implements IInitAndCheckService {
         allFunctionList.add(new ArrayList<>( List.of("System", "ProjectManagement", "Edit")));
         allFunctionList.add(new ArrayList<>( List.of("System", "ProjectManagement", "EditAll")));
 
+        allFunctionList.add(new ArrayList<>( List.of("System", "Company", "View")));
+        allFunctionList.add(new ArrayList<>( List.of("System", "Company", "Edit")));
+        allFunctionList.add(new ArrayList<>( List.of("System", "JobPosting", "View")));
+        allFunctionList.add(new ArrayList<>( List.of("System", "JobPosting", "Edit")));
+        allFunctionList.add(new ArrayList<>( List.of("System", "JobPosting", "Scrape")));
+        allFunctionList.add(new ArrayList<>( List.of("System", "UserJobLink", "View")));
+        allFunctionList.add(new ArrayList<>( List.of("System", "UserJobLink", "Edit")));
+        allFunctionList.add(new ArrayList<>( List.of("System", "User", "Edit")));
+        allFunctionList.add(new ArrayList<>( List.of("System", "Function", "View")));
+        allFunctionList.add(new ArrayList<>( List.of("System", "Function", "Edit")));
+        allFunctionList.add(new ArrayList<>( List.of("System", "Role", "View")));
+        allFunctionList.add(new ArrayList<>( List.of("System", "Role", "Edit")));
 
-
+        allFunctionList.add(new ArrayList<>( List.of("System", "Skill", "View")));
+        allFunctionList.add(new ArrayList<>( List.of("System", "Skill", "Edit")));
+        allFunctionList.add(new ArrayList<>( List.of("System", "SkillLevel", "View")));
+        allFunctionList.add(new ArrayList<>( List.of("System", "SkillLevel", "Edit")));
+        allFunctionList.add(new ArrayList<>( List.of("System", "PersonalSkill", "Edit")));
+        allFunctionList.add(new ArrayList<>( List.of("System", "AlertLimit", "View")));
+        allFunctionList.add(new ArrayList<>( List.of("System", "AlertLimit", "Edit")));
+        allFunctionList.add(new ArrayList<>( List.of("System", "AquarkData", "View")));
+        allFunctionList.add(new ArrayList<>( List.of("System", "Project", "View")));
+        allFunctionList.add(new ArrayList<>( List.of("System", "Project", "Edit")));
+        allFunctionList.add(new ArrayList<>( List.of("System", "Project", "PersonalEdit")));
 
         for (List<String> functionListStr : allFunctionList) {
             if (!checkIsExist(functionListStr.get(0), functionListStr.get(1), functionListStr.get(2))) {
                 insertFunctionByList(functionListStr,"");
             }
         }
+        List<FunctionVo> functionList = functionService.getFunction();
         RoleOutVo role = roleService.getRoleByName("admin");
         if (role != null) {
             var parentIds = functionList.stream()

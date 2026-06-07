@@ -110,6 +110,50 @@ public class UserJobLinkService implements IUserJobLinkService {
                 .toList();
     }
 
+    @Override
+    @Transactional
+    @CacheEvict(value = "userJobLinks", allEntries = true)
+    public UserJobLinkVo addJobToCurrentUser(String currentUserId, String jobPostingId) {
+        UUID userUuid = mapUuid(currentUserId);
+        UUID jobUuid = mapUuid(jobPostingId);
+        if (userUuid == null || jobUuid == null) {
+            throw new IllegalArgumentException("User ID and Job Posting ID must not be null");
+        }
+        if (userJobLinkDataAccess.existsByUserIdAndJobPostingId(userUuid, jobUuid)) {
+            throw new IllegalArgumentException("Job already bound to current user");
+        }
+        User user = userDataAccess.findById(userUuid)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        JobPosting jobPosting = jobPostingDataAccess.findById(jobUuid)
+                .orElseThrow(() -> new IllegalArgumentException("Job posting not found"));
+        UserJobLink link = new UserJobLink();
+        link.setUser(user);
+        link.setJobPosting(jobPosting);
+        link = userJobLinkDataAccess.save(link);
+        return userJobLinkMapper.toVo(link);
+    }
+
+    @Override
+    @Transactional
+    @CacheEvict(value = "userJobLinks", allEntries = true)
+    public void removeJobFromCurrentUser(String currentUserId, String jobPostingId) {
+        UUID userUuid = mapUuid(currentUserId);
+        UUID jobUuid = mapUuid(jobPostingId);
+        if (userUuid == null || jobUuid == null) {
+            throw new IllegalArgumentException("User ID and Job Posting ID must not be null");
+        }
+        if (!userJobLinkDataAccess.existsByUserIdAndJobPostingId(userUuid, jobUuid)) {
+            throw new IllegalArgumentException("Job binding not found");
+        }
+        userJobLinkDataAccess.deleteByUserIdAndJobPostingId(userUuid, jobUuid);
+    }
+
+    @Override
+    @Cacheable(value = "userJobLinks", key = "'currentuser:' + #currentUserId", unless = "#result == null || #result.isEmpty()")
+    public List<UserJobLinkVo> getCurrentUserJobLinks(String currentUserId) {
+        return getUserJobLinksByUserId(currentUserId);
+    }
+
     private UUID mapUuid(String id) {
         return id == null || id.isBlank() ? null : UUID.fromString(id);
     }

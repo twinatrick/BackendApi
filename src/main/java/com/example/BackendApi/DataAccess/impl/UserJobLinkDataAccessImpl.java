@@ -54,4 +54,25 @@ public class UserJobLinkDataAccessImpl implements IUserJobLinkDataAccess {
                 .filter(link -> link.getJobPosting().getId().equals(jobPostingId))
                 .toList();
     }
+
+    @Override
+    public Optional<UserJobLink> findByUserIdAndJobPostingId(UUID userId, UUID jobPostingId) {
+        return userJobLinkRepository.findAll().stream()
+                .filter(link -> link.getUser().getId().equals(userId)
+                        && link.getJobPosting().getId().equals(jobPostingId))
+                .findFirst();
+    }
+
+    @Override
+    public void deleteByUserIdAndJobPostingId(UUID userId, UUID jobPostingId) {
+        findByUserIdAndJobPostingId(userId, jobPostingId)
+                .ifPresent(userJobLinkRepository::delete);
+    }
+
+    @Override
+    public boolean existsByUserIdAndJobPostingId(UUID userId, UUID jobPostingId) {
+        return userJobLinkRepository.findAll().stream()
+                .anyMatch(link -> link.getUser().getId().equals(userId)
+                        && link.getJobPosting().getId().equals(jobPostingId));
+    }
 }
