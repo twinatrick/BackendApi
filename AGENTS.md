@@ -3,7 +3,11 @@
 ## Language
 - **必須使用繁體中文**與使用者進行溝通、撰寫說明與註解 (MUST use Traditional Chinese for communication and documentation).
 ## Build & Run Environment
-- **必須詢問當前使用的java路徑 並儲存到環境變數 除非.env java-now-home有 把拿到的路徑暫時用到當前環境變數**
+- **Java 環境變數自動配置 (優先級極高)**：
+  - 在執行任何需要 Java 21 的指令（如 `./mvnw test`）之前，**必須**先讀取專案根目錄下的 `.env` 檔案。
+  - 檢查 `.env` 中是否存在 `JAVA_NOW_HOME` 或 `java-now-home` 變數。
+  - **若存在**：直接讀取該路徑，並將其設定為當前終端機的環境變數（例如 `$env:JAVA_HOME="<該路徑>"`），**嚴禁**再向使用者詢問。
+  - **若不存在**：才可詢問使用者當前的 Java 21 路徑，拿到路徑後除了暫存到環境變數，也請協助將其寫入 `.env` 中的 `JAVA_NOW_HOME` 以供未來使用。
 - **環境設定讀取優先權 (重要)**：
   - 在執行任何啟動或測試指令前，請先檢查當前專案目錄下是否存在 **`.run` 資料夾**。
   - **若存在 `.run` 目錄，必須優先讀取其中的配置檔案 (如 XML)**，並將其內嵌的環境變數、Spring Profiles 或啟動參數作為最高優先級應用於後續的執行環境中。
