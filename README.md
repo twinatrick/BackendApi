@@ -321,7 +321,7 @@ erDiagram
 | **Lombok**            | 程式碼簡化        | 減少 getter/setter/constructor 樣板程式碼              |
 | **Jsoup**             | HTML 解析與網頁爬蟲 | 輕量級靜態頁面爬取，支援 CSS Selector 與 DOM 操作，適合結構化頁面      |
 | **Selenium**          | 動態網頁爬蟲       | 瀏覽器自動化工具，處理 JavaScript 渲染頁面，作為 Jsoup 的 fallback |
-| **ONNX Runtime**      | AI 模型推論引擎   | 用於執行本地端的 Whisper 模型進行語音辨識 (STT)                  |
+| **whisperjni (whisper.cpp)** | AI 模型推論引擎   | JNI 封裝 whisper.cpp，用於本地端 GPU/CUDA 加速語音辨識 (STT)    |
 | **jave-all-deps**     | 音訊轉檔工具      | 基於 FFmpeg，用於將各類音訊檔轉換為 Whisper 需要的 16kHz PCM    |
 | **Kuromoji**          | 日文 NLP 工具    | 日文形態素分析與片假名拼音萃取                                 |
 | **Pinyin4j/Bopomofo** | 中文拼音/注音轉換   | 中文字轉漢語拼音及注音符號轉換引擎                               |
@@ -344,7 +344,7 @@ erDiagram
 | **公司管理模組**  | 公司 CRUD，作為職缺的隸屬企業                                     | `/company/*`                  |
 | **職缺管理模組**  | 職缺 CRUD、依公司查詢、爬蟲結果儲存                                  | `/job-posting/*`              |
 | **爬蟲分析模組**  | Jsoup/Selenium 複合爬蟲抓取公司網站 + Gemini API 智能分析職缺資訊       | `內部服務`                        |
-| **AI 語音辨識模組**| 整合 ONNX Runtime 與 Whisper 進行 STT，支援中日文羅馬音/注音/拼音轉換      | `/stt/v1/*`                   |
+| **AI 語音辨識模組**| 整合 whisperjni (whisper.cpp) 進行 GPU 加速 STT，支援中日文羅馬音/注音/拼音轉換 | `/stt/v1/*`                   |
 | **告警通知模組**  | 定時拉取外部資料、閾值比對、Kafka 非同步推送、WebSocket 即時通知              | `/alertCheckLimit/*`          |
 | **資料查詢模組**  | Aquark 感測器資料查詢、動態條件過濾、Redis 快取                        | `/aquarkData/*`               |
 
@@ -423,7 +423,7 @@ DataAccess 層將資料存取邏輯從 Service 中分離，便於測試與替換
 - [x] **專案成員技能管理**: 新增 `user_project_skill` 表，支援專案維度技能管理
 - [x] **Redis 快取策略擴充**: 全 Service 層快取註解、14+ 命名空間、多層級 TTL 策略
 - [x] **職缺爬蟲與 AI 分析**: 整合 Jsoup/Selenium 複合爬蟲 + Gemini API 智能萃取，支援公司/職缺/使用者收藏 CRUD
-- [x] **AI 語音辨識 (STT)**: 整合 ONNX Runtime 執行 Whisper 模型，支援音訊轉檔並將辨識結果依語種 (中/日) 轉換為拼音、注音或羅馬音
+- [x] **AI 語音辨識 (STT)**: 整合 whisperjni (whisper.cpp) GPU 加速執行 Whisper 模型，支援音訊轉檔並將辨識結果依語種 (中/日) 轉換為拼音、注音或羅馬音
 - [ ] **監控與日誌**: 引入 Micrometer + Prometheus + Grafana，集中化日誌管理
 - [ ] **效能優化**: 資料庫查詢優化、連線池調整、虛擬執行緒應用
 - [ ] **API 版本管理**: 引入 URI/Header 版本控制，向後相容
@@ -440,7 +440,7 @@ DataAccess 層將資料存取邏輯從 Service 中分離，便於測試與替換
 
 ## 🤖 AI 語音辨識功能 (STT) 說明
 
-系統已內建基於 **ONNX Runtime** 的 Whisper 語音辨識服務，可將上傳的音訊進行本地推論，並將結果轉換為各種拼音格式。
+系統已內建基於 **whisperjni (whisper.cpp)** 的 Whisper 語音辨識服務，支援 CUDA GPU 加速，可將上傳的音訊進行本地推論，並將結果轉換為各種拼音格式。
 
 ### API 介面：`POST /stt/v1/{lan}/{mode}`
 
@@ -458,15 +458,43 @@ DataAccess 層將資料存取邏輯從 Service 中分離，便於測試與替換
 
 ### 模型下載與配置指南
 
-為了讓 Whisper 成功在本地執行推論，您必須準備好 `.onnx` 模型並放置於指定的路徑：
-1. 預設模型路徑：`src/main/resources/models/whisper-tiny.onnx`
-2. 您可以自行修改 `application.yml` 變更路徑：
-   ```yaml
-   ai:
-     whisper:
-       model-path: classpath:models/whisper-tiny.onnx
-   ```
-3. ⚠️ **注意**：Java ONNX 實作需要您自行編寫/對接 Mel Spectrogram (梅爾頻譜) 的前處理，目前的實作為**核心推論流程骨架**。如果在正式環境中需要使用，建議引入已整合前處理邏輯的 End-to-End ONNX Whisper 模型。
+本專案使用 **GGML 格式** 的 Whisper 模型（非 ONNX），透過 whisper.cpp 在本地執行推論。
+
+#### 下載模型
+
+```bash
+# 下載 ggml-large-v3-turbo.bin（約 1.5GB，高準確度，建議 NVIDIA GPU）
+curl -L -o src/main/resources/models/ggml-large-v3-turbo.bin ^
+  https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-turbo.bin
+
+# 或下載 ggml-tiny.bin（約 75MB，快速測試用，支援 CPU）
+curl -L -o src/main/resources/models/ggml-tiny.bin ^
+  https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-tiny.bin
+```
+
+#### 配置模型路徑
+
+預設路徑為 `models/ggml-large-v3-turbo.bin`（相對於工作目錄），可透過環境變數或 `application.yml` 修改：
+
+```yaml
+ai:
+  whisper:
+    model-path: ${WHISPER_MODEL_PATH:models/ggml-large-v3-turbo.bin}
+```
+
+或直接在啟動時指定：
+
+```bash
+set WHISPER_MODEL_PATH=models/ggml-tiny.bin
+./mvnw spring-boot:run
+```
+
+#### GPU 加速說明
+
+- whisperjni 會自動偵測系統上的 NVIDIA CUDA 驅動
+- 若偵測到 CUDA，推論將自動在 GPU 上執行（需安裝 [CUDA Toolkit](https://developer.nvidia.com/cuda-downloads)）
+- 若無 GPU，則自動回退至 CPU 推論
+- 推論線程數可透過 `params.nThreads` 調整（預設 4）
 
 ## 啟動方式
 

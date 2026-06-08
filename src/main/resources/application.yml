@@ -82,3 +82,7 @@ github:
       key: ${GITHUB_MODELS_API_KEY:}
       url: ${GITHUB_MODELS_API_URL:https://models.inference.ai.azure.com/chat/completions}
       model: ${GITHUB_MODELS_MODEL:gpt-4o-mini}
+
+ai:
+  whisper:
+    model-path: ${WHISPER_MODEL_PATH:models/ggml-large-v3-turbo.bin}

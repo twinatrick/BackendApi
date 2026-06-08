@@ -198,11 +198,11 @@
             <artifactId>gson</artifactId>
         </dependency>
 
-        <!-- ONNX Runtime for Whisper -->
+        <!-- Whisper JNI (whisper.cpp) for STT -->
         <dependency>
-            <groupId>com.microsoft.onnxruntime</groupId>
-            <artifactId>onnxruntime</artifactId>
-            <version>1.17.1</version>
+            <groupId>io.github.givimad</groupId>
+            <artifactId>whisper-jni</artifactId>
+            <version>1.7.1</version>
         </dependency>
 
         <!-- Audio Processing (FFmpeg wrapper) -->
