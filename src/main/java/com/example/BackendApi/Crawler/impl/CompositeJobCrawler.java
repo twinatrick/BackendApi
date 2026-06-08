@@ -5,9 +5,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-/**
- * Composite crawler that tries Jsoup first, then falls back to Selenium.
- */
+import java.net.URI;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -22,8 +21,18 @@ public class CompositeJobCrawler implements IJobCrawler {
             log.info("Attempting to crawl with Jsoup first: {}", url);
             return jsoupJobCrawler.crawl(url);
         } catch (Exception e) {
-            log.warn("Jsoup crawling failed, falling back to Selenium: {}", url, e);
+            String domain = extractDomain(url);
+            log.warn("Jsoup crawling failed for [{}], falling back to Selenium: {}", domain, url);
             return seleniumJobCrawler.crawl(url);
+        }
+    }
+
+    private String extractDomain(String url) {
+        try {
+            return URI.create(url).getHost();
+        } catch (Exception e) {
+            log.warn("無法解析域名 {}: {}", url, e.toString());
+            return "unknown";
         }
     }
 }

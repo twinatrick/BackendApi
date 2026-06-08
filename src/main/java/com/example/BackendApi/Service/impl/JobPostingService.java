@@ -3,6 +3,7 @@ package com.example.BackendApi.Service.impl;
 import com.example.BackendApi.Crawler.impl.CompositeJobCrawler;
 import com.example.BackendApi.DataAccess.ICompanyDataAccess;
 import com.example.BackendApi.DataAccess.IJobPostingDataAccess;
+import com.example.BackendApi.Dto.Vo.AiJobPostingDto;
 import com.example.BackendApi.Dto.Vo.Common.PageResult;
 import com.example.BackendApi.Dto.Vo.CreateJobPostingRequest;
 import com.example.BackendApi.Dto.Vo.JobPostingVo;
@@ -10,7 +11,7 @@ import com.example.BackendApi.Dto.Vo.Search.JobPostingSearchQuery;
 import com.example.BackendApi.Entity.Company;
 import com.example.BackendApi.Entity.JobPosting;
 import com.example.BackendApi.Mapper.JobPostingMapper;
-import com.example.BackendApi.Service.IGeminiService;
+import com.example.BackendApi.Service.impl.CompositeAiService;
 import com.example.BackendApi.Service.IJobPostingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,7 +37,7 @@ public class JobPostingService implements IJobPostingService {
     private final ICompanyDataAccess companyDataAccess;
     private final JobPostingMapper jobPostingMapper;
     private final CompositeJobCrawler jobCrawler;
-    private final IGeminiService geminiService;
+    private final CompositeAiService compositeAiService;
 
     @Override
     @Transactional
@@ -180,19 +181,19 @@ public class JobPostingService implements IJobPostingService {
             try {
                 htmlContent = jobCrawler.crawl(url);
             } catch (Exception e) {
-                log.warn("Failed to crawl URL {}: {}", url, e.getMessage());
+                log.warn("Failed to crawl URL {}: {}", url, e.toString());
                 continue;
             }
 
-            List<Map<String, String>> analyzedJobs = geminiService.analyzeJobPostings(company.getName(), htmlContent);
-            log.info("Gemini returned {} jobs from URL: {}", analyzedJobs.size(), url);
+            List<AiJobPostingDto> analyzedJobs = compositeAiService.analyzeJobPostings(company.getName(), htmlContent);
+            log.info("AI service returned {} jobs from URL: {}", analyzedJobs.size(), url);
 
             List<JobPosting> existingJobs = jobPostingDataAccess.findByCompanyId(uuid);
 
-            for (Map<String, String> jobData : analyzedJobs) {
+            for (AiJobPostingDto jobData : analyzedJobs) {
                 try {
-                    String title = jobData.getOrDefault("title", "Unknown Title");
-                    String salaryRange = jobData.getOrDefault("salaryRange", "");
+                    String title = jobData.getTitle() != null && !jobData.getTitle().isBlank() ? jobData.getTitle() : "Unknown Title";
+                    String salaryRange = jobData.getSalaryRange() != null ? jobData.getSalaryRange() : "";
 
                     JobPosting matched = findMatch(existingJobs, title, salaryRange);
                     if (matched != null) {
@@ -208,17 +209,17 @@ public class JobPostingService implements IJobPostingService {
                     JobPosting jobPosting = new JobPosting();
                     jobPosting.setCompany(company);
                     jobPosting.setTitle(title);
-                    jobPosting.setUrl(jobData.getOrDefault("url", ""));
-                    jobPosting.setDescription(jobData.getOrDefault("description", ""));
-                    jobPosting.setRequirements(jobData.getOrDefault("requirements", ""));
-                    jobPosting.setResponsibilities(jobData.getOrDefault("responsibilities", ""));
+                    jobPosting.setUrl(jobData.getUrl() != null ? jobData.getUrl() : "");
+                    jobPosting.setDescription(jobData.getDescription() != null ? jobData.getDescription() : "");
+                    jobPosting.setRequirements(jobData.getRequirements() != null ? jobData.getRequirements() : "");
+                    jobPosting.setResponsibilities(jobData.getResponsibilities() != null ? jobData.getResponsibilities() : "");
                     jobPosting.setSalaryRange(salaryRange);
 
                     jobPosting = jobPostingDataAccess.save(jobPosting);
                     allSavedJobs.add(jobPostingMapper.toVo(jobPosting));
                     log.info("Created new job: {} for company: {}", title, company.getName());
                 } catch (Exception e) {
-                    log.error("Failed to process job posting for company: {}", company.getName(), e);
+                    log.error("Failed to process job posting for company: {}: {}", company.getName(), e.toString());
                 }
             }
         }
@@ -248,7 +249,7 @@ public class JobPostingService implements IJobPostingService {
             try {
                 scrapeAndAnalyzeJobs(company.getId().toString());
             } catch (Exception e) {
-                log.error("Failed to scrape company: {}", company.getName(), e);
+                log.error("Failed to scrape company: {}", company.getName());
             }
         }
     }
@@ -278,29 +279,29 @@ public class JobPostingService implements IJobPostingService {
         return null;
     }
 
-    private boolean updateIfChanged(JobPosting existing, Map<String, String> newData) {
+    private boolean updateIfChanged(JobPosting existing, AiJobPostingDto newData) {
         boolean changed = false;
-        String newUrl = newData.getOrDefault("url", "");
+        String newUrl = newData.getUrl() != null ? newData.getUrl() : "";
         if (!newUrl.equals(existing.getUrl() != null ? existing.getUrl() : "")) {
             existing.setUrl(newUrl);
             changed = true;
         }
-        String newDesc = newData.getOrDefault("description", "");
+        String newDesc = newData.getDescription() != null ? newData.getDescription() : "";
         if (!newDesc.equals(existing.getDescription() != null ? existing.getDescription() : "")) {
             existing.setDescription(newDesc);
             changed = true;
         }
-        String newReq = newData.getOrDefault("requirements", "");
+        String newReq = newData.getRequirements() != null ? newData.getRequirements() : "";
         if (!newReq.equals(existing.getRequirements() != null ? existing.getRequirements() : "")) {
             existing.setRequirements(newReq);
             changed = true;
         }
-        String newResp = newData.getOrDefault("responsibilities", "");
+        String newResp = newData.getResponsibilities() != null ? newData.getResponsibilities() : "";
         if (!newResp.equals(existing.getResponsibilities() != null ? existing.getResponsibilities() : "")) {
             existing.setResponsibilities(newResp);
             changed = true;
         }
-        String newSalary = newData.getOrDefault("salaryRange", "");
+        String newSalary = newData.getSalaryRange() != null ? newData.getSalaryRange() : "";
         if (!newSalary.equals(existing.getSalaryRange() != null ? existing.getSalaryRange() : "")) {
             existing.setSalaryRange(newSalary);
             changed = true;

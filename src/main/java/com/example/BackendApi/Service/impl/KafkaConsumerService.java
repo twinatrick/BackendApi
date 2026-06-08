@@ -22,7 +22,7 @@ public class KafkaConsumerService implements IKafkaConsumerService {
             LOGGER.warn("Received empty alarm message list");
             return;
         }
-        System.out.println("outSize:" + messages.size());
+        LOGGER.debug("outSize: {}", messages.size());
         messages.forEach(AlarmWebSocket::broadcast);
     }
 
