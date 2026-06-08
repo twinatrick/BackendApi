@@ -3,6 +3,7 @@ package com.example.BackendApi.Service.impl;
 import com.example.BackendApi.Crawler.impl.CompositeJobCrawler;
 import com.example.BackendApi.DataAccess.ICompanyDataAccess;
 import com.example.BackendApi.DataAccess.IJobPostingDataAccess;
+import com.example.BackendApi.Dto.Vo.AiJobPostingDto;
 import com.example.BackendApi.Dto.Vo.Common.PageResult;
 import com.example.BackendApi.Dto.Vo.CreateJobPostingRequest;
 import com.example.BackendApi.Dto.Vo.JobPostingVo;
@@ -184,15 +185,15 @@ public class JobPostingService implements IJobPostingService {
                 continue;
             }
 
-            List<Map<String, String>> analyzedJobs = compositeAiService.analyzeJobPostings(company.getName(), htmlContent);
+            List<AiJobPostingDto> analyzedJobs = compositeAiService.analyzeJobPostings(company.getName(), htmlContent);
             log.info("AI service returned {} jobs from URL: {}", analyzedJobs.size(), url);
 
             List<JobPosting> existingJobs = jobPostingDataAccess.findByCompanyId(uuid);
 
-            for (Map<String, String> jobData : analyzedJobs) {
+            for (AiJobPostingDto jobData : analyzedJobs) {
                 try {
-                    String title = jobData.getOrDefault("title", "Unknown Title");
-                    String salaryRange = jobData.getOrDefault("salaryRange", "");
+                    String title = jobData.getTitle() != null && !jobData.getTitle().isBlank() ? jobData.getTitle() : "Unknown Title";
+                    String salaryRange = jobData.getSalaryRange() != null ? jobData.getSalaryRange() : "";
 
                     JobPosting matched = findMatch(existingJobs, title, salaryRange);
                     if (matched != null) {
@@ -208,10 +209,10 @@ public class JobPostingService implements IJobPostingService {
                     JobPosting jobPosting = new JobPosting();
                     jobPosting.setCompany(company);
                     jobPosting.setTitle(title);
-                    jobPosting.setUrl(jobData.getOrDefault("url", ""));
-                    jobPosting.setDescription(jobData.getOrDefault("description", ""));
-                    jobPosting.setRequirements(jobData.getOrDefault("requirements", ""));
-                    jobPosting.setResponsibilities(jobData.getOrDefault("responsibilities", ""));
+                    jobPosting.setUrl(jobData.getUrl() != null ? jobData.getUrl() : "");
+                    jobPosting.setDescription(jobData.getDescription() != null ? jobData.getDescription() : "");
+                    jobPosting.setRequirements(jobData.getRequirements() != null ? jobData.getRequirements() : "");
+                    jobPosting.setResponsibilities(jobData.getResponsibilities() != null ? jobData.getResponsibilities() : "");
                     jobPosting.setSalaryRange(salaryRange);
 
                     jobPosting = jobPostingDataAccess.save(jobPosting);
@@ -278,29 +279,29 @@ public class JobPostingService implements IJobPostingService {
         return null;
     }
 
-    private boolean updateIfChanged(JobPosting existing, Map<String, String> newData) {
+    private boolean updateIfChanged(JobPosting existing, AiJobPostingDto newData) {
         boolean changed = false;
-        String newUrl = newData.getOrDefault("url", "");
+        String newUrl = newData.getUrl() != null ? newData.getUrl() : "";
         if (!newUrl.equals(existing.getUrl() != null ? existing.getUrl() : "")) {
             existing.setUrl(newUrl);
             changed = true;
         }
-        String newDesc = newData.getOrDefault("description", "");
+        String newDesc = newData.getDescription() != null ? newData.getDescription() : "";
         if (!newDesc.equals(existing.getDescription() != null ? existing.getDescription() : "")) {
             existing.setDescription(newDesc);
             changed = true;
         }
-        String newReq = newData.getOrDefault("requirements", "");
+        String newReq = newData.getRequirements() != null ? newData.getRequirements() : "";
         if (!newReq.equals(existing.getRequirements() != null ? existing.getRequirements() : "")) {
             existing.setRequirements(newReq);
             changed = true;
         }
-        String newResp = newData.getOrDefault("responsibilities", "");
+        String newResp = newData.getResponsibilities() != null ? newData.getResponsibilities() : "";
         if (!newResp.equals(existing.getResponsibilities() != null ? existing.getResponsibilities() : "")) {
             existing.setResponsibilities(newResp);
             changed = true;
         }
-        String newSalary = newData.getOrDefault("salaryRange", "");
+        String newSalary = newData.getSalaryRange() != null ? newData.getSalaryRange() : "";
         if (!newSalary.equals(existing.getSalaryRange() != null ? existing.getSalaryRange() : "")) {
             existing.setSalaryRange(newSalary);
             changed = true;

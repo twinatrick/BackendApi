@@ -1,9 +1,9 @@
 package com.example.BackendApi.Service;
 
+import com.example.BackendApi.Dto.Vo.AiJobPostingDto;
 import java.util.List;
-import java.util.Map;
 
 public interface IAiService {
 
-    List<Map<String, String>> analyzeJobPostings(String companyName, String htmlContent);
+    List<AiJobPostingDto> analyzeJobPostings(String companyName, String htmlContent);
 }

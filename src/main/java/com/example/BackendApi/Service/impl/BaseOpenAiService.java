@@ -1,5 +1,6 @@
 package com.example.BackendApi.Service.impl;
 
+import com.example.BackendApi.Dto.Vo.AiJobPostingDto;
 import com.example.BackendApi.Service.IAiService;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -43,7 +44,7 @@ public abstract class BaseOpenAiService implements IAiService {
     protected abstract String getModelName();
 
     @Override
-    public List<Map<String, String>> analyzeJobPostings(String companyName, String htmlContent) {
+    public List<AiJobPostingDto> analyzeJobPostings(String companyName, String htmlContent) {
         String truncatedHtml = htmlContent.length() > 60000
                 ? htmlContent.substring(0, 60000)
                 : htmlContent;
@@ -84,7 +85,7 @@ public abstract class BaseOpenAiService implements IAiService {
                 }
 
                 previousResponse = response;
-                List<Map<String, String>> result = parseResponse(response);
+                List<AiJobPostingDto> result = parseResponse(response);
 
                 if (isValidJobList(result)) return result;
                 log.warn("{} response format invalid for company: {} (attempt {})", getModelName(), companyName, attempt + 1);
@@ -159,14 +160,11 @@ public abstract class BaseOpenAiService implements IAiService {
         return gson.toJson(requestBody);
     }
 
-    private boolean isValidJobList(List<Map<String, String>> jobs) {
+    private boolean isValidJobList(List<AiJobPostingDto> jobs) {
         if (jobs == null || jobs.isEmpty()) return false;
-        String[] required = {"title", "description"};
-        for (Map<String, String> job : jobs) {
-            for (String f : required) {
-                String val = job.get(f);
-                if (val == null || val.isBlank()) return false;
-            }
+        for (AiJobPostingDto job : jobs) {
+            if (job.getTitle() == null || job.getTitle().isBlank()) return false;
+            if (job.getDescription() == null || job.getDescription().isBlank()) return false;
         }
         return true;
     }
@@ -188,7 +186,7 @@ public abstract class BaseOpenAiService implements IAiService {
         return rawResponse;
     }
 
-    protected List<Map<String, String>> parseResponse(String response) {
+    protected List<AiJobPostingDto> parseResponse(String response) {
         try {
             JsonObject responseObj = gson.fromJson(response, JsonObject.class);
             JsonArray choices = responseObj.getAsJsonArray("choices");
@@ -216,15 +214,30 @@ public abstract class BaseOpenAiService implements IAiService {
             String jsonArray = text.substring(start, end + 1);
             JsonArray jobs = gson.fromJson(jsonArray, JsonArray.class);
 
-            List<Map<String, String>> result = new ArrayList<>();
+            List<AiJobPostingDto> result = new ArrayList<>();
             for (JsonElement jobElement : jobs) {
                 JsonObject jobObj = jobElement.getAsJsonObject();
-                Map<String, String> jobMap = new LinkedHashMap<>();
-                for (String key : new String[]{"title", "url", "description", "requirements", "responsibilities", "salaryRange"}) {
-                    JsonElement value = jobObj.get(key);
-                    jobMap.put(key, value != null && !value.isJsonNull() ? value.getAsString() : "");
-                }
-                result.add(jobMap);
+                AiJobPostingDto dto = new AiJobPostingDto();
+                
+                JsonElement title = jobObj.get("title");
+                dto.setTitle(title != null && !title.isJsonNull() ? title.getAsString() : "");
+                
+                JsonElement url = jobObj.get("url");
+                dto.setUrl(url != null && !url.isJsonNull() ? url.getAsString() : "");
+                
+                JsonElement description = jobObj.get("description");
+                dto.setDescription(description != null && !description.isJsonNull() ? description.getAsString() : "");
+                
+                JsonElement requirements = jobObj.get("requirements");
+                dto.setRequirements(requirements != null && !requirements.isJsonNull() ? requirements.getAsString() : "");
+                
+                JsonElement responsibilities = jobObj.get("responsibilities");
+                dto.setResponsibilities(responsibilities != null && !responsibilities.isJsonNull() ? responsibilities.getAsString() : "");
+                
+                JsonElement salaryRange = jobObj.get("salaryRange");
+                dto.setSalaryRange(salaryRange != null && !salaryRange.isJsonNull() ? salaryRange.getAsString() : "");
+                
+                result.add(dto);
             }
 
             return result;

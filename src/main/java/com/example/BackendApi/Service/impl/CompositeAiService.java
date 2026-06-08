@@ -1,5 +1,6 @@
 package com.example.BackendApi.Service.impl;
 
+import com.example.BackendApi.Dto.Vo.AiJobPostingDto;
 import com.example.BackendApi.Service.IAiService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -7,7 +8,6 @@ import org.jsoup.Jsoup;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Map;
 
 @Slf4j
 @Service
@@ -22,9 +22,9 @@ public class CompositeAiService implements IAiService {
     private final GitHubModelsService gitHubModelsService;
 
     @Override
-    public List<Map<String, String>> analyzeJobPostings(String companyName, String htmlContent) {
+    public List<AiJobPostingDto> analyzeJobPostings(String companyName, String htmlContent) {
         String cleanText = cleanHtmlToText(htmlContent);
-        List<Map<String, String>> result;
+        List<AiJobPostingDto> result;
 
         result = tryService(geminiService, "Gemini", companyName, cleanText);
         if (result != null) return result;
@@ -42,10 +42,10 @@ public class CompositeAiService implements IAiService {
         return List.of();
     }
 
-    private List<Map<String, String>> tryService(IAiService service, String name, String companyName, String cleanText) {
+    private List<AiJobPostingDto> tryService(IAiService service, String name, String companyName, String cleanText) {
         try {
             log.info("Trying {} API for company: {}", name, companyName);
-            List<Map<String, String>> result = service.analyzeJobPostings(companyName, cleanText);
+            List<AiJobPostingDto> result = service.analyzeJobPostings(companyName, cleanText);
             if (result != null && !result.isEmpty()) {
                 return result;
             }
