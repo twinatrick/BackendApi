@@ -35,3 +35,7 @@
 - **Generators**: 專案大量使用 MapStruct 與 Lombok，Maven 已設定對應的 Annotation Processors。
 - **Package Quirks**: 請遵守現有的 Package 命名與大小寫慣例：
   - 首字母大寫: `Aop`, `Dto`, `Entity`, `Repository`, `Service`, `Timer`, `Util`, `WebSocket`,`Annotation`, `Config`, `Controller`, `Dataaccess`, `Exception`, `Filter`, `Mapper`
+
+## Git & Version Control (嚴格規定)
+- **絕對禁止擅自 Commit/Push (CRITICAL)**：在任何情況下，Agent **絕對不可以**在未經使用者明確指示或同意的情況下，自動執行 `git commit`、`git push` 或任何修改 Git 歷史紀錄的操作。
+- **敏感檔案保護**：執行任何 Git 相關操作前，必須檢查並確保 `.env` 等包含機密/本地設定的檔案已正確列入 `.gitignore`，嚴禁將其加入版本控制。
