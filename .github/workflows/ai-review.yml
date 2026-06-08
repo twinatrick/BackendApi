@@ -81,7 +81,34 @@ jobs:
                 if len(diff) > 15000:
                     diff = diff[:15000] + "\n\n...(內容過長已自動截斷，以符合 Groq 免費額度限制)..."
 
-                prompt = f"請擔任高階資深工程師，為以下的程式碼改動（Git Diff）進行 Code Review，並用繁體中文回覆。\n請先簡短總結這次 MR 實現了什麼功能，接著針對有資安風險、效能問題或潛在 Bug 的地方給予具體修改建議。\n\n```diff\n{diff}\n```"
+                prompt = f"""請擔任高階資深 Java/Spring Boot 軟體工程師，為以下的程式碼改動（Git Diff）進行精準且具體的 Code Review，並使用繁體中文回覆。
+
+【Review 核心守則】
+1. 拒絕幻覺 (No Hallucination)：請嚴格根據 Diff 內容評論。若程式碼已處理了某種情況（如已經有重試上限、已有防呆或例外處理），切勿無中生有指責其未處理。
+2. 提供具體範例 (Concrete Examples)：提出修改建議時，必須給出「具體且可執行的程式碼範例 (Code Snippet)」，絕不能只給籠統的文字建議。
+3. 關注真實風險：專注於 Spring Boot 最佳實踐、效能瓶頸、資安與防禦性設計。
+4. 肯定優良設計：如果改動很完整、設計得當，請不要為了 Review 而硬挑骨頭，直接給予肯定即可。
+
+【回覆格式要求】
+請使用以下 Markdown 結構回覆：
+
+### 📝 MR 總結
+(用 2-3 句話精簡說明本次改動核心)
+
+### 🔴 必須修正 (Critical Issues / Bugs)
+(致命錯誤、資安漏洞或嚴重效能問題。若無請寫「無」。必須指明錯誤邏輯並附上「修正程式碼範例」)
+
+### 🟡 建議優化 (Suggestions & Refactoring)
+(可提升可讀性、擴充性或型別安全的建議。請附上「優化後的程式碼對比範例」)
+
+### 🟢 亮點與肯定 (Good Practices)
+(指出寫得不錯的防禦性設計或架構設計)
+
+---
+以下是本次提交的 Git Diff 內容：
+```diff
+{diff}
+```"""
                 headers = {'Authorization': f'Bearer {groq_key}', 'Content-Type': 'application/json'}
             
                 # 雙模型防禦：首選現役最新的 3.3，備援 3.1
