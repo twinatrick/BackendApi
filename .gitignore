@@ -33,3 +33,14 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Bopomofo4j temp files
+bopomofo4j-temp/
+
+# STT Models (GGML / ONNX)
+/src/main/resources/models/*.bin
+/src/main/resources/models/*.onnx
+/src/main/resources/models/*.json
+/src/main/resources/models/*.txt
+/models/ggml-large-v3-turbo.bin
+/models/ggml-tiny.bin

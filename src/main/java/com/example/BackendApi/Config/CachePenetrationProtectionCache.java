@@ -221,12 +221,34 @@ public class CachePenetrationProtectionCache implements Cache {
     }
 
     private boolean bloomFilterMightContain(String cacheKey) {
+        if (!isEntityId(cacheKey)) {
+            return true;
+        }
+
         try {
             return bloomFilterService.mightContain(name, cacheKey);
         } catch (Exception e) {
             log.warn("BloomFilter 檢查異常 [{}] key [{}]: {}", name, cacheKey, e.toString());
             return true;
         }
+    }
+
+    private static boolean isEntityId(String key) {
+        if (key == null || key.length() != 36) {
+            return false;
+        }
+        for (int i = 0; i < key.length(); i++) {
+            char c = key.charAt(i);
+            switch (i) {
+                case 8: case 13: case 18: case 23:
+                    if (c != '-') return false;
+                    break;
+                default:
+                    if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')))
+                        return false;
+            }
+        }
+        return true;
     }
 
     private void setNullMarker(String cacheKey) {
