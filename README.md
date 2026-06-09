@@ -1,16 +1,88 @@
+# Backend Architecture Validation Platform
+
+> Personal Backend Architecture Validation Platform
+
+本專案並非教學範例，而是作為後端架構設計、技術驗證與工程實踐的平台，持續驗證企業級系統常見設計模式、系統架構與開發流程。
+
+專案以 Java 21 與 Spring Boot 3 為核心，整合 Authentication、Authorization、Cache、Event-Driven Architecture、Real-Time Notification、AI Integration 與 CI/CD Automation 等常見企業級技術。
+
+透過實際開發驗證大型系統常見技術選型、架構設計與工程實務，並持續擴充作為個人技術研究平台。
+
+---
+
+## Architecture Highlights
+
+- Spring Security + JWT Authentication
+- Annotation-based RBAC Authorization
+- Redis Multi-Level Cache Strategy
+- Kafka Event-Driven Architecture
+- WebSocket Real-Time Notification
+- JPA Specification Dynamic Query
+- Docker Compose Development Environment
+- GitHub Actions CI Pipeline
+- AI-assisted Code Review
+- Unit Test + JaCoCo Coverage Validation
+
+---
+
+## Engineering Practices
+
+- Git Flow Branch Strategy
+- Pull Request Workflow
+- GitHub Actions Continuous Integration
+- Automated Unit Testing
+- JaCoCo Coverage Validation
+- AI Code Review Before Merge
+- Docker-based Development Environment
+- Environment Variable Management
+- Centralized Exception Handling
+- Layered Architecture Design
+
+---
+
 ## 專案目的
 
-此專案用於整理與實作常見後端架構與平台功能，
-包含：
+此專案用於整理與實作企業級系統常見後端架構與平台功能，包含：
 
-- JWT / RBAC 權限管理
-- WebSocket 即時通知
-- Kafka 非同步事件處理
-- Redis 快取
-- Docker 化部署
-- API validation 與統一例外處理
+### Security
 
-並模擬具備使用者、角色、技能管理與告警通知的平台型系統。
+- JWT Authentication
+- Spring Security
+- RBAC Permission Model
+
+### Architecture
+
+- Redis Cache
+- Kafka Event-Driven Architecture
+- WebSocket Real-Time Notification
+- Dynamic Query Specification
+
+### Infrastructure
+
+- Docker Compose
+- GitHub Actions
+- AI Code Review
+- Environment Configuration
+
+### AI Integration
+
+- Gemini API
+- Whisper STT
+- Milvus Vector Database
+
+---
+
+並模擬具備：
+
+- 使用者管理
+- 權限管理
+- 技能管理
+- 專案管理
+- 職缺管理
+- AI 文件處理
+- 即時告警通知
+
+等企業管理平台常見業務情境。
 
 # Java 21 Spring Boot 常見技術 實作方法
 
@@ -403,7 +475,7 @@ DataAccess 層將資料存取邏輯從 Service 中分離，便於測試與替換
 
 - JUnit 5 + Mockito 單元測試
 - H2 in-memory database 隔離測試環境
-- JaCoCo 覆蓋率要求 ≥ 80% (排除介面、Entity、DTO 等樣板層)
+- JaCoCo 覆蓋率要求 ≥ 75% (排除介面、Entity、DTO 等樣板層)
 
 ### Docker Compose 本地開發
 
@@ -416,21 +488,59 @@ DataAccess 層將資料存取邏輯從 Service 中分離，便於測試與替換
 - 標準化回應格式：`ResponseType<T>` (code, data, message, errorType)
 - 自訂 `AppException` 支援 HTTP 狀態碼與錯誤型別設定
 
-## 後續規劃
 
-- [x] **CI/CD 管線**: 整合 GitHub Actions，自動化測試、建置、部署
-- [x] **管理者綁定 API 重構**: 統一 Rebind API 設計，完整覆蓋語意，Diff 策略最佳化
-- [x] **專案成員技能管理**: 新增 `user_project_skill` 表，支援專案維度技能管理
-- [x] **Redis 快取策略擴充**: 全 Service 層快取註解、14+ 命名空間、多層級 TTL 策略
-- [x] **職缺爬蟲與 AI 分析**: 整合 Jsoup/Selenium 複合爬蟲 + Gemini API 智能萃取，支援公司/職缺/使用者收藏 CRUD
-- [x] **AI 語音辨識 (STT)**: 整合 whisperjni (whisper.cpp) GPU 加速執行 Whisper 模型，支援音訊轉檔並將辨識結果依語種 (中/日) 轉換為拼音、注音或羅馬音
-- [ ] **監控與日誌**: 引入 Micrometer + Prometheus + Grafana，集中化日誌管理
-- [ ] **效能優化**: 資料庫查詢優化、連線池調整、虛擬執行緒應用
-- [ ] **API 版本管理**: 引入 URI/Header 版本控制，向後相容
-- [ ] **安全強化**: 速率限制、CORS 細部控制、SQL 注入防護審計
-- [ ] **文件完善**: API 文件自動化、架構決策記錄 (ADR)
-- [ ] **微服務拆分評估**: 依業務邊界拆分服務，引入 API Gateway
-- [ ] **向量搜尋應用**: 整合 Milvus 實現語意搜尋、RAG 應用
+## CI/CD Pipeline
+
+專案導入 GitHub Actions 建立 Pull Request 自動化驗證流程。
+
+### Pull Request Flow
+
+    Developer
+    ↓
+    Create Pull Request
+    ↓
+    GitHub Actions
+    ↓
+    Maven Build
+    ↓
+    Unit Test
+    ↓
+    JaCoCo Coverage Check
+    ↓
+    AI Code Review
+    ↓
+    Merge Validation
+    ↓
+    Approve & Merge
+## Roadmap
+
+### Infrastructure
+
+- [ ] Prometheus Metrics
+- [ ] Grafana Dashboard
+- [ ] Centralized Logging
+- [ ] ELK Stack
+
+### Architecture
+
+- [ ] Outbox Pattern
+- [ ] Distributed Lock
+- [ ] Event Replay Mechanism
+- [ ] Saga Pattern Evaluation
+
+### Quality
+
+- [ ] Testcontainers Integration Test
+- [ ] SonarQube Static Analysis
+- [ ] Performance Benchmark
+- [ ] Security Audit Automation
+
+### AI Integration
+
+- [ ] RAG Architecture
+- [ ] Hybrid Search
+- [ ] Vector Search Optimization
+- [ ] Multi-Agent Workflow
 
 ## 提供的介面類型
 
@@ -1364,7 +1474,7 @@ class UserIntegrationTest {
 
 ### 測試覆蓋率要求
 
-**目標覆蓋率：** ≥ 80%（BUNDLE 級別）
+**目標覆蓋率：** ≥ 75%（BUNDLE 級別）
 
 **排除項目：**
 
@@ -1382,9 +1492,21 @@ class UserIntegrationTest {
 # 生成覆蓋率報告
 ./mvnw jacoco:report
 
-# 檢查覆蓋率是否達標（會驗證 80% 門檻）
+# 檢查覆蓋率是否達標（會驗證 75% 門檻）
 ./mvnw jacoco:check
 ```
+
+**排除範圍與原因：**
+
+| 排除範圍 | 原因 |
+|---------|------|
+| `Security/**` | Spring Security Filter Chain 需完整 Servlet 容器模擬 |
+| `Service/impl/*AiService*.class` | 外部 HTTP API 調用，脫離實際端點無法驗證 |
+| `Service/impl/Kafka*`, `*Alarm*` | Kafka 依賴，需 Broker 基礎設施 |
+| `Service/impl/CheckApiService` | 外部 API 定時輪詢，需實際端點 |
+| `Util/CallApi.class` | HTTP 請求工具類，單純 HttpClient 封裝 |
+| `Service/Onnx/**` | 需 GPU 與 Whisper 模型檔 (GGML) 才能執行 |
+| `Crawler/**` | 網頁爬蟲需實際連線目標網站，無法單元驗證 |
 
 **檢視覆蓋率報告：**
 

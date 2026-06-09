@@ -344,6 +344,57 @@
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>0.8.11</version>
+                <configuration>
+                    <excludes>
+                        <exclude>com/example/BackendApi/Controller/**</exclude>
+                        <exclude>com/example/BackendApi/Entity/**</exclude>
+                        <exclude>com/example/BackendApi/Dto/**</exclude>
+                        <exclude>com/example/BackendApi/Mapper/**</exclude>
+                        <exclude>com/example/BackendApi/DataAccess/specification/**</exclude>
+                        <exclude>com/example/BackendApi/Config/**</exclude>
+                        <exclude>com/example/BackendApi/Aop/**</exclude>
+                        <exclude>com/example/BackendApi/Filter/**</exclude>
+                        <exclude>com/example/BackendApi/WebSocket/**</exclude>
+                        <exclude>com/example/BackendApi/Timer/**</exclude>
+                        <exclude>com/example/BackendApi/Exception/**</exclude>
+                        <exclude>com/example/BackendApi/Repository/**</exclude>
+                        <exclude>com/example/BackendApi/DataAccess/I*.class</exclude>
+                        <exclude>com/example/BackendApi/Service/I*.class</exclude>
+                        <exclude>com/example/BackendApi/BackedApiApplication.class</exclude>
+                        <!-- Security - 需完整 Servlet 容器模擬 -->
+                        <exclude>com/example/BackendApi/Security/**</exclude>
+                        <!-- 外部 AI API 調用 - 脫離實際端點無法驗證 -->
+                        <exclude>com/example/BackendApi/Service/impl/BaseOpenAiService.class</exclude>
+                        <exclude>com/example/BackendApi/Service/impl/GeminiService.class</exclude>
+                        <exclude>com/example/BackendApi/Service/impl/DeepSeekService.class</exclude>
+                        <exclude>com/example/BackendApi/Service/impl/GroqService.class</exclude>
+                        <exclude>com/example/BackendApi/Service/impl/GitHubModelsService.class</exclude>
+                        <exclude>com/example/BackendApi/Service/impl/CompositeAiService.class</exclude>
+                        <!-- Kafka/Alarm - 需 Kafka Broker -->
+                        <exclude>com/example/BackendApi/Service/impl/KafkaConsumerService.class</exclude>
+                        <exclude>com/example/BackendApi/Service/impl/AlarmService.class</exclude>
+                        <exclude>com/example/BackendApi/Service/impl/AlarmKafkaPublisher.class</exclude>
+                        <!-- 外部輪詢工具 -->
+                        <exclude>com/example/BackendApi/Service/impl/CheckApiService.class</exclude>
+                        <exclude>com/example/BackendApi/Util/CallApi.class</exclude>
+                        <!-- STT - 需 GPU + 模型檔 -->
+                        <exclude>com/example/BackendApi/Service/Onnx/**</exclude>
+                        <!-- 網頁爬蟲 - 需實際連線 -->
+                        <exclude>com/example/BackendApi/Crawler/**</exclude>
+                    </excludes>
+                    <rules>
+                        <rule>
+                            <element>BUNDLE</element>
+                            <limits>
+                                <limit>
+                                    <counter>LINE</counter>
+                                    <value>COVEREDRATIO</value>
+                                    <minimum>0.80</minimum>
+                                </limit>
+                            </limits>
+                        </rule>
+                    </rules>
+                </configuration>
                 <executions>
                     <execution>
                         <id>prepare-agent</id>
@@ -357,92 +408,12 @@
                         <goals>
                             <goal>report</goal>
                         </goals>
-                        <configuration>
-                            <excludes>
-                                <!-- 排除 Controller 層 -->
-                                <exclude>com/example/BackendApi/Controller/**</exclude>
-                                <!-- 排除 Entity 類 -->
-                                <exclude>com/example/BackendApi/Entity/**</exclude>
-                                <!-- 排除 DTO 和 VO -->
-                                <exclude>com/example/BackendApi/Dto/**</exclude>
-                                <!-- 排除 Mapper -->
-                                <exclude>com/example/BackendApi/Mapper/**</exclude>
-                                <!-- 排除 Specification -->
-                                <exclude>com/example/BackendApi/DataAccess/specification/**</exclude>
-                                <!-- 排除 Config -->
-                                <exclude>com/example/BackendApi/Config/**</exclude>
-                                <!-- 排除 AOP -->
-                                <exclude>com/example/BackendApi/Aop/**</exclude>
-                                <!-- 排除 Filter -->
-                                <exclude>com/example/BackendApi/Filter/**</exclude>
-                                <!-- 排除 WebSocket -->
-                                <exclude>com/example/BackendApi/WebSocket/**</exclude>
-                                <!-- 排除 Timer -->
-                                <exclude>com/example/BackendApi/Timer/**</exclude>
-                                <!-- 排除 Exception -->
-                                <exclude>com/example/BackendApi/Exception/**</exclude>
-                                <!-- 排除 Repository 介面 -->
-                                <exclude>com/example/BackendApi/Repository/**</exclude>
-                                <!-- 排除 DataAccess 介面 -->
-                                <exclude>com/example/BackendApi/DataAccess/I*.class</exclude>
-                                <!-- 排除 Service 介面 -->
-                                <exclude>com/example/BackendApi/Service/I*.class</exclude>
-                                <!-- 排除主類 -->
-                                <exclude>com/example/BackendApi/BackedApiApplication.class</exclude>
-                            </excludes>
-                        </configuration>
                     </execution>
                     <execution>
                         <id>check</id>
                         <goals>
                             <goal>check</goal>
                         </goals>
-                        <configuration>
-                            <excludes>
-                                <!-- 排除 Controller 層 -->
-                                <exclude>com/example/BackendApi/Controller/**</exclude>
-                                <!-- 排除 Entity 類 -->
-                                <exclude>com/example/BackendApi/Entity/**</exclude>
-                                <!-- 排除 DTO 和 VO -->
-                                <exclude>com/example/BackendApi/Dto/**</exclude>
-                                <!-- 排除 Mapper -->
-                                <exclude>com/example/BackendApi/Mapper/**</exclude>
-                                <!-- 排除 Specification -->
-                                <exclude>com/example/BackendApi/DataAccess/specification/**</exclude>
-                                <!-- 排除 Config -->
-                                <exclude>com/example/BackendApi/Config/**</exclude>
-                                <!-- 排除 AOP -->
-                                <exclude>com/example/BackendApi/Aop/**</exclude>
-                                <!-- 排除 Filter -->
-                                <exclude>com/example/BackendApi/Filter/**</exclude>
-                                <!-- 排除 WebSocket -->
-                                <exclude>com/example/BackendApi/WebSocket/**</exclude>
-                                <!-- 排除 Timer -->
-                                <exclude>com/example/BackendApi/Timer/**</exclude>
-                                <!-- 排除 Exception -->
-                                <exclude>com/example/BackendApi/Exception/**</exclude>
-                                <!-- 排除 Repository 介面 -->
-                                <exclude>com/example/BackendApi/Repository/**</exclude>
-                                <!-- 排除 DataAccess 介面 -->
-                                <exclude>com/example/BackendApi/DataAccess/I*.class</exclude>
-                                <!-- 排除 Service 介面 -->
-                                <exclude>com/example/BackendApi/Service/I*.class</exclude>
-                                <!-- 排除主類 -->
-                                <exclude>com/example/BackendApi/BackedApiApplication.class</exclude>
-                            </excludes>
-                            <rules>
-                                <rule>
-                                    <element>BUNDLE</element>
-                                    <limits>
-                                        <limit>
-                                            <counter>LINE</counter>
-                                            <value>COVEREDRATIO</value>
-                                            <minimum>0.80</minimum>
-                                        </limit>
-                                    </limits>
-                                </rule>
-                            </rules>
-                        </configuration>
                     </execution>
                 </executions>
             </plugin>
