@@ -23,11 +23,8 @@ jobs:
       - name: Make mvnw executable
         run: chmod +x mvnw
 
-      - name: Build & Test with Maven
-        run: ./mvnw test
-
-      - name: Check Coverage Threshold
-        run: ./mvnw jacoco:check
+      - name: Build, Test & Check Coverage
+        run: ./mvnw test jacoco:check
 
       - name: Upload JaCoCo Coverage Report
         uses: actions/upload-artifact@v4
