@@ -22,6 +22,8 @@
 - GitHub Actions CI Pipeline
 - AI-assisted Code Review
 - Unit Test + JaCoCo Coverage Validation
+- Micrometer + Prometheus Monitoring
+- Grafana Dashboard
 
 ---
 
@@ -442,6 +444,12 @@ DataAccess 層將資料存取邏輯從 Service 中分離，便於測試與替換
     - **參考資料**（24h）：skills、skillLevels、functions
     - **業務資料**（1-6h）：roles（6h）、companies（6h）、jobPostings（1h）
     - **使用者資料**（10-30min）：currentUserSkills、userProjects、userJobLinks、userRoles
+- **精確 Evict 優化**：以 `@CachePut` + 精確 key evict 取代全量 `allEntries=true`，
+  減少寫入操作對快取命中率的衝擊（7 個 Service，約 40+ 處註解已優化）
+- **Namespace 拆分**：`skillLevels` 從 `skills` 拆分、`roleFunctions` 從 `roles` 拆分，
+  避免不同資料類型共用同一 namespace 導致的無效清除
+- **CacheManager 降級**：對於需先查 entity 才能取得關聯 key 的情境
+  （如 `deleteJobPosting`、`deleteUserJobLink`），直接使用 `CacheManager.evict()` 精確清除
 
 ### 非同步事件處理
 
@@ -516,8 +524,8 @@ DataAccess 層將資料存取邏輯從 Service 中分離，便於測試與替換
 
 ### Infrastructure
 
-- [ ] Prometheus Metrics
-- [ ] Grafana Dashboard
+- [x] Prometheus Metrics
+- [x] Grafana Dashboard
 - [ ] Centralized Logging
 - [ ] ELK Stack
 
