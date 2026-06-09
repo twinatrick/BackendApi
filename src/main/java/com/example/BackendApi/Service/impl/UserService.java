@@ -198,7 +198,7 @@ public class UserService implements IUserService {
 
     @Override
     @Transactional
-    @CacheEvict(value = "userProjects", allEntries = true)
+    @CacheEvict(value = "userProjects", key = "'current:' + #userId")
     public void rebindUserProjects(UUID userId, List<UUID> projectIds) {
         if (userId == null) {
             throw new IllegalArgumentException("Key must not be null");
@@ -248,7 +248,7 @@ public class UserService implements IUserService {
 
     @Override
     @Transactional
-    @CacheEvict(value = "users", allEntries = true)
+    @CacheEvict(value = "users", key = "#userId")
     public void rebindUserRoles(UUID userId, List<String> roleIds) {
         if (userId == null) {
             throw new IllegalArgumentException("User ID must not be null");

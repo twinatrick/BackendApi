@@ -18,6 +18,7 @@ import com.example.BackendApi.Entity.User;
 import com.example.BackendApi.Entity.UserRole;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Example;
@@ -46,7 +47,10 @@ public class RoleService implements IRoleService {
     private final UserMapper userMapper;
 
     @Override
-    @CacheEvict(value = "roles", allEntries = true)
+    @Caching(put = {
+        @CachePut(value = "roles", key = "#result.id"),
+        @CachePut(value = "roles", key = "'byname:' + #result.name")
+    })
     public RoleOutVo addRole(RoleOutVo roleOutVo) {
         Role role = roleMapper.toEntity(roleOutVo);
         Role exampleRole = new Role();
@@ -66,10 +70,6 @@ public class RoleService implements IRoleService {
 
     @Transactional
     @Override
-    @Caching(evict = {
-        @CacheEvict(value = "roles", allEntries = true),
-        @CacheEvict(value = "functions", allEntries = true)
-    })
     public RoleOutVo addRoleWithFunctions(RoleOutVo roleOutVo) {
         RoleOutVo savedRole = addRole(roleOutVo);
         syncRoleFunctions(savedRole.getId(), roleOutVo.getFunctionIds());
@@ -77,7 +77,7 @@ public class RoleService implements IRoleService {
     }
 
     @Override
-    @Cacheable(value = "roles", sync = true)
+    @Cacheable(value = "roles", key = "'all'", sync = true)
     public List<RoleOutVo> getRole() {
         return roleDataAccess.findAll().stream().map(roleMapper::toVo).toList();
     }
@@ -96,9 +96,9 @@ public class RoleService implements IRoleService {
     }
 
     @Override
-    @Caching(evict = {
-        @CacheEvict(value = "roles", allEntries = true),
-        @CacheEvict(value = "functions", allEntries = true)
+    @Caching(put = {
+        @CachePut(value = "roles", key = "#roleOutVo.id"),
+        @CachePut(value = "roles", key = "'byname:' + #roleOutVo.name")
     })
     public RoleOutVo updateRole(RoleOutVo roleOutVo) {
         Role role = roleMapper.toEntity(roleOutVo);
@@ -118,8 +118,7 @@ public class RoleService implements IRoleService {
     @Transactional
     @Override
     @Caching(evict = {
-        @CacheEvict(value = "roles", allEntries = true),
-        @CacheEvict(value = "functions", allEntries = true)
+        @CacheEvict(value = "roleFunctions", key = "#roleOutVo.id")
     })
     public RoleOutVo updateRoleWithFunctions(RoleOutVo roleOutVo) {
         RoleOutVo updatedRole = updateRole(roleOutVo);
@@ -130,8 +129,8 @@ public class RoleService implements IRoleService {
     @Transactional
     @Override
     @Caching(evict = {
-        @CacheEvict(value = "roles", allEntries = true),
-        @CacheEvict(value = "functions", allEntries = true)
+        @CacheEvict(value = "roles", key = "#roleOutVo.id"),
+        @CacheEvict(value = "roleFunctions", key = "#roleOutVo.id")
     })
     public void deleteRole(RoleOutVo roleOutVo) {
         Role role = roleMapper.toEntity(roleOutVo);
@@ -151,10 +150,7 @@ public class RoleService implements IRoleService {
     }
     @Transactional
     @Override
-    @Caching(evict = {
-        @CacheEvict(value = "roles", allEntries = true),
-        @CacheEvict(value = "functions", allEntries = true)
-    })
+    @CacheEvict(value = "roleFunctions", key = "#roleId")
     public void roleBindFunction(String roleId, List<String> functionIds) {
         UUID roleUuid = mapUuid(roleId);
         if (roleUuid == null) {
@@ -181,7 +177,7 @@ public class RoleService implements IRoleService {
     @Override
     @Caching(evict = {
         @CacheEvict(value = "roles", allEntries = true),
-        @CacheEvict(value = "functions", allEntries = true)
+        @CacheEvict(value = "roleFunctions", allEntries = true)
     })
     public void functionBindRole(String functionId, List<String> roleIds) {
         UUID functionUuid = mapUuid(functionId);
@@ -212,6 +208,7 @@ public class RoleService implements IRoleService {
         @CacheEvict(value = "roles", allEntries = true),
         @CacheEvict(value = "userRoles", allEntries = true)
     })
+    // 無法精確反推各 user 的 key，保留全量清除
     public void roleBindUser(String roleId, List<String> userIds) {
         UUID roleUuid = mapUuid(roleId);
         if (roleUuid == null) {
@@ -261,9 +258,10 @@ public class RoleService implements IRoleService {
     @Transactional
     @Override
     @Caching(evict = {
-        @CacheEvict(value = "roles", allEntries = true),
+        @CacheEvict(value = "roles", key = "'byuser:' + #userId"),
         @CacheEvict(value = "userRoles", allEntries = true)
     })
+    // userRoles 綁定可能增刪多個 role，無法精確反推各 key
     public void userBindRole(String userId, List<String> roleIds) {
         UUID userUuid = mapUuid(userId);
         if (userUuid == null) {
@@ -332,6 +330,7 @@ public class RoleService implements IRoleService {
         @CacheEvict(value = "roles", allEntries = true),
         @CacheEvict(value = "userRoles", allEntries = true)
     })
+    // 多個 userIds 無法精確反推，保留全量清除
     public void roleUnbindUser(String roleId, List<String> userIds) {
         UUID roleUuid = mapUuid(roleId);
         if (roleUuid == null) {
@@ -350,9 +349,10 @@ public class RoleService implements IRoleService {
     @Transactional
     @Override
     @Caching(evict = {
-        @CacheEvict(value = "roles", allEntries = true),
+        @CacheEvict(value = "roles", key = "'byuser:' + #userId"),
         @CacheEvict(value = "userRoles", allEntries = true)
     })
+    // 多個 roleIds 無法精確反推
     public void userUnbindRole(String userId, List<String> roleIds) {
         UUID userUuid = mapUuid(userId);
         if (userUuid == null) {
@@ -371,9 +371,10 @@ public class RoleService implements IRoleService {
     @Transactional
     @Override
     @Caching(evict = {
-        @CacheEvict(value = "roles", allEntries = true),
+        @CacheEvict(value = "roles", key = "'byuser:' + #userId"),
         @CacheEvict(value = "userRoles", allEntries = true)
     })
+    // userRoles 全部 role 被清除，無法精確反推
     public void userUnbindAllRole(String userId) {
         UUID userUuid = mapUuid(userId);
         if (userUuid == null) {
@@ -388,10 +389,7 @@ public class RoleService implements IRoleService {
     }
     @Transactional
     @Override
-    @Caching(evict = {
-        @CacheEvict(value = "roles", allEntries = true),
-        @CacheEvict(value = "functions", allEntries = true)
-    })
+    @CacheEvict(value = "roleFunctions", key = "#roleId")
     public void roleUnbindFunction(String roleId, List<String> functionIds) {
         UUID roleUuid = mapUuid(roleId);
         if (roleUuid == null) {
@@ -412,7 +410,7 @@ public class RoleService implements IRoleService {
     @Override
     @Caching(evict = {
         @CacheEvict(value = "roles", allEntries = true),
-        @CacheEvict(value = "functions", allEntries = true)
+        @CacheEvict(value = "roleFunctions", allEntries = true)
     })
     public void functionUnbindRole(String functionId, List<String> roleIds) {
         UUID functionUuid = mapUuid(functionId);
@@ -432,7 +430,7 @@ public class RoleService implements IRoleService {
 
 
     @Override
-    @Cacheable(value = "roles", key = "'functions:' + #roleId", sync = true)
+    @Cacheable(value = "roleFunctions", key = "#roleId", sync = true)
     public List<FunctionVo> getFunctionByRole(String roleId) {
         UUID roleUuid = mapUuid(roleId);
         if (roleUuid == null) {

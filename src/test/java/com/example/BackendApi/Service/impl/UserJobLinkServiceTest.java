@@ -19,6 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
+import org.springframework.cache.CacheManager;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -42,6 +43,9 @@ class UserJobLinkServiceTest {
 
     @Mock
     private UserJobLinkMapper userJobLinkMapper;
+
+    @Mock
+    private CacheManager cacheManager;
 
     @InjectMocks
     private UserJobLinkService userJobLinkService;
@@ -213,11 +217,11 @@ class UserJobLinkServiceTest {
     @Test
     @DisplayName("Should delete user job link successfully")
     void testDeleteUserJobLink() {
-        when(userJobLinkDataAccess.existsById(linkId)).thenReturn(true);
+        when(userJobLinkDataAccess.findById(linkId)).thenReturn(Optional.of(testLink));
 
         userJobLinkService.deleteUserJobLink(linkId.toString());
 
-        verify(userJobLinkDataAccess).existsById(linkId);
+        verify(userJobLinkDataAccess).findById(linkId);
         verify(userJobLinkDataAccess).deleteById(linkId);
     }
 
@@ -230,7 +234,7 @@ class UserJobLinkServiceTest {
     @Test
     @DisplayName("Should throw exception when link not found for delete")
     void testDeleteUserJobLink_NotFound() {
-        when(userJobLinkDataAccess.existsById(linkId)).thenReturn(false);
+        when(userJobLinkDataAccess.findById(linkId)).thenReturn(Optional.empty());
 
         assertThrows(IllegalArgumentException.class,
                 () -> userJobLinkService.deleteUserJobLink(linkId.toString()));

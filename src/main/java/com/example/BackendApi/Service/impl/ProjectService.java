@@ -357,7 +357,7 @@ public class ProjectService implements IProjectService {
     @Override
     @Caching(evict = {
         @CacheEvict(value = "userProjects", allEntries = true),
-        @CacheEvict(value = "projectSkills", allEntries = true)
+        @CacheEvict(value = "projectSkills", key = "#projectId")
     })
     public void updatePersonalProject(UUID projectId, PersonalProjectRequest request) {
         // 驗證輸入
@@ -391,7 +391,7 @@ public class ProjectService implements IProjectService {
     @Override
     @Caching(evict = {
         @CacheEvict(value = "userProjects", allEntries = true),
-        @CacheEvict(value = "projectSkills", allEntries = true)
+        @CacheEvict(value = "projectSkills", key = "#projectId")
     })
     public void deletePersonalProject(UUID projectId) {
         // 驗證輸入
@@ -428,7 +428,7 @@ public class ProjectService implements IProjectService {
 
     @Transactional
     @Override
-    @CacheEvict(value = "projectSkills", allEntries = true)
+    @CacheEvict(value = "projectSkills", key = "#projectId")
     public void bindPersonalProjectSkill(UUID projectId, UUID skillId, UUID skillLevelId) {
         UUID currentUserId = requireCurrentUserId();
         validateBindingInput(projectId, skillId, skillLevelId);
@@ -452,7 +452,7 @@ public class ProjectService implements IProjectService {
 
     @Transactional
     @Override
-    @CacheEvict(value = "projectSkills", allEntries = true)
+    @CacheEvict(value = "projectSkills", key = "#projectId")
     public void updatePersonalProjectSkillLevel(UUID projectId, UUID skillId, UUID skillLevelId) {
         UUID currentUserId = requireCurrentUserId();
         validateBindingInput(projectId, skillId, skillLevelId);
@@ -469,7 +469,7 @@ public class ProjectService implements IProjectService {
 
     @Transactional
     @Override
-    @CacheEvict(value = "projectSkills", allEntries = true)
+    @CacheEvict(value = "projectSkills", key = "#projectId")
     public void unbindPersonalProjectSkill(UUID projectId, UUID skillId) {
         UUID currentUserId = requireCurrentUserId();
         if (projectId == null || skillId == null) {
@@ -487,7 +487,7 @@ public class ProjectService implements IProjectService {
 
     @Transactional
     @Override
-    @CacheEvict(value = "projectSkills", allEntries = true)
+    @CacheEvict(value = "projectSkills", key = "#projectId")
     public void rebindProjectSkills(UUID projectId, Map<UUID, UUID> skillLevelMapping) {
         if (projectId == null) {
             throw new IllegalArgumentException("Key must not be null");
@@ -534,7 +534,7 @@ public class ProjectService implements IProjectService {
 
     @Transactional
     @Override
-    @CacheEvict(value = "projectSkills", allEntries = true)
+    @CacheEvict(value = "projectSkills", key = "#projectId")
     public void rebindPersonalProjectSkills(UUID projectId, Map<UUID, UUID> skillLevelMapping) {
         UUID currentUserId = requireCurrentUserId();
         if (projectId == null) {
@@ -679,7 +679,7 @@ public class ProjectService implements IProjectService {
     @Override
     @Transactional
     @Caching(evict = {
-        @CacheEvict(value = "projectSkills", allEntries = true),
+        @CacheEvict(value = "projectSkills", key = "#projectId"),
         @CacheEvict(value = "userProjects", allEntries = true)
     })
     public void rebindProjectMemberSkills(UUID projectId, Map<UUID, Map<UUID, UUID>> memberSkillsMap) {

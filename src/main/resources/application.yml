@@ -33,6 +33,18 @@ spring:
 server:
   port: ${SERVER_PORT:8000}
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  metrics:
+    tags:
+      application: backend-api
+    enable:
+      redis: true
+      cache: true
+
 kafka:
   consumer:
     group-id: ${KAFKA_CONSUMER_GROUP_ID:myGroup}

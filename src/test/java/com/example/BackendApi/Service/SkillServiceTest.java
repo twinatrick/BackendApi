@@ -13,6 +13,7 @@ import com.example.BackendApi.DataAccess.*;
 import com.example.BackendApi.Exception.AppException;
 import com.example.BackendApi.Mapper.SkillMapper;
 import jakarta.persistence.EntityManager;
+import org.springframework.cache.CacheManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -55,6 +56,8 @@ class SkillServiceTest {
     private User currentUser;
     @Mock
     private EntityManager entityManager;
+    @Mock
+    private CacheManager cacheManager;
 
     @InjectMocks
     private SkillService skillService;
@@ -752,6 +755,7 @@ class SkillServiceTest {
         UUID levelId = UUID.randomUUID();
         SkillLevel level = new SkillLevel();
         level.setId(levelId);
+        level.setSkill(testSkill);
 
         when(skillLevelDataAccess.findById(levelId)).thenReturn(Optional.of(level));
         when(userSkillDataAccess.existsBySkillLevelId(levelId)).thenReturn(false);
