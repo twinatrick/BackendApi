@@ -1386,6 +1386,18 @@ class UserIntegrationTest {
 ./mvnw jacoco:check
 ```
 
+**排除範圍與原因：**
+
+| 排除範圍 | 原因 |
+|---------|------|
+| `Security/**` | Spring Security Filter Chain 需完整 Servlet 容器模擬 |
+| `Service/impl/*AiService*.class` | 外部 HTTP API 調用，脫離實際端點無法驗證 |
+| `Service/impl/Kafka*`, `*Alarm*` | Kafka 依賴，需 Broker 基礎設施 |
+| `Service/impl/CheckApiService` | 外部 API 定時輪詢，需實際端點 |
+| `Util/CallApi.class` | HTTP 請求工具類，單純 HttpClient 封裝 |
+| `Service/Onnx/**` | 需 GPU 與 Whisper 模型檔 (GGML) 才能執行 |
+| `Crawler/**` | 網頁爬蟲需實際連線目標網站，無法單元驗證 |
+
 **檢視覆蓋率報告：**
 
 ```bash

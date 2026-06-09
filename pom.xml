@@ -361,6 +361,26 @@
                         <exclude>com/example/BackendApi/DataAccess/I*.class</exclude>
                         <exclude>com/example/BackendApi/Service/I*.class</exclude>
                         <exclude>com/example/BackendApi/BackedApiApplication.class</exclude>
+                        <!-- Security - 需完整 Servlet 容器模擬 -->
+                        <exclude>com/example/BackendApi/Security/**</exclude>
+                        <!-- 外部 AI API 調用 - 脫離實際端點無法驗證 -->
+                        <exclude>com/example/BackendApi/Service/impl/BaseOpenAiService.class</exclude>
+                        <exclude>com/example/BackendApi/Service/impl/GeminiService.class</exclude>
+                        <exclude>com/example/BackendApi/Service/impl/DeepSeekService.class</exclude>
+                        <exclude>com/example/BackendApi/Service/impl/GroqService.class</exclude>
+                        <exclude>com/example/BackendApi/Service/impl/GitHubModelsService.class</exclude>
+                        <exclude>com/example/BackendApi/Service/impl/CompositeAiService.class</exclude>
+                        <!-- Kafka/Alarm - 需 Kafka Broker -->
+                        <exclude>com/example/BackendApi/Service/impl/KafkaConsumerService.class</exclude>
+                        <exclude>com/example/BackendApi/Service/impl/AlarmService.class</exclude>
+                        <exclude>com/example/BackendApi/Service/impl/AlarmKafkaPublisher.class</exclude>
+                        <!-- 外部輪詢工具 -->
+                        <exclude>com/example/BackendApi/Service/impl/CheckApiService.class</exclude>
+                        <exclude>com/example/BackendApi/Util/CallApi.class</exclude>
+                        <!-- STT - 需 GPU + 模型檔 -->
+                        <exclude>com/example/BackendApi/Service/Onnx/**</exclude>
+                        <!-- 網頁爬蟲 - 需實際連線 -->
+                        <exclude>com/example/BackendApi/Crawler/**</exclude>
                     </excludes>
                     <rules>
                         <rule>
