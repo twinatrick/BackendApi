@@ -31,7 +31,7 @@
   - **Mockito Warning**: 測試已在 Maven Surefire 中設定 `-XX:+EnableDynamicAgentLoading` 來消除 Java 21 下的警告。
 
 ## Architecture & Code Conventions
-- **Base Package**: `com.example.BackendApi` (注意大小寫)
+- **Base Package**: `com.example.BackendArchitectureLab` (注意大小寫)
 - **Generators**: 專案大量使用 MapStruct 與 Lombok，Maven 已設定對應的 Annotation Processors。
 - **Package Quirks**: 請遵守現有的 Package 命名與大小寫慣例：
   - 首字母大寫: `Aop`, `Dto`, `Entity`, `Repository`, `Service`, `Timer`, `Util`, `WebSocket`,`Annotation`, `Config`, `Controller`, `Dataaccess`, `Exception`, `Filter`, `Mapper`

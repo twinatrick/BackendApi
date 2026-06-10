@@ -972,7 +972,7 @@ grep -r "@Query.*nativeQuery.*true" src/
             </layout>
             <charset>UTF-8</charset>
         </encoder>
-        <filter class="com.example.BackendApi.Filter.SensitiveDataMaskingFilter"/>
+        <filter class="com.example.BackendArchitectureLab.Filter.SensitiveDataMaskingFilter"/>
     </appender>
 </configuration>
 ```
@@ -1340,7 +1340,7 @@ target/
     └── jacoco/
         ├── index.html          ← 總覽
         ├── jacoco.xml          ← CI/CD 用
-        └── com.example.BackendApi/
+        └── com.example.BackendArchitectureLab/
             ├── Service/
             │   └── impl/
             │       └── UserService.html

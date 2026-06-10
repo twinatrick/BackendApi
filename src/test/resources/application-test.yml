@@ -35,7 +35,7 @@ spring:
 # 日誌配置
 logging:
   level:
-    com.example.BackendApi: DEBUG
+    com.example.BackendArchitectureLab: DEBUG
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
     org.springframework.test: INFO
