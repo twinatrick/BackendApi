@@ -358,41 +358,41 @@
                 <version>0.8.11</version>
                 <configuration>
                     <excludes>
-                        <exclude>com/example/BackendApi/Controller/**</exclude>
-                        <exclude>com/example/BackendApi/Entity/**</exclude>
-                        <exclude>com/example/BackendApi/Dto/**</exclude>
-                        <exclude>com/example/BackendApi/Mapper/**</exclude>
-                        <exclude>com/example/BackendApi/DataAccess/specification/**</exclude>
-                        <exclude>com/example/BackendApi/Config/**</exclude>
-                        <exclude>com/example/BackendApi/Aop/**</exclude>
-                        <exclude>com/example/BackendApi/Filter/**</exclude>
-                        <exclude>com/example/BackendApi/WebSocket/**</exclude>
-                        <exclude>com/example/BackendApi/Timer/**</exclude>
-                        <exclude>com/example/BackendApi/Exception/**</exclude>
-                        <exclude>com/example/BackendApi/Repository/**</exclude>
-                        <exclude>com/example/BackendApi/DataAccess/I*.class</exclude>
-                        <exclude>com/example/BackendApi/Service/I*.class</exclude>
-                        <exclude>com/example/BackendApi/BackedApiApplication.class</exclude>
+                        <exclude>com/example/BackendArchitectureLab/Controller/**</exclude>
+                        <exclude>com/example/BackendArchitectureLab/Entity/**</exclude>
+                        <exclude>com/example/BackendArchitectureLab/Dto/**</exclude>
+                        <exclude>com/example/BackendArchitectureLab/Mapper/**</exclude>
+                        <exclude>com/example/BackendArchitectureLab/DataAccess/specification/**</exclude>
+                        <exclude>com/example/BackendArchitectureLab/Config/**</exclude>
+                        <exclude>com/example/BackendArchitectureLab/Aop/**</exclude>
+                        <exclude>com/example/BackendArchitectureLab/Filter/**</exclude>
+                        <exclude>com/example/BackendArchitectureLab/WebSocket/**</exclude>
+                        <exclude>com/example/BackendArchitectureLab/Timer/**</exclude>
+                        <exclude>com/example/BackendArchitectureLab/Exception/**</exclude>
+                        <exclude>com/example/BackendArchitectureLab/Repository/**</exclude>
+                        <exclude>com/example/BackendArchitectureLab/DataAccess/I*.class</exclude>
+                        <exclude>com/example/BackendArchitectureLab/Service/I*.class</exclude>
+                        <exclude>com/example/BackendArchitectureLab/BackedApiApplication.class</exclude>
                         <!-- Security - 需完整 Servlet 容器模擬 -->
-                        <exclude>com/example/BackendApi/Security/**</exclude>
+                        <exclude>com/example/BackendArchitectureLab/Security/**</exclude>
                         <!-- 外部 AI API 調用 - 脫離實際端點無法驗證 -->
-                        <exclude>com/example/BackendApi/Service/impl/BaseOpenAiService.class</exclude>
-                        <exclude>com/example/BackendApi/Service/impl/GeminiService.class</exclude>
-                        <exclude>com/example/BackendApi/Service/impl/DeepSeekService.class</exclude>
-                        <exclude>com/example/BackendApi/Service/impl/GroqService.class</exclude>
-                        <exclude>com/example/BackendApi/Service/impl/GitHubModelsService.class</exclude>
-                        <exclude>com/example/BackendApi/Service/impl/CompositeAiService.class</exclude>
+                        <exclude>com/example/BackendArchitectureLab/Service/impl/BaseOpenAiService.class</exclude>
+                        <exclude>com/example/BackendArchitectureLab/Service/impl/GeminiService.class</exclude>
+                        <exclude>com/example/BackendArchitectureLab/Service/impl/DeepSeekService.class</exclude>
+                        <exclude>com/example/BackendArchitectureLab/Service/impl/GroqService.class</exclude>
+                        <exclude>com/example/BackendArchitectureLab/Service/impl/GitHubModelsService.class</exclude>
+                        <exclude>com/example/BackendArchitectureLab/Service/impl/CompositeAiService.class</exclude>
                         <!-- Kafka/Alarm - 需 Kafka Broker -->
-                        <exclude>com/example/BackendApi/Service/impl/KafkaConsumerService.class</exclude>
-                        <exclude>com/example/BackendApi/Service/impl/AlarmService.class</exclude>
-                        <exclude>com/example/BackendApi/Service/impl/AlarmKafkaPublisher.class</exclude>
+                        <exclude>com/example/BackendArchitectureLab/Service/impl/KafkaConsumerService.class</exclude>
+                        <exclude>com/example/BackendArchitectureLab/Service/impl/AlarmService.class</exclude>
+                        <exclude>com/example/BackendArchitectureLab/Service/impl/AlarmKafkaPublisher.class</exclude>
                         <!-- 外部輪詢工具 -->
-                        <exclude>com/example/BackendApi/Service/impl/CheckApiService.class</exclude>
-                        <exclude>com/example/BackendApi/Util/CallApi.class</exclude>
+                        <exclude>com/example/BackendArchitectureLab/Service/impl/CheckApiService.class</exclude>
+                        <exclude>com/example/BackendArchitectureLab/Util/CallApi.class</exclude>
                         <!-- STT - 需 GPU + 模型檔 -->
-                        <exclude>com/example/BackendApi/Service/Onnx/**</exclude>
+                        <exclude>com/example/BackendArchitectureLab/Service/Onnx/**</exclude>
                         <!-- 網頁爬蟲 - 需實際連線 -->
-                        <exclude>com/example/BackendApi/Crawler/**</exclude>
+                        <exclude>com/example/BackendArchitectureLab/Crawler/**</exclude>
                     </excludes>
                     <rules>
                         <rule>
