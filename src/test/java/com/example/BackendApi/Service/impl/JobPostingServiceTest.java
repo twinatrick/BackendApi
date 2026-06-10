@@ -21,6 +21,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.springframework.cache.CacheManager;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -52,6 +53,9 @@ class JobPostingServiceTest {
 
     @Mock
     private CompositeAiService compositeAiService;
+
+    @Mock
+    private CacheManager cacheManager;
 
     @InjectMocks
     private JobPostingService jobPostingService;
@@ -272,11 +276,11 @@ class JobPostingServiceTest {
     @Test
     @DisplayName("Should delete job posting successfully")
     void testDeleteJobPosting() {
-        when(jobPostingDataAccess.existsById(jobPostingId)).thenReturn(true);
+        when(jobPostingDataAccess.findById(jobPostingId)).thenReturn(Optional.of(testJobPosting));
 
         jobPostingService.deleteJobPosting(jobPostingId.toString());
 
-        verify(jobPostingDataAccess).existsById(jobPostingId);
+        verify(jobPostingDataAccess).findById(jobPostingId);
         verify(jobPostingDataAccess).deleteById(jobPostingId);
     }
 
@@ -289,7 +293,7 @@ class JobPostingServiceTest {
     @Test
     @DisplayName("Should throw exception when job posting not found for delete")
     void testDeleteJobPosting_NotFound() {
-        when(jobPostingDataAccess.existsById(jobPostingId)).thenReturn(false);
+        when(jobPostingDataAccess.findById(jobPostingId)).thenReturn(Optional.empty());
 
         assertThrows(IllegalArgumentException.class,
                 () -> jobPostingService.deleteJobPosting(jobPostingId.toString()));

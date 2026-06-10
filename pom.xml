@@ -232,6 +232,18 @@
             <artifactId>bopomofo4j</artifactId>
             <version>1.0.1</version>
         </dependency>
+
+        <!-- Actuator - 健康檢查與 Metrics 端點 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <!-- Micrometer Prometheus - 快取監控指標 -->
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
     </dependencies>
     <dependencyManagement>
         <dependencies>
