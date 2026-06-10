@@ -16,8 +16,11 @@ import com.example.BackendArchitectureLab.Service.IJobPostingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,10 +41,15 @@ public class JobPostingService implements IJobPostingService {
     private final JobPostingMapper jobPostingMapper;
     private final CompositeJobCrawler jobCrawler;
     private final CompositeAiService compositeAiService;
+    private final CacheManager cacheManager;
 
     @Override
     @Transactional
-    @CacheEvict(value = "jobPostings", allEntries = true)
+    @Caching(put = {
+        @CachePut(value = "jobPostings", key = "#result.id")
+    }, evict = {
+        @CacheEvict(value = "jobPostings", key = "'bycompany:' + #request.companyId")
+    })
     public JobPostingVo createJobPosting(CreateJobPostingRequest request) {
         Company company = companyDataAccess.findById(UUID.fromString(request.getCompanyId()))
                 .orElseThrow(() -> new IllegalArgumentException("Company not found"));
@@ -81,7 +89,11 @@ public class JobPostingService implements IJobPostingService {
 
     @Override
     @Transactional
-    @CacheEvict(value = "jobPostings", allEntries = true)
+    @Caching(put = {
+        @CachePut(value = "jobPostings", key = "#jobPostingVo.id")
+    }, evict = {
+        @CacheEvict(value = "jobPostings", key = "'bycompany:' + #jobPostingVo.companyId")
+    })
     public JobPostingVo updateJobPosting(JobPostingVo jobPostingVo) {
         if (jobPostingVo.getId() == null || jobPostingVo.getId().isBlank()) {
             throw new IllegalArgumentException("ID must not be null");
@@ -125,16 +137,20 @@ public class JobPostingService implements IJobPostingService {
 
     @Override
     @Transactional
-    @CacheEvict(value = "jobPostings", allEntries = true)
     public void deleteJobPosting(String id) {
         UUID uuid = mapUuid(id);
         if (uuid == null) {
             throw new IllegalArgumentException("ID must not be null");
         }
-        if (!jobPostingDataAccess.existsById(uuid)) {
-            throw new IllegalArgumentException("Job posting not found");
-        }
+        JobPosting jobPosting = jobPostingDataAccess.findById(uuid)
+                .orElseThrow(() -> new IllegalArgumentException("Job posting not found"));
+        String companyId = jobPosting.getCompany().getId().toString();
         jobPostingDataAccess.deleteById(uuid);
+        Cache cache = cacheManager.getCache("jobPostings");
+        if (cache != null) {
+            cache.evict(id);
+            cache.evict("bycompany:" + companyId);
+        }
     }
 
     @Override
@@ -152,7 +168,7 @@ public class JobPostingService implements IJobPostingService {
     @Override
     @Transactional
     @Caching(evict = {
-        @CacheEvict(value = "jobPostings", allEntries = true),
+        @CacheEvict(value = "jobPostings", key = "'bycompany:' + #companyId"),
         @CacheEvict(value = "companies", allEntries = true)
     })
     public List<JobPostingVo> scrapeAndAnalyzeJobs(String companyId) {

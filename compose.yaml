@@ -64,8 +64,8 @@ services:
 
 ##  backend:
 ##    build: .
-##    image: ${BACKEND_IMAGE:-backendapi0212}
-##    container_name: ${BACKEND_CONTAINER_NAME:-backend_api_all}
+##    image: ${BACKEND_IMAGE:-backendarchitecturelab0212}
+##    container_name: ${BACKEND_CONTAINER_NAME:-backend_architecture_lab_all}
 ##    restart: ${RESTART_POLICY:-always}
 ##    depends_on:
 ##      - postgres

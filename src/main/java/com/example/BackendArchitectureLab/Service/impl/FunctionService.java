@@ -12,7 +12,9 @@ import com.example.BackendArchitectureLab.Entity.Function;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
@@ -34,7 +36,12 @@ public class FunctionService implements IFunctionService {
     private final FunctionMapper functionMapper;
 
     @Override
-    @CacheEvict(value = "functions", allEntries = true)
+    @Caching(put = {
+        @CachePut(value = "functions", key = "#result.id"),
+        @CachePut(value = "functions", key = "'byname:' + #result.name")
+    }, evict = {
+        @CacheEvict(value = "functions", key = "'bynameparent:' + #result.name + ':' + (#result.parent != null ? #result.parent : '')")
+    })
     public FunctionVo addFunction(FunctionVo functionVo) {
         Function function = functionMapper.toEntity(functionVo);
         if (function.getId() != null) {
@@ -54,13 +61,17 @@ public class FunctionService implements IFunctionService {
     }
 
     @Override
-    @Cacheable(value = "functions", sync = true)
+    @Cacheable(value = "functions", key = "'all'", sync = true)
     public List<FunctionVo> getFunction() {
         return functionDataAccess.findAll().stream().map(functionMapper::toVo).toList();
     }
 
     @Override
-    @CacheEvict(value = "functions", allEntries = true)
+    @Caching(evict = {
+        @CacheEvict(value = "functions", key = "#functionVo.id"),
+        @CacheEvict(value = "functions", key = "'byname:' + #functionVo.name"),
+        @CacheEvict(value = "functions", key = "'bynameparent:' + #functionVo.name + ':' + (#functionVo.parent != null ? #functionVo.parent : '')")
+    })
     public void updateFunction(FunctionVo functionVo) {
         Function function = functionMapper.toEntity(functionVo);
         if (function.getId() == null) {
@@ -77,7 +88,7 @@ public class FunctionService implements IFunctionService {
 
     @Override
     @Transactional
-    @CacheEvict(value = "functions", allEntries = true)
+    @CacheEvict(value = "functions", key = "#functionVo.id")
     public void deleteFunction(FunctionVo functionVo) {
         Function function = functionMapper.toEntity(functionVo);
         if (function.getId() == null) {
@@ -91,6 +102,7 @@ public class FunctionService implements IFunctionService {
     @Override
     @CacheEvict(value = "functions", allEntries = true)
     public void deleteFunction(List<FunctionVo> function) {
+        // 批次刪除無法精確反推 key，保留全量清除
         if (function.isEmpty()) {
             return;
         }
@@ -105,6 +117,7 @@ public class FunctionService implements IFunctionService {
     @Override
     @CacheEvict(value = "functions", allEntries = true)
     public void saveFunction(List<FunctionVo> function) {
+        // 批次儲存無法精確反推 key，保留全量清除
         if (function.isEmpty()) {
             return;
         }
@@ -118,6 +131,7 @@ public class FunctionService implements IFunctionService {
     @Override
     @CacheEvict(value = "functions", allEntries = true)
     public List<FunctionVo> saveFunctionNewChild(List<FunctionVo> function) {
+        // 新增子功能無法精確反推 key，保留全量清除
         Date date= new Date();
         Sort sort = Sort.by(Sort.Direction.ASC, "sort");
         if (function.isEmpty()) {

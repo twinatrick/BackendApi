@@ -12,7 +12,11 @@ import com.example.BackendArchitectureLab.Service.IUserJobLinkService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,10 +32,17 @@ public class UserJobLinkService implements IUserJobLinkService {
     private final IUserDataAccess userDataAccess;
     private final IJobPostingDataAccess jobPostingDataAccess;
     private final UserJobLinkMapper userJobLinkMapper;
+    private final CacheManager cacheManager;
 
     @Override
     @Transactional
-    @CacheEvict(value = "userJobLinks", allEntries = true)
+    @Caching(put = {
+        @CachePut(value = "userJobLinks", key = "#result.id")
+    }, evict = {
+        @CacheEvict(value = "userJobLinks", key = "'byuser:' + #userJobLinkVo.userId"),
+        @CacheEvict(value = "userJobLinks", key = "'byjob:' + #userJobLinkVo.jobPostingId"),
+        @CacheEvict(value = "userJobLinks", key = "'currentuser:' + #userJobLinkVo.userId")
+    })
     public UserJobLinkVo createUserJobLink(UserJobLinkVo userJobLinkVo) {
         UserJobLink link = new UserJobLink();
 
@@ -74,16 +85,23 @@ public class UserJobLinkService implements IUserJobLinkService {
 
     @Override
     @Transactional
-    @CacheEvict(value = "userJobLinks", allEntries = true)
     public void deleteUserJobLink(String id) {
         UUID uuid = mapUuid(id);
         if (uuid == null) {
             throw new IllegalArgumentException("ID must not be null");
         }
-        if (!userJobLinkDataAccess.existsById(uuid)) {
-            throw new IllegalArgumentException("User job link not found");
-        }
+        UserJobLink link = userJobLinkDataAccess.findById(uuid)
+                .orElseThrow(() -> new IllegalArgumentException("User job link not found"));
+        String userId = link.getUser().getId().toString();
+        String jobPostingId = link.getJobPosting().getId().toString();
         userJobLinkDataAccess.deleteById(uuid);
+        Cache cache = cacheManager.getCache("userJobLinks");
+        if (cache != null) {
+            cache.evict(id);
+            cache.evict("byuser:" + userId);
+            cache.evict("byjob:" + jobPostingId);
+            cache.evict("currentuser:" + userId);
+        }
     }
 
     @Override
@@ -112,7 +130,13 @@ public class UserJobLinkService implements IUserJobLinkService {
 
     @Override
     @Transactional
-    @CacheEvict(value = "userJobLinks", allEntries = true)
+    @Caching(put = {
+        @CachePut(value = "userJobLinks", key = "#result.id")
+    }, evict = {
+        @CacheEvict(value = "userJobLinks", key = "'byuser:' + #currentUserId"),
+        @CacheEvict(value = "userJobLinks", key = "'byjob:' + #jobPostingId"),
+        @CacheEvict(value = "userJobLinks", key = "'currentuser:' + #currentUserId")
+    })
     public UserJobLinkVo addJobToCurrentUser(String currentUserId, String jobPostingId) {
         UUID userUuid = mapUuid(currentUserId);
         UUID jobUuid = mapUuid(jobPostingId);
@@ -135,7 +159,11 @@ public class UserJobLinkService implements IUserJobLinkService {
 
     @Override
     @Transactional
-    @CacheEvict(value = "userJobLinks", allEntries = true)
+    @Caching(evict = {
+        @CacheEvict(value = "userJobLinks", key = "'byuser:' + #currentUserId"),
+        @CacheEvict(value = "userJobLinks", key = "'byjob:' + #jobPostingId"),
+        @CacheEvict(value = "userJobLinks", key = "'currentuser:' + #currentUserId")
+    })
     public void removeJobFromCurrentUser(String currentUserId, String jobPostingId) {
         UUID userUuid = mapUuid(currentUserId);
         UUID jobUuid = mapUuid(jobPostingId);

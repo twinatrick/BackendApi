@@ -1,16 +1,90 @@
+# Backend Architecture Validation Platform
+
+> Personal Backend Architecture Validation Platform
+
+本專案並非教學範例，而是作為後端架構設計、技術驗證與工程實踐的平台，持續驗證企業級系統常見設計模式、系統架構與開發流程。
+
+專案以 Java 21 與 Spring Boot 3 為核心，整合 Authentication、Authorization、Cache、Event-Driven Architecture、Real-Time Notification、AI Integration 與 CI/CD Automation 等常見企業級技術。
+
+透過實際開發驗證大型系統常見技術選型、架構設計與工程實務，並持續擴充作為個人技術研究平台。
+
+---
+
+## Architecture Highlights
+
+- Spring Security + JWT Authentication
+- Annotation-based RBAC Authorization
+- Redis Multi-Level Cache Strategy
+- Kafka Event-Driven Architecture
+- WebSocket Real-Time Notification
+- JPA Specification Dynamic Query
+- Docker Compose Development Environment
+- GitHub Actions CI Pipeline
+- AI-assisted Code Review
+- Unit Test + JaCoCo Coverage Validation
+- Micrometer + Prometheus Monitoring
+- Grafana Dashboard
+
+---
+
+## Engineering Practices
+
+- Git Flow Branch Strategy
+- Pull Request Workflow
+- GitHub Actions Continuous Integration
+- Automated Unit Testing
+- JaCoCo Coverage Validation
+- AI Code Review Before Merge
+- Docker-based Development Environment
+- Environment Variable Management
+- Centralized Exception Handling
+- Layered Architecture Design
+
+---
+
 ## 專案目的
 
-此專案用於整理與實作常見後端架構與平台功能，
-包含：
+此專案用於整理與實作企業級系統常見後端架構與平台功能，包含：
 
-- JWT / RBAC 權限管理
-- WebSocket 即時通知
-- Kafka 非同步事件處理
-- Redis 快取
-- Docker 化部署
-- API validation 與統一例外處理
+### Security
 
-並模擬具備使用者、角色、技能管理與告警通知的平台型系統。
+- JWT Authentication
+- Spring Security
+- RBAC Permission Model
+
+### Architecture
+
+- Redis Cache
+- Kafka Event-Driven Architecture
+- WebSocket Real-Time Notification
+- Dynamic Query Specification
+
+### Infrastructure
+
+- Docker Compose
+- GitHub Actions
+- AI Code Review
+- Environment Configuration
+
+### AI Integration
+
+- Gemini API
+- Whisper STT
+- Milvus Vector Database
+
+---
+
+並模擬具備：
+
+- 使用者管理
+- 權限管理
+- 技能管理
+- 專案管理
+- 職缺管理
+- AI 文件處理
+- 即時告警通知
+
+等企業管理平台常見業務情境。
 
 # Java 21 Spring Boot 常見技術 實作方法
 
@@ -321,6 +395,10 @@ erDiagram
 | **Lombok**            | 程式碼簡化        | 減少 getter/setter/constructor 樣板程式碼              |
 | **Jsoup**             | HTML 解析與網頁爬蟲 | 輕量級靜態頁面爬取，支援 CSS Selector 與 DOM 操作，適合結構化頁面      |
 | **Selenium**          | 動態網頁爬蟲       | 瀏覽器自動化工具，處理 JavaScript 渲染頁面，作為 Jsoup 的 fallback |
+| **whisperjni (whisper.cpp)** | AI 模型推論引擎   | JNI 封裝 whisper.cpp，用於本地端 GPU/CUDA 加速語音辨識 (STT)    |
+| **jave-all-deps**     | 音訊轉檔工具      | 基於 FFmpeg，用於將各類音訊檔轉換為 Whisper 需要的 16kHz PCM    |
+| **Kuromoji**          | 日文 NLP 工具    | 日文形態素分析與片假名拼音萃取                                 |
+| **Pinyin4j/Bopomofo** | 中文拼音/注音轉換   | 中文字轉漢語拼音及注音符號轉換引擎                               |
 | **Gemini API**        | AI 智能分析      | Google Gemini REST API，用於從爬取內容中結構化萃取職缺資訊        |
 | **Gson**              | JSON 序列化     | Google 官方 JSON 庫，用於 Gemini API 請求/回應處理          |
 | **Docker Compose**    | 本地開發環境       | 一鍵啟動所有依賴服務、環境一致性高                               |
@@ -340,6 +418,7 @@ erDiagram
 | **公司管理模組**  | 公司 CRUD，作為職缺的隸屬企業                                     | `/company/*`                  |
 | **職缺管理模組**  | 職缺 CRUD、依公司查詢、爬蟲結果儲存                                  | `/job-posting/*`              |
 | **爬蟲分析模組**  | Jsoup/Selenium 複合爬蟲抓取公司網站 + Gemini API 智能分析職缺資訊       | `內部服務`                        |
+| **AI 語音辨識模組**| 整合 whisperjni (whisper.cpp) 進行 GPU 加速 STT，支援中日文羅馬音/注音/拼音轉換 | `/stt/v1/*`                   |
 | **告警通知模組**  | 定時拉取外部資料、閾值比對、Kafka 非同步推送、WebSocket 即時通知              | `/alertCheckLimit/*`          |
 | **資料查詢模組**  | Aquark 感測器資料查詢、動態條件過濾、Redis 快取                        | `/aquarkData/*`               |
 
@@ -365,6 +444,12 @@ DataAccess 層將資料存取邏輯從 Service 中分離，便於測試與替換
     - **參考資料**（24h）：skills、skillLevels、functions
     - **業務資料**（1-6h）：roles（6h）、companies（6h）、jobPostings（1h）
     - **使用者資料**（10-30min）：currentUserSkills、userProjects、userJobLinks、userRoles
+- **精確 Evict 優化**：以 `@CachePut` + 精確 key evict 取代全量 `allEntries=true`，
+  減少寫入操作對快取命中率的衝擊（7 個 Service，約 40+ 處註解已優化）
+- **Namespace 拆分**：`skillLevels` 從 `skills` 拆分、`roleFunctions` 從 `roles` 拆分，
+  避免不同資料類型共用同一 namespace 導致的無效清除
+- **CacheManager 降級**：對於需先查 entity 才能取得關聯 key 的情境
+  （如 `deleteJobPosting`、`deleteUserJobLink`），直接使用 `CacheManager.evict()` 精確清除
 
 ### 非同步事件處理
 
@@ -398,7 +483,7 @@ DataAccess 層將資料存取邏輯從 Service 中分離，便於測試與替換
 
 - JUnit 5 + Mockito 單元測試
 - H2 in-memory database 隔離測試環境
-- JaCoCo 覆蓋率要求 ≥ 80% (排除介面、Entity、DTO 等樣板層)
+- JaCoCo 覆蓋率要求 ≥ 75% (排除介面、Entity、DTO 等樣板層)
 
 ### Docker Compose 本地開發
 
@@ -411,26 +496,123 @@ DataAccess 層將資料存取邏輯從 Service 中分離，便於測試與替換
 - 標準化回應格式：`ResponseType<T>` (code, data, message, errorType)
 - 自訂 `AppException` 支援 HTTP 狀態碼與錯誤型別設定
 
-## 後續規劃
 
-- [x] **CI/CD 管線**: 整合 GitHub Actions，自動化測試、建置、部署
-- [x] **管理者綁定 API 重構**: 統一 Rebind API 設計，完整覆蓋語意，Diff 策略最佳化
-- [x] **專案成員技能管理**: 新增 `user_project_skill` 表，支援專案維度技能管理
-- [x] **Redis 快取策略擴充**: 全 Service 層快取註解、14+ 命名空間、多層級 TTL 策略
-- [x] **職缺爬蟲與 AI 分析**: 整合 Jsoup/Selenium 複合爬蟲 + Gemini API 智能萃取，支援公司/職缺/使用者收藏 CRUD
-- [ ] **監控與日誌**: 引入 Micrometer + Prometheus + Grafana，集中化日誌管理
-- [ ] **效能優化**: 資料庫查詢優化、連線池調整、虛擬執行緒應用
-- [ ] **API 版本管理**: 引入 URI/Header 版本控制，向後相容
-- [ ] **安全強化**: 速率限制、CORS 細部控制、SQL 注入防護審計
-- [ ] **文件完善**: API 文件自動化、架構決策記錄 (ADR)
-- [ ] **微服務拆分評估**: 依業務邊界拆分服務，引入 API Gateway
-- [ ] **向量搜尋應用**: 整合 Milvus 實現語意搜尋、RAG 應用
+## CI/CD Pipeline
+
+專案導入 GitHub Actions 建立 Pull Request 自動化驗證流程。
+
+### Pull Request Flow
+
+    Developer
+    ↓
+    Create Pull Request
+    ↓
+    GitHub Actions
+    ↓
+    Maven Build
+    ↓
+    Unit Test
+    ↓
+    JaCoCo Coverage Check
+    ↓
+    AI Code Review
+    ↓
+    Merge Validation
+    ↓
+    Approve & Merge
+## Roadmap
+
+### Infrastructure
+
+- [x] Prometheus Metrics
+- [x] Grafana Dashboard
+- [ ] Centralized Logging
+- [ ] ELK Stack
+
+### Architecture
+
+- [ ] Outbox Pattern
+- [ ] Distributed Lock
+- [ ] Event Replay Mechanism
+- [ ] Saga Pattern Evaluation
+
+### Quality
+
+- [ ] Testcontainers Integration Test
+- [ ] SonarQube Static Analysis
+- [ ] Performance Benchmark
+- [ ] Security Audit Automation
+
+### AI Integration
+
+- [ ] RAG Architecture
+- [ ] Hybrid Search
+- [ ] Vector Search Optimization
+- [ ] Multi-Agent Workflow
 
 ## 提供的介面類型
 
 - REST API
 - WebSocket
 - Kafka Consumer
+
+## 🤖 AI 語音辨識功能 (STT) 說明
+
+系統已內建基於 **whisperjni (whisper.cpp)** 的 Whisper 語音辨識服務，支援 CUDA GPU 加速，可將上傳的音訊進行本地推論，並將結果轉換為各種拼音格式。
+
+### API 介面：`POST /stt/v1/{lan}/{mode}`
+
+*   **參數說明**:
+    *   `lan`: 語言。`zh` (中文), `ja` (日文)
+    *   `mode`: 輸出模式。`pinyin` (拼音), `zhuyin` (注音), `romaji` (日文羅馬音), `none` (不輸出拼音)
+    *   `file`: 音訊檔案 (MultipartFile，支援 MP3/WAV/M4A，後端會使用 FFmpeg 自動轉 16kHz PCM)
+
+*   **CURL 測試範例**:
+    ```bash
+    curl -X POST "http://localhost:8000/stt/v1/zh/zhuyin" \
+         -H "Content-Type: multipart/form-data" \
+         -F "file=@/path/to/your/audio.mp3"
+    ```
+
+### 模型下載與配置指南
+
+本專案使用 **GGML 格式** 的 Whisper 模型（非 ONNX），透過 whisper.cpp 在本地執行推論。
+
+#### 下載模型
+
+```bash
+# 下載 ggml-large-v3-turbo.bin（約 1.5GB，高準確度，建議 NVIDIA GPU）
+curl -L -o src/main/resources/models/ggml-large-v3-turbo.bin ^
+  https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-turbo.bin
+
+# 或下載 ggml-tiny.bin（約 75MB，快速測試用，支援 CPU）
+curl -L -o src/main/resources/models/ggml-tiny.bin ^
+  https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-tiny.bin
+```
+
+#### 配置模型路徑
+
+預設路徑為 `models/ggml-large-v3-turbo.bin`（相對於工作目錄），可透過環境變數或 `application.yml` 修改：
+
+```yaml
+ai:
+  whisper:
+    model-path: ${WHISPER_MODEL_PATH:models/ggml-large-v3-turbo.bin}
+```
+
+或直接在啟動時指定：
+
+```bash
+set WHISPER_MODEL_PATH=models/ggml-tiny.bin
+./mvnw spring-boot:run
+```
+
+#### GPU 加速說明
+
+- whisperjni 會自動偵測系統上的 NVIDIA CUDA 驅動
+- 若偵測到 CUDA，推論將自動在 GPU 上執行（需安裝 [CUDA Toolkit](https://developer.nvidia.com/cuda-downloads)）
+- 若無 GPU，則自動回退至 CPU 推論
+- 推論線程數可透過 `params.nThreads` 調整（預設 4）
 
 ## 啟動方式
 
@@ -1300,7 +1482,7 @@ class UserIntegrationTest {
 
 ### 測試覆蓋率要求
 
-**目標覆蓋率：** ≥ 80%（BUNDLE 級別）
+**目標覆蓋率：** ≥ 75%（BUNDLE 級別）
 
 **排除項目：**
 
@@ -1318,9 +1500,21 @@ class UserIntegrationTest {
 # 生成覆蓋率報告
 ./mvnw jacoco:report
 
-# 檢查覆蓋率是否達標（會驗證 80% 門檻）
+# 檢查覆蓋率是否達標（會驗證 75% 門檻）
 ./mvnw jacoco:check
 ```
+
+**排除範圍與原因：**
+
+| 排除範圍 | 原因 |
+|---------|------|
+| `Security/**` | Spring Security Filter Chain 需完整 Servlet 容器模擬 |
+| `Service/impl/*AiService*.class` | 外部 HTTP API 調用，脫離實際端點無法驗證 |
+| `Service/impl/Kafka*`, `*Alarm*` | Kafka 依賴，需 Broker 基礎設施 |
+| `Service/impl/CheckApiService` | 外部 API 定時輪詢，需實際端點 |
+| `Util/CallApi.class` | HTTP 請求工具類，單純 HttpClient 封裝 |
+| `Service/Onnx/**` | 需 GPU 與 Whisper 模型檔 (GGML) 才能執行 |
+| `Crawler/**` | 網頁爬蟲需實際連線目標網站，無法單元驗證 |
 
 **檢視覆蓋率報告：**
 

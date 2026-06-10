@@ -33,6 +33,18 @@ spring:
 server:
   port: ${SERVER_PORT:8000}
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  metrics:
+    tags:
+      application: backend-architecture-lab
+    enable:
+      redis: true
+      cache: true
+
 kafka:
   consumer:
     group-id: ${KAFKA_CONSUMER_GROUP_ID:myGroup}
@@ -82,3 +94,7 @@ github:
       key: ${GITHUB_MODELS_API_KEY:}
       url: ${GITHUB_MODELS_API_URL:https://models.inference.ai.azure.com/chat/completions}
       model: ${GITHUB_MODELS_MODEL:gpt-4o-mini}
+
+ai:
+  whisper:
+    model-path: ${WHISPER_MODEL_PATH:models/ggml-large-v3-turbo.bin}

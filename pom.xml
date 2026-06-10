@@ -197,6 +197,53 @@
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
         </dependency>
+
+        <!-- Whisper JNI (whisper.cpp) for STT -->
+        <dependency>
+            <groupId>io.github.givimad</groupId>
+            <artifactId>whisper-jni</artifactId>
+            <version>1.7.1</version>
+        </dependency>
+
+        <!-- Audio Processing (FFmpeg wrapper) -->
+        <dependency>
+            <groupId>ws.schild</groupId>
+            <artifactId>jave-all-deps</artifactId>
+            <version>3.5.0</version>
+        </dependency>
+
+        <!-- Japanese NLP -->
+        <dependency>
+            <groupId>com.atilika.kuromoji</groupId>
+            <artifactId>kuromoji-ipadic</artifactId>
+            <version>0.9.0</version>
+        </dependency>
+
+        <!-- Chinese Pinyin -->
+        <dependency>
+            <groupId>com.belerweb</groupId>
+            <artifactId>pinyin4j</artifactId>
+            <version>2.5.1</version>
+        </dependency>
+
+        <!-- Chinese Zhuyin -->
+        <dependency>
+            <groupId>com.rnkrsoft.bopomofo4j</groupId>
+            <artifactId>bopomofo4j</artifactId>
+            <version>1.0.1</version>
+        </dependency>
+
+        <!-- Actuator - 健康檢查與 Metrics 端點 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <!-- Micrometer Prometheus - 快取監控指標 -->
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
     </dependencies>
     <dependencyManagement>
         <dependencies>
@@ -309,6 +356,57 @@
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>0.8.11</version>
+                <configuration>
+                    <excludes>
+                        <exclude>com/example/BackendApi/Controller/**</exclude>
+                        <exclude>com/example/BackendApi/Entity/**</exclude>
+                        <exclude>com/example/BackendApi/Dto/**</exclude>
+                        <exclude>com/example/BackendApi/Mapper/**</exclude>
+                        <exclude>com/example/BackendApi/DataAccess/specification/**</exclude>
+                        <exclude>com/example/BackendApi/Config/**</exclude>
+                        <exclude>com/example/BackendApi/Aop/**</exclude>
+                        <exclude>com/example/BackendApi/Filter/**</exclude>
+                        <exclude>com/example/BackendApi/WebSocket/**</exclude>
+                        <exclude>com/example/BackendApi/Timer/**</exclude>
+                        <exclude>com/example/BackendApi/Exception/**</exclude>
+                        <exclude>com/example/BackendApi/Repository/**</exclude>
+                        <exclude>com/example/BackendApi/DataAccess/I*.class</exclude>
+                        <exclude>com/example/BackendApi/Service/I*.class</exclude>
+                        <exclude>com/example/BackendApi/BackedApiApplication.class</exclude>
+                        <!-- Security - 需完整 Servlet 容器模擬 -->
+                        <exclude>com/example/BackendApi/Security/**</exclude>
+                        <!-- 外部 AI API 調用 - 脫離實際端點無法驗證 -->
+                        <exclude>com/example/BackendApi/Service/impl/BaseOpenAiService.class</exclude>
+                        <exclude>com/example/BackendApi/Service/impl/GeminiService.class</exclude>
+                        <exclude>com/example/BackendApi/Service/impl/DeepSeekService.class</exclude>
+                        <exclude>com/example/BackendApi/Service/impl/GroqService.class</exclude>
+                        <exclude>com/example/BackendApi/Service/impl/GitHubModelsService.class</exclude>
+                        <exclude>com/example/BackendApi/Service/impl/CompositeAiService.class</exclude>
+                        <!-- Kafka/Alarm - 需 Kafka Broker -->
+                        <exclude>com/example/BackendApi/Service/impl/KafkaConsumerService.class</exclude>
+                        <exclude>com/example/BackendApi/Service/impl/AlarmService.class</exclude>
+                        <exclude>com/example/BackendApi/Service/impl/AlarmKafkaPublisher.class</exclude>
+                        <!-- 外部輪詢工具 -->
+                        <exclude>com/example/BackendApi/Service/impl/CheckApiService.class</exclude>
+                        <exclude>com/example/BackendApi/Util/CallApi.class</exclude>
+                        <!-- STT - 需 GPU + 模型檔 -->
+                        <exclude>com/example/BackendApi/Service/Onnx/**</exclude>
+                        <!-- 網頁爬蟲 - 需實際連線 -->
+                        <exclude>com/example/BackendApi/Crawler/**</exclude>
+                    </excludes>
+                    <rules>
+                        <rule>
+                            <element>BUNDLE</element>
+                            <limits>
+                                <limit>
+                                    <counter>LINE</counter>
+                                    <value>COVEREDRATIO</value>
+                                    <minimum>0.80</minimum>
+                                </limit>
+                            </limits>
+                        </rule>
+                    </rules>
+                </configuration>
                 <executions>
                     <execution>
                         <id>prepare-agent</id>

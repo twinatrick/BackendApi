@@ -68,14 +68,25 @@ class CachePenetrationProtectionCacheTest {
     }
 
     @Test
-    void get_WhenBloomFilterSaysNo_ReturnsNullWithoutQueryingDelegate() {
+    void get_WhenBloomFilterSaysNoForUuidKey_ReturnsNullWithoutQueryingDelegate() {
+        String uuidKey = "550e8400-e29b-41d4-a716-446655440000";
+        when(stringRedisTemplate.hasKey("null:test-cache:550e8400-e29b-41d4-a716-446655440000")).thenReturn(false);
+        when(bloomFilterService.mightContain(cacheName, uuidKey)).thenReturn(false);
+
+        Cache.ValueWrapper result = cache.get(uuidKey);
+
+        assertNull(result);
+        verify(delegate, never()).get(any());
+    }
+
+    @Test
+    void get_WhenBloomFilterSaysNoForNonUuidKey_StillQueriesDelegate() {
         when(stringRedisTemplate.hasKey(nullKey)).thenReturn(false);
-        when(bloomFilterService.mightContain(cacheName, testKey)).thenReturn(false);
 
         Cache.ValueWrapper result = cache.get(testKey);
 
         assertNull(result);
-        verify(delegate, never()).get(any());
+        verify(delegate).get(testKey);
     }
 
     @Test
