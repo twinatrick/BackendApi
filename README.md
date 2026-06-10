@@ -483,7 +483,7 @@ DataAccess 層將資料存取邏輯從 Service 中分離，便於測試與替換
 
 - JUnit 5 + Mockito 單元測試
 - H2 in-memory database 隔離測試環境
-- JaCoCo 覆蓋率要求 ≥ 75% (排除介面、Entity、DTO 等樣板層)
+- JaCoCo 覆蓋率要求 ≥ 80% (排除介面、Entity、DTO 等樣板層)
 
 ### Docker Compose 本地開發
 
@@ -1482,7 +1482,7 @@ class UserIntegrationTest {
 
 ### 測試覆蓋率要求
 
-**目標覆蓋率：** ≥ 75%（BUNDLE 級別）
+**目標覆蓋率：** ≥ 80%（BUNDLE 級別）
 
 **排除項目：**
 
@@ -1500,7 +1500,7 @@ class UserIntegrationTest {
 # 生成覆蓋率報告
 ./mvnw jacoco:report
 
-# 檢查覆蓋率是否達標（會驗證 75% 門檻）
+# 檢查覆蓋率是否達標（會驗證 80% 門檻）
 ./mvnw jacoco:check
 ```
 
