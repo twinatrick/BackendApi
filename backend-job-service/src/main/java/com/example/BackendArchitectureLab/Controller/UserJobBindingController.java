@@ -5,11 +5,14 @@ import com.example.BackendArchitectureLab.Annotation.OpenApi.ApiOperationBadRequ
 import com.example.BackendArchitectureLab.Annotation.OpenApi.ApiOperationOk;
 import com.example.BackendArchitectureLab.Dto.Vo.ResponseType;
 import com.example.BackendArchitectureLab.Dto.Vo.UserJobLinkVo;
-import com.example.BackendArchitectureLab.Entity.User;
+import com.example.BackendArchitectureLab.Dto.Vo.UserVo;
+import com.example.BackendArchitectureLab.Feign.UserServiceFeignClient;
 import com.example.BackendArchitectureLab.Service.IUserJobLinkService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -28,9 +31,9 @@ public class UserJobBindingController {
     private static final Logger log = LoggerFactory.getLogger(UserJobBindingController.class);
 
     @Autowired
-    private User currentUser;
-    @Autowired
     private IUserJobLinkService userJobLinkService;
+    @Autowired
+    private UserServiceFeignClient userServiceFeignClient;
 
     @PostMapping("/add/{jobPostingId}")
     @ApiOperationBadRequest(summary = "綁定職缺", description = "當前使用者綁定一筆職缺。")
@@ -59,9 +62,18 @@ public class UserJobBindingController {
     }
 
     private UUID requireCurrentUserId() {
-        if (currentUser == null || currentUser.getId() == null) {
-            throw new IllegalStateException("Current user not found");
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || auth.getPrincipal() == null) {
+            throw new IllegalStateException("Current user not found - no authentication");
         }
-        return currentUser.getId();
+        String email = auth.getName();
+        if (email == null || email.isBlank()) {
+            throw new IllegalStateException("Current user not found - no email in authentication");
+        }
+        UserVo userVo = userServiceFeignClient.getUserByEmail(email);
+        if (userVo == null || userVo.getId() == null) {
+            throw new IllegalStateException("Current user not found - user lookup failed");
+        }
+        return UUID.fromString(userVo.getId());
     }
 }
