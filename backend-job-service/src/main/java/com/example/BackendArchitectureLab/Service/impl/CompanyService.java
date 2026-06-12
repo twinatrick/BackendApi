@@ -7,7 +7,7 @@ import com.example.BackendArchitectureLab.Dto.Vo.UpdateCompanyRequest;
 import com.example.BackendArchitectureLab.Entity.Company;
 import com.example.BackendArchitectureLab.Mapper.CompanyMapper;
 import com.example.BackendArchitectureLab.Service.ICompanyService;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -17,11 +17,12 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
 public class CompanyService implements ICompanyService {
 
-    private final ICompanyDataAccess companyDataAccess;
-    private final CompanyMapper companyMapper;
+    @Autowired
+    private ICompanyDataAccess companyDataAccess;
+    @Autowired
+    private CompanyMapper companyMapper;
 
     @Override
     @Transactional

@@ -9,6 +9,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.test.context.ActiveProfiles;
 
@@ -24,16 +25,17 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 @DataJpaTest
 @ActiveProfiles("test")
+@Import(UserDataAccessImpl.class)
 class UserDataAccessImplTest {
 
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
     private IUserDataAccess userDataAccess;
 
     @BeforeEach
     void setUp() {
-        userDataAccess = new UserDataAccessImpl(userRepository);
         userRepository.deleteAll();
     }
 
@@ -329,3 +331,4 @@ class UserDataAccessImplTest {
         assertEquals(2, result.getContent().size());
     }
 }
+

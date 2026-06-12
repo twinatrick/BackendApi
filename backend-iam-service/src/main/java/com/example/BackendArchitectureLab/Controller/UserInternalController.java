@@ -2,7 +2,7 @@ package com.example.BackendArchitectureLab.Controller;
 
 import com.example.BackendArchitectureLab.Dto.Vo.UserVo;
 import com.example.BackendArchitectureLab.Service.IUserService;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -10,13 +10,13 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/users/inner")
-@RequiredArgsConstructor
 public class UserInternalController {
-    private final IUserService userService;
+    @Autowired
+    private IUserService userService;
 
     @GetMapping("/{id}")
-    public UserVo getUserById(@PathVariable Long id) {
-        return userService.getUserById(String.valueOf(id));
+    public UserVo getUserById(@PathVariable UUID id) {
+        return userService.getUserById(id.toString());
     }
 
     @PostMapping("/by-email")
@@ -31,8 +31,13 @@ public class UserInternalController {
     }
 
     @GetMapping("/exists/{id}")
-    public boolean existsUserById(@PathVariable Long id) {
-        return userService.getUserById(String.valueOf(id)) != null;
+    public boolean existsUserById(@PathVariable UUID id) {
+        try {
+            userService.getUserById(id.toString());
+            return true;
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
     }
 
     @GetMapping("/by-email-exists")

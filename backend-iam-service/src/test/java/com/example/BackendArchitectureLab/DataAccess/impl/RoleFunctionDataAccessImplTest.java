@@ -10,6 +10,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.data.domain.Example;
 import org.springframework.test.context.ActiveProfiles;
@@ -24,19 +25,20 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 @DataJpaTest
 @ActiveProfiles("test")
+@Import(RoleFunctionDataAccessImpl.class)
 class RoleFunctionDataAccessImplTest {
+
+    @Autowired
+    private TestEntityManager entityManager;
 
     @Autowired
     private RoleFunctionRepository roleFunctionRepository;
 
     @Autowired
-    private TestEntityManager entityManager;
-
     private IRoleFunctionDataAccess roleFunctionDataAccess;
 
     @BeforeEach
     void setUp() {
-        roleFunctionDataAccess = new RoleFunctionDataAccessImpl(roleFunctionRepository);
         roleFunctionRepository.deleteAll();
     }
 
@@ -245,3 +247,4 @@ class RoleFunctionDataAccessImplTest {
         assertEquals("UPDATE_USER", remaining.get(0).getFunction().getName());
     }
 }
+

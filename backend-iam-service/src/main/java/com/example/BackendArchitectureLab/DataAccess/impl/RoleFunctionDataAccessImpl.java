@@ -5,7 +5,7 @@ import com.example.BackendArchitectureLab.DataAccess.IRoleFunctionDataAccess;
 import com.example.BackendArchitectureLab.Entity.Function;
 import com.example.BackendArchitectureLab.Entity.Role;
 import com.example.BackendArchitectureLab.Entity.RoleFunction;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
 import org.springframework.stereotype.Component;
 
@@ -18,10 +18,10 @@ import java.util.UUID;
  * Delegates to Spring Data JPA RoleFunctionRepository.
  */
 @Component
-@RequiredArgsConstructor
 public class RoleFunctionDataAccessImpl implements IRoleFunctionDataAccess {
 
-    private final RoleFunctionRepository roleFunctionRepository;
+    @Autowired
+    private RoleFunctionRepository roleFunctionRepository;
 
     @Override
     public List<RoleFunction> findAll(Example<RoleFunction> example) {

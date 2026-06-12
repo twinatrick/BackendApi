@@ -1,16 +1,16 @@
 package com.example.BackendArchitectureLab.Service.impl;
 
 import com.example.BackendArchitectureLab.DataAccess.IJobPostingDataAccess;
-import com.example.BackendArchitectureLab.DataAccess.IUserDataAccess;
 import com.example.BackendArchitectureLab.DataAccess.IUserJobLinkDataAccess;
 import com.example.BackendArchitectureLab.Dto.Vo.UserJobLinkVo;
 import com.example.BackendArchitectureLab.Entity.JobPosting;
 import com.example.BackendArchitectureLab.Entity.User;
 import com.example.BackendArchitectureLab.Entity.UserJobLink;
+import com.example.BackendArchitectureLab.Feign.UserServiceFeignClient;
 import com.example.BackendArchitectureLab.Mapper.UserJobLinkMapper;
 import com.example.BackendArchitectureLab.Service.IUserJobLinkService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
@@ -25,14 +25,18 @@ import java.util.UUID;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class UserJobLinkService implements IUserJobLinkService {
 
-    private final IUserJobLinkDataAccess userJobLinkDataAccess;
-    private final IUserDataAccess userDataAccess;
-    private final IJobPostingDataAccess jobPostingDataAccess;
-    private final UserJobLinkMapper userJobLinkMapper;
-    private final CacheManager cacheManager;
+    @Autowired
+    private IUserJobLinkDataAccess userJobLinkDataAccess;
+    @Autowired
+    private IJobPostingDataAccess jobPostingDataAccess;
+    @Autowired
+    private UserJobLinkMapper userJobLinkMapper;
+    @Autowired
+    private CacheManager cacheManager;
+    @Autowired
+    private UserServiceFeignClient userServiceFeignClient;
 
     @Override
     @Transactional
@@ -47,8 +51,12 @@ public class UserJobLinkService implements IUserJobLinkService {
         UserJobLink link = new UserJobLink();
 
         if (userJobLinkVo.getUserId() != null) {
-            User user = userDataAccess.findById(UUID.fromString(userJobLinkVo.getUserId()))
-                    .orElseThrow(() -> new IllegalArgumentException("User not found"));
+            UUID userUuid = UUID.fromString(userJobLinkVo.getUserId());
+            if (!userServiceFeignClient.existsUserById(userUuid)) {
+                throw new IllegalArgumentException("User not found");
+            }
+            User user = new User();
+            user.setId(userUuid);
             link.setUser(user);
         }
 
@@ -146,11 +154,14 @@ public class UserJobLinkService implements IUserJobLinkService {
         if (userJobLinkDataAccess.existsByUserIdAndJobPostingId(userUuid, jobUuid)) {
             throw new IllegalArgumentException("Job already bound to current user");
         }
-        User user = userDataAccess.findById(userUuid)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        if (!userServiceFeignClient.existsUserById(userUuid)) {
+            throw new IllegalArgumentException("User not found");
+        }
         JobPosting jobPosting = jobPostingDataAccess.findById(jobUuid)
                 .orElseThrow(() -> new IllegalArgumentException("Job posting not found"));
         UserJobLink link = new UserJobLink();
+        User user = new User();
+        user.setId(userUuid);
         link.setUser(user);
         link.setJobPosting(jobPosting);
         link = userJobLinkDataAccess.save(link);

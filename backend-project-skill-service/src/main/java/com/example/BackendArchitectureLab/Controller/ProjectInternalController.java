@@ -2,7 +2,7 @@ package com.example.BackendArchitectureLab.Controller;
 
 import com.example.BackendArchitectureLab.Dto.Vo.ProjectVo;
 import com.example.BackendArchitectureLab.Service.IProjectService;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -12,12 +12,12 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/project/inner")
-@RequiredArgsConstructor
 public class ProjectInternalController {
-    private final IProjectService projectService;
+    @Autowired
+    private IProjectService projectService;
 
     @GetMapping("/{id}")
-    public ProjectVo getProjectById(@PathVariable Long id) {
+    public ProjectVo getProjectById(@PathVariable UUID id) {
         return projectService.getProjectById(id);
     }
 

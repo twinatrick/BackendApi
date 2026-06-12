@@ -15,6 +15,7 @@ import com.example.BackendArchitectureLab.Dto.Vo.ResponseType;
 import com.example.BackendArchitectureLab.Dto.Vo.SkillLevelVo;
 import com.example.BackendArchitectureLab.Dto.Vo.SkillVo;
 import io.swagger.v3.oas.annotations.Operation;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,11 +25,8 @@ import java.util.UUID;
 @RequestMapping("/skill")
 @ApiControllerTag(name = "Skills", description = "Backend API endpoints - Skill management")
 public class SkillController {
-    private final ISkillService skillService;
-
-    public SkillController(ISkillService skillService) {
-        this.skillService = skillService;
-    }
+    @Autowired
+    private ISkillService skillService;
 
     @PostMapping("/add")
     @RequirePermission({"System", "Skill", "Edit"})

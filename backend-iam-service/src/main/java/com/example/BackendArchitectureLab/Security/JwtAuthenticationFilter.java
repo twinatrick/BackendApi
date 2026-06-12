@@ -8,7 +8,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.springframework.http.HttpStatus;
@@ -24,12 +24,14 @@ import java.io.IOException;
 import java.util.Objects;
 
 @Component
-@RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private final JwtAuthenticationToken jwtAuthenticationToken;
-    private final UserDetailsService userDetailsService;
-    private final ObjectMapper objectMapper;
+    @Autowired
+    private JwtAuthenticationToken jwtAuthenticationToken;
+    @Autowired
+    private UserDetailsService userDetailsService;
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {

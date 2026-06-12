@@ -3,7 +3,7 @@ package com.example.BackendArchitectureLab.DataAccess.impl;
 import com.example.BackendArchitectureLab.DataAccess.ICompanyWebsiteDataAccess;
 import com.example.BackendArchitectureLab.Entity.CompanyWebsite;
 import com.example.BackendArchitectureLab.Repository.CompanyWebsiteRepository;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -11,10 +11,10 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Component
-@RequiredArgsConstructor
 public class CompanyWebsiteDataAccessImpl implements ICompanyWebsiteDataAccess {
 
-    private final CompanyWebsiteRepository companyWebsiteRepository;
+    @Autowired
+    private CompanyWebsiteRepository companyWebsiteRepository;
 
     @Override
     public CompanyWebsite save(CompanyWebsite companyWebsite) {

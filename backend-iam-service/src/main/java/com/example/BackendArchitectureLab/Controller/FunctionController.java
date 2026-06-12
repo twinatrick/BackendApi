@@ -11,6 +11,7 @@ import com.example.BackendArchitectureLab.Dto.Vo.FunctionTransVo;
 import com.example.BackendArchitectureLab.Dto.Vo.FunctionVo;
 import com.example.BackendArchitectureLab.Dto.Vo.ResponseType;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,11 +20,8 @@ import java.util.List;
 @RequestMapping("/function")
 @ApiControllerTag(name = "Functions", description = "Backend API endpoints - Function management")
 public class FunctionController {
-    private final IFunctionService functionService;
-
-    public FunctionController(IFunctionService functionService) {
-        this.functionService = functionService;
-    }
+    @Autowired
+    private IFunctionService functionService;
 
     @PostMapping("/add")
     @RequirePermission({"System", "Function", "Edit"})

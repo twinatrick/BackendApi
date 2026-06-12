@@ -5,7 +5,7 @@ import com.example.BackendArchitectureLab.Repository.SkillRepository;
 import com.example.BackendArchitectureLab.DataAccess.ISkillDataAccess;
 import com.example.BackendArchitectureLab.DataAccess.specification.SkillSpecification;
 import com.example.BackendArchitectureLab.Entity.Skill;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -21,10 +21,10 @@ import java.util.UUID;
  * Delegates to Spring Data JPA SkillRepository.
  */
 @Component
-@RequiredArgsConstructor
 public class SkillDataAccessImpl implements ISkillDataAccess {
 
-    private final SkillRepository skillRepository;
+    @Autowired
+    private SkillRepository skillRepository;
 
     @Override
     public Skill save(Skill skill) {

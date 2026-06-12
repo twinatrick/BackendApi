@@ -5,7 +5,7 @@ import com.example.BackendArchitectureLab.Repository.SkillLevelRepository;
 import com.example.BackendArchitectureLab.DataAccess.ISkillLevelDataAccess;
 import com.example.BackendArchitectureLab.DataAccess.specification.SkillLevelSpecification;
 import com.example.BackendArchitectureLab.Entity.SkillLevel;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -16,10 +16,10 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Component
-@RequiredArgsConstructor
 public class SkillLevelDataAccessImpl implements ISkillLevelDataAccess {
 
-    private final SkillLevelRepository skillLevelRepository;
+    @Autowired
+    private SkillLevelRepository skillLevelRepository;
 
     @Override
     public SkillLevel save(SkillLevel skillLevel) {

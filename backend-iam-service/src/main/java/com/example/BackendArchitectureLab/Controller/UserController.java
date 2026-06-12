@@ -2,7 +2,6 @@ package com.example.BackendArchitectureLab.Controller;
 
 import com.example.BackendArchitectureLab.Dto.Vo.Search.UserSearchQuery;
 import com.example.BackendArchitectureLab.Dto.Vo.Common.PageResult;
-import com.example.BackendArchitectureLab.Service.ISkillService;
 import com.example.BackendArchitectureLab.Service.IUserService;
 import com.example.BackendArchitectureLab.Annotation.RequirePermission;
 import com.example.BackendArchitectureLab.Annotation.OpenApi.ApiControllerTag;
@@ -11,7 +10,6 @@ import com.example.BackendArchitectureLab.Annotation.OpenApi.ApiOperationBadRequ
 import com.example.BackendArchitectureLab.Annotation.OpenApi.ApiOperationOk;
 import com.example.BackendArchitectureLab.Dto.Vo.UserProjectBindRequest;
 import com.example.BackendArchitectureLab.Dto.Vo.UserRoleRebindRequest;
-import com.example.BackendArchitectureLab.Dto.Vo.UserSkillBindRequest;
 import com.example.BackendArchitectureLab.Dto.Vo.ResponseType;
 import com.example.BackendArchitectureLab.Dto.Vo.UserVo;
 import jakarta.validation.Valid;
@@ -34,9 +32,6 @@ public class UserController {
     @Autowired
     private IUserService userService;
 
-    @Autowired
-    private ISkillService skillService;
-
 
     @PostMapping(value = "/create")
     @RequirePermission({"System", "ProjectManagement", "EditAll"})
@@ -50,15 +45,6 @@ public class UserController {
     @ApiOperationAuth(summary = "Get current user info", description = "Returns current user profile and permissions.")
     public ResponseType<UserVo> getUserInfo() {
         return new ResponseType<>(userService.getCurrentUserInfo());
-    }
-
-    @PostMapping("/bindSkill")
-    @Deprecated
-    @RequirePermission({"System", "ProjectManagement", "Edit"})
-    @ApiOperationBadRequest(summary = "Bind user skill", description = "Binds a skill level to a user. This operation manages binding relation only and does not modify skill content. Admin-assigned skills can still be bound by authorized users.")
-    public ResponseType<String> bindUserSkill(@RequestBody UserSkillBindRequest body) {
-        skillService.bindUserSkill(body.getUserId(), body.getSkillId(), body.getSkillLevelId());
-        return ResponseType.Success("User skill bound successfully");
     }
 
     @PostMapping("/bindProject")

@@ -3,17 +3,17 @@ package com.example.BackendArchitectureLab.DataAccess.impl;
 import com.example.BackendArchitectureLab.Repository.UserSkillRepository;
 import com.example.BackendArchitectureLab.DataAccess.IUserSkillDataAccess;
 import com.example.BackendArchitectureLab.Entity.UserSkill;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.UUID;
 
 @Component
-@RequiredArgsConstructor
 public class UserSkillDataAccessImpl implements IUserSkillDataAccess {
 
-    private final UserSkillRepository userSkillRepository;
+    @Autowired
+    private UserSkillRepository userSkillRepository;
 
     @Override
     public boolean existsByUserIdAndSkillId(UUID userId, UUID skillId) {

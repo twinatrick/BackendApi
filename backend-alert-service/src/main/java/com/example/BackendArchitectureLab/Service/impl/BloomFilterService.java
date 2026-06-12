@@ -6,6 +6,7 @@ import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RBloomFilter;
 import org.redisson.api.RedissonClient;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Collection;
@@ -16,16 +17,13 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 public class BloomFilterService implements IBloomFilterService {
 
-    private final RedissonClient redissonClient;
+    @Autowired
+    private RedissonClient redissonClient;
 
-    private final BloomFilterProperties bloomFilterProperties;
+    @Autowired
+    private BloomFilterProperties bloomFilterProperties;
 
     private final Map<String, RBloomFilter<String>> filters = new ConcurrentHashMap<>();
-
-    public BloomFilterService(RedissonClient redissonClient, BloomFilterProperties bloomFilterProperties) {
-        this.redissonClient = redissonClient;
-        this.bloomFilterProperties = bloomFilterProperties;
-    }
 
     public boolean mightContain(String cacheName, String key) {
         RBloomFilter<String> filter = filters.get(cacheName);

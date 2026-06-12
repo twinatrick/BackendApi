@@ -3,7 +3,7 @@ package com.example.BackendArchitectureLab.DataAccess.impl;
 import com.example.BackendArchitectureLab.DataAccess.IUserProjectSkillDataAccess;
 import com.example.BackendArchitectureLab.Entity.UserProjectSkill;
 import com.example.BackendArchitectureLab.Repository.UserProjectSkillRepository;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -11,10 +11,10 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Component
-@RequiredArgsConstructor
 public class UserProjectSkillDataAccessImpl implements IUserProjectSkillDataAccess {
 
-    private final UserProjectSkillRepository repository;
+    @Autowired
+    private UserProjectSkillRepository repository;
 
     @Override
     public List<UserProjectSkill> findByUserIdAndProjectId(UUID userId, UUID projectId) {

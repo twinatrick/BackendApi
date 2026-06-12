@@ -1,19 +1,21 @@
 package com.example.BackendArchitectureLab.DataAccess.impl;
 
-import com.example.BackendArchitectureLab.Repository.ProjectSkillRepository;
-import com.example.BackendArchitectureLab.Repository.ProjectRepository;
-import com.example.BackendArchitectureLab.Repository.SkillRepository;
-import com.example.BackendArchitectureLab.Repository.SkillLevelRepository;
 import com.example.BackendArchitectureLab.DataAccess.IProjectSkillDataAccess;
-import com.example.BackendArchitectureLab.Entity.ProjectSkill;
+import com.example.BackendArchitectureLab.DataAccess.impl.ProjectSkillDataAccessImpl;
 import com.example.BackendArchitectureLab.Entity.Project;
+import com.example.BackendArchitectureLab.Entity.ProjectSkill;
 import com.example.BackendArchitectureLab.Entity.Skill;
 import com.example.BackendArchitectureLab.Entity.SkillLevel;
+import com.example.BackendArchitectureLab.Repository.ProjectRepository;
+import com.example.BackendArchitectureLab.Repository.ProjectSkillRepository;
+import com.example.BackendArchitectureLab.Repository.SkillLevelRepository;
+import com.example.BackendArchitectureLab.Repository.SkillRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.UUID;
@@ -26,7 +28,11 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 @DataJpaTest
 @ActiveProfiles("test")
+@Import(ProjectSkillDataAccessImpl.class)
 class ProjectSkillDataAccessImplTest {
+
+    @Autowired
+    private IProjectSkillDataAccess projectSkillDataAccess;
 
     @Autowired
     private ProjectSkillRepository projectSkillRepository;
@@ -40,11 +46,8 @@ class ProjectSkillDataAccessImplTest {
     @Autowired
     private SkillLevelRepository skillLevelRepository;
 
-    private IProjectSkillDataAccess projectSkillDataAccess;
-
     @BeforeEach
     void setUp() {
-        projectSkillDataAccess = new ProjectSkillDataAccessImpl(projectSkillRepository);
         projectSkillRepository.deleteAll();
         projectRepository.deleteAll();
         skillRepository.deleteAll();

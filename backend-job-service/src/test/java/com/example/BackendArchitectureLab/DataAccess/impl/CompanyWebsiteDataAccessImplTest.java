@@ -1,6 +1,7 @@
 package com.example.BackendArchitectureLab.DataAccess.impl;
 
 import com.example.BackendArchitectureLab.DataAccess.ICompanyWebsiteDataAccess;
+import com.example.BackendArchitectureLab.DataAccess.impl.CompanyWebsiteDataAccessImpl;
 import com.example.BackendArchitectureLab.Entity.Company;
 import com.example.BackendArchitectureLab.Entity.CompanyWebsite;
 import com.example.BackendArchitectureLab.Repository.CompanyRepository;
@@ -10,6 +11,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.List;
@@ -20,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @DataJpaTest
 @ActiveProfiles("test")
+@Import(CompanyWebsiteDataAccessImpl.class)
 class CompanyWebsiteDataAccessImplTest {
 
     @Autowired
@@ -28,12 +31,12 @@ class CompanyWebsiteDataAccessImplTest {
     @Autowired
     private CompanyRepository companyRepository;
 
+    @Autowired
     private ICompanyWebsiteDataAccess companyWebsiteDataAccess;
     private Company testCompany;
 
     @BeforeEach
     void setUp() {
-        companyWebsiteDataAccess = new CompanyWebsiteDataAccessImpl(companyWebsiteRepository);
         companyWebsiteRepository.deleteAll();
         companyRepository.deleteAll();
 

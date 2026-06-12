@@ -5,7 +5,7 @@ import com.example.BackendArchitectureLab.Repository.FunctionRepository;
 import com.example.BackendArchitectureLab.DataAccess.IFunctionDataAccess;
 import com.example.BackendArchitectureLab.Entity.Function;
 import com.example.BackendArchitectureLab.DataAccess.specification.FunctionSpecification;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -22,10 +22,10 @@ import java.util.UUID;
  * Delegates to Spring Data JPA FunctionRepository.
  */
 @Component
-@RequiredArgsConstructor
 public class FunctionDataAccessImpl implements IFunctionDataAccess {
 
-    private final FunctionRepository functionRepository;
+    @Autowired
+    private FunctionRepository functionRepository;
 
     @Override
     public List<Function> findAllById(List<UUID> ids) {

@@ -1,14 +1,16 @@
 package com.example.BackendArchitectureLab.DataAccess.impl;
 
-import com.example.BackendArchitectureLab.Dto.Vo.Search.SkillSearchQuery;
-import com.example.BackendArchitectureLab.Repository.SkillRepository;
 import com.example.BackendArchitectureLab.DataAccess.ISkillDataAccess;
+import com.example.BackendArchitectureLab.DataAccess.impl.SkillDataAccessImpl;
+import com.example.BackendArchitectureLab.Dto.Vo.Search.SkillSearchQuery;
 import com.example.BackendArchitectureLab.Entity.Skill;
+import com.example.BackendArchitectureLab.Repository.SkillRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
 import org.springframework.test.context.ActiveProfiles;
@@ -26,16 +28,17 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 @DataJpaTest
 @ActiveProfiles("test")
+@Import(SkillDataAccessImpl.class)
 class SkillDataAccessImplTest {
+
+    @Autowired
+    private ISkillDataAccess skillDataAccess;
 
     @Autowired
     private SkillRepository skillRepository;
 
-    private ISkillDataAccess skillDataAccess;
-
     @BeforeEach
     void setUp() {
-        skillDataAccess = new SkillDataAccessImpl(skillRepository);
         skillRepository.deleteAll();
     }
 

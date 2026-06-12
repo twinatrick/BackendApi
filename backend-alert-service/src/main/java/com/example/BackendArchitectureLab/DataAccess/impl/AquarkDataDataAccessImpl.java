@@ -9,7 +9,7 @@ import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -21,11 +21,12 @@ import java.util.List;
  * Delegates to AquarkDataRepository and Criteria API queries.
  */
 @Component
-@RequiredArgsConstructor
 public class AquarkDataDataAccessImpl implements IAquarkDataDataAccess {
 
-    private final AquarkDataRepository aquarkDataRepository;
-    private final EntityManager entityManager;
+    @Autowired
+    private AquarkDataRepository aquarkDataRepository;
+    @Autowired
+    private EntityManager entityManager;
 
     @Override
     public List<AquarkData> findAll() {

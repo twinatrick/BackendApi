@@ -17,6 +17,7 @@ public class SkillSpecification {
      * 根據 SkillSearchQuery 建立查詢規格
      */
     public static Specification<Skill> buildSpecification(SkillSearchQuery query) {
+        if (query == null) return null;
         return (root, criteriaQuery, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
             

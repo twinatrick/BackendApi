@@ -12,6 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.List;
@@ -24,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 @DataJpaTest
 @ActiveProfiles("test")
+@Import(UserRoleDataAccessImpl.class)
 class UserRoleDataAccessImplTest {
 
     @Autowired
@@ -35,11 +37,11 @@ class UserRoleDataAccessImplTest {
     @Autowired
     private RoleRepository roleRepository;
 
+    @Autowired
     private IUserRoleDataAccess userRoleDataAccess;
 
     @BeforeEach
     void setUp() {
-        userRoleDataAccess = new UserRoleDataAccessImpl(userRoleRepository);
         userRoleRepository.deleteAll();
         userRepository.deleteAll();
         roleRepository.deleteAll();
@@ -248,3 +250,4 @@ class UserRoleDataAccessImplTest {
         assertEquals(role2.getId(), left.get(0).getRole().getId());
     }
 }
+

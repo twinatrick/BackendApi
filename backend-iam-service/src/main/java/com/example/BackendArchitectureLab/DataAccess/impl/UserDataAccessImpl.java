@@ -5,7 +5,7 @@ import com.example.BackendArchitectureLab.Repository.UserRepository;
 import com.example.BackendArchitectureLab.DataAccess.IUserDataAccess;
 import com.example.BackendArchitectureLab.Entity.User;
 import com.example.BackendArchitectureLab.DataAccess.specification.UserSpecification;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -21,10 +21,10 @@ import java.util.UUID;
  * Delegates to Spring Data JPA UserRepository.
  */
 @Component
-@RequiredArgsConstructor
 public class UserDataAccessImpl implements IUserDataAccess {
 
-    private final UserRepository userRepository;
+    @Autowired
+    private UserRepository userRepository;
 
     @Override
     public void save(User user) {

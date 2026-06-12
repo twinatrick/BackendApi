@@ -148,6 +148,11 @@
                 <version>${springdoc.version}</version>
             </dependency>
             <dependency>
+                <groupId>org.springdoc</groupId>
+                <artifactId>springdoc-openapi-starter-webflux-ui</artifactId>
+                <version>${springdoc.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.mybatis.spring.boot</groupId>
                 <artifactId>mybatis-spring-boot-starter</artifactId>
                 <version>${mybatis-spring-boot.version}</version>
@@ -218,7 +223,7 @@
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>3.2.5</version>
                     <configuration>
-                        <argLine>@{argLine} -XX:+EnableDynamicAgentLoading</argLine>
+                        <argLine>-XX:+EnableDynamicAgentLoading</argLine>
                     </configuration>
                 </plugin>
             </plugins>

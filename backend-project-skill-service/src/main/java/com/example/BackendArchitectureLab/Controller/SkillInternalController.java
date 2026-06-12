@@ -3,7 +3,7 @@ package com.example.BackendArchitectureLab.Controller;
 import com.example.BackendArchitectureLab.Dto.Vo.SkillLevelVo;
 import com.example.BackendArchitectureLab.Dto.Vo.SkillVo;
 import com.example.BackendArchitectureLab.Service.ISkillService;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -11,9 +11,9 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/skill/inner")
-@RequiredArgsConstructor
 public class SkillInternalController {
-    private final ISkillService skillService;
+    @Autowired
+    private ISkillService skillService;
 
     @GetMapping("/{id}")
     public SkillVo getSkillById(@PathVariable Long id) {

@@ -3,7 +3,7 @@ package com.example.BackendArchitectureLab.DataAccess.impl;
 import com.example.BackendArchitectureLab.Repository.ProjectSkillRepository;
 import com.example.BackendArchitectureLab.DataAccess.IProjectSkillDataAccess;
 import com.example.BackendArchitectureLab.Entity.ProjectSkill;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -11,10 +11,10 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Component
-@RequiredArgsConstructor
 public class ProjectSkillDataAccessImpl implements IProjectSkillDataAccess {
 
-    private final ProjectSkillRepository projectSkillRepository;
+    @Autowired
+    private ProjectSkillRepository projectSkillRepository;
 
     @Override
     public boolean existsByProjectIdAndSkillId(UUID projectId, UUID skillId) {

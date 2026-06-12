@@ -3,7 +3,7 @@ package com.example.BackendArchitectureLab.DataAccess.impl;
 import com.example.BackendArchitectureLab.DataAccess.ICompanyDataAccess;
 import com.example.BackendArchitectureLab.Entity.Company;
 import com.example.BackendArchitectureLab.Repository.CompanyRepository;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -15,10 +15,10 @@ import java.util.UUID;
  * Delegates to Spring Data JPA CompanyRepository.
  */
 @Component
-@RequiredArgsConstructor
 public class CompanyDataAccessImpl implements ICompanyDataAccess {
 
-    private final CompanyRepository companyRepository;
+    @Autowired
+    private CompanyRepository companyRepository;
 
     @Override
     public Company save(Company company) {

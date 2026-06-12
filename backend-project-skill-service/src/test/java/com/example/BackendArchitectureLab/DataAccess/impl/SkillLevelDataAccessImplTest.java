@@ -1,16 +1,18 @@
 package com.example.BackendArchitectureLab.DataAccess.impl;
 
+import com.example.BackendArchitectureLab.DataAccess.ISkillLevelDataAccess;
+import com.example.BackendArchitectureLab.DataAccess.impl.SkillLevelDataAccessImpl;
 import com.example.BackendArchitectureLab.Dto.Vo.Search.SkillLevelSearchQuery;
+import com.example.BackendArchitectureLab.Entity.Skill;
+import com.example.BackendArchitectureLab.Entity.SkillLevel;
 import com.example.BackendArchitectureLab.Repository.SkillLevelRepository;
 import com.example.BackendArchitectureLab.Repository.SkillRepository;
-import com.example.BackendArchitectureLab.DataAccess.ISkillLevelDataAccess;
-import com.example.BackendArchitectureLab.Entity.SkillLevel;
-import com.example.BackendArchitectureLab.Entity.Skill;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.test.context.ActiveProfiles;
 
@@ -26,7 +28,11 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 @DataJpaTest
 @ActiveProfiles("test")
+@Import(SkillLevelDataAccessImpl.class)
 class SkillLevelDataAccessImplTest {
+
+    @Autowired
+    private ISkillLevelDataAccess skillLevelDataAccess;
 
     @Autowired
     private SkillLevelRepository skillLevelRepository;
@@ -34,11 +40,8 @@ class SkillLevelDataAccessImplTest {
     @Autowired
     private SkillRepository skillRepository;
 
-    private ISkillLevelDataAccess skillLevelDataAccess;
-
     @BeforeEach
     void setUp() {
-        skillLevelDataAccess = new SkillLevelDataAccessImpl(skillLevelRepository);
         skillLevelRepository.deleteAll();
         skillRepository.deleteAll();
     }

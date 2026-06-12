@@ -1,6 +1,7 @@
 package com.example.BackendArchitectureLab.DataAccess.impl;
 
 import com.example.BackendArchitectureLab.DataAccess.IJobPostingDataAccess;
+import com.example.BackendArchitectureLab.DataAccess.impl.JobPostingDataAccessImpl;
 import com.example.BackendArchitectureLab.Dto.Vo.Search.JobPostingSearchQuery;
 import com.example.BackendArchitectureLab.Entity.Company;
 import com.example.BackendArchitectureLab.Entity.JobPosting;
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.test.context.ActiveProfiles;
 
@@ -23,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @DataJpaTest
 @ActiveProfiles("test")
+@Import(JobPostingDataAccessImpl.class)
 class JobPostingDataAccessImplTest {
 
     @Autowired
@@ -31,12 +34,12 @@ class JobPostingDataAccessImplTest {
     @Autowired
     private CompanyRepository companyRepository;
 
+    @Autowired
     private IJobPostingDataAccess jobPostingDataAccess;
     private Company testCompany;
 
     @BeforeEach
     void setUp() {
-        jobPostingDataAccess = new JobPostingDataAccessImpl(jobPostingRepository);
         jobPostingRepository.deleteAll();
         companyRepository.deleteAll();
 

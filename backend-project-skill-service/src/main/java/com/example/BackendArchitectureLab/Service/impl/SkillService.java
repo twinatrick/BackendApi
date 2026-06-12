@@ -7,6 +7,7 @@ import com.example.BackendArchitectureLab.Dto.Vo.Search.SkillSearchQuery;
 import com.example.BackendArchitectureLab.Dto.Vo.SkillLevelVo;
 import com.example.BackendArchitectureLab.Dto.Vo.SkillVo;
 import com.example.BackendArchitectureLab.Dto.Vo.Common.PageResult;
+import com.example.BackendArchitectureLab.Dto.Vo.UserVo;
 import com.example.BackendArchitectureLab.Entity.Project;
 import com.example.BackendArchitectureLab.Entity.ProjectSkill;
 import com.example.BackendArchitectureLab.Entity.Skill;
@@ -22,9 +23,11 @@ import com.example.BackendArchitectureLab.DataAccess.ISkillDataAccess;
 import com.example.BackendArchitectureLab.DataAccess.ISkillLevelDataAccess;
 import com.example.BackendArchitectureLab.DataAccess.IUserProjectDataAccess;
 import com.example.BackendArchitectureLab.DataAccess.IUserSkillDataAccess;
+import com.example.BackendArchitectureLab.Feign.UserServiceFeignClient;
 import com.example.BackendArchitectureLab.Mapper.SkillMapper;
-import jakarta.persistence.EntityManager;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
@@ -44,24 +47,30 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class SkillService implements ISkillService {
-    private final ISkillDataAccess skillDataAccess;
-    private final IProjectDataAccess projectDataAccess;
-    private final ISkillLevelDataAccess skillLevelDataAccess;
-    private final IUserSkillDataAccess userSkillDataAccess;
-    private final IUserProjectDataAccess userProjectDataAccess;
-    private final IProjectSkillDataAccess projectSkillDataAccess;
-    private final SkillMapper skillMapper;
-    private final EntityManager entityManager;
-    private final User currentUser;
-    private final CacheManager cacheManager;
+    @Autowired
+    private ISkillDataAccess skillDataAccess;
+    @Autowired
+    private IProjectDataAccess projectDataAccess;
+    @Autowired
+    private ISkillLevelDataAccess skillLevelDataAccess;
+    @Autowired
+    private IUserSkillDataAccess userSkillDataAccess;
+    @Autowired
+    private IUserProjectDataAccess userProjectDataAccess;
+    @Autowired
+    private IProjectSkillDataAccess projectSkillDataAccess;
+    @Autowired
+    private SkillMapper skillMapper;
+    @Autowired
+    private CacheManager cacheManager;
+    @Autowired
+    private UserServiceFeignClient userServiceFeignClient;
 
     @Transactional
     @Override
@@ -161,14 +170,14 @@ public class SkillService implements ISkillService {
             String userIdStr = userId.toString();
             
             // 驗證使用者是否存在
-            if (entityManager.find(User.class, userId) == null) {
+            if (!userServiceFeignClient.existsUserById(userId)) {
                 throw new IllegalArgumentException("User not found: " + userIdStr);
             }
             
             // 檢查是否已存在綁定
             if (!userSkillDataAccess.existsByUserIdAndSkillId(userId, skillId)) {
-                // 使用 EntityManager.getReference 避免 CGLIB 代理問題
-                User user = entityManager.getReference(User.class, userId);
+                User user = new User();
+                user.setId(userId);
                 
                 UserSkill userSkill = new UserSkill();
                 userSkill.setUser(user);
@@ -293,8 +302,9 @@ public class SkillService implements ISkillService {
             throw new IllegalArgumentException("Key must not be null");
         }
 
-        User user = Optional.ofNullable(entityManager.find(User.class, userUuid))
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        if (!userServiceFeignClient.existsUserById(userUuid)) {
+            throw new IllegalArgumentException("User not found");
+        }
         Skill skill = skillDataAccess.findById(skillUuid)
                 .orElseThrow(() -> new IllegalArgumentException("Skill not found"));
         SkillLevel skillLevel = skillLevelDataAccess.findById(skillLevelUuid)
@@ -324,8 +334,11 @@ public class SkillService implements ISkillService {
             throw new IllegalArgumentException("Key must not be null");
         }
 
-        User user = Optional.ofNullable(entityManager.find(User.class, userId))
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        if (!userServiceFeignClient.existsUserById(userId)) {
+            throw new IllegalArgumentException("User not found");
+        }
+        User user = new User();
+        user.setId(userId);
 
         Map<UUID, UUID> targetMap = normalizeSkillLevelMapping(skillLevelMapping);
         validateSkillLevelMapping(targetMap);
@@ -470,11 +483,8 @@ public class SkillService implements ISkillService {
         skillDataAccess.findById(skillId).orElseThrow(() -> new IllegalArgumentException("Skill not found"));
 
         projectSkillDataAccess.deleteBySkillId(skillId);
-        entityManager.flush();
         userSkillDataAccess.deleteBySkillId(skillId);
-        entityManager.flush();
         skillLevelDataAccess.deleteBySkillId(skillId);
-        entityManager.flush();
         skillDataAccess.deleteById(skillId);
     }
 
@@ -516,7 +526,7 @@ public class SkillService implements ISkillService {
         Set<UUID> seenSkillIds = new HashSet<>();
         
         // 1. 取得 USER 直接綁定的技能
-        List<UserSkill> userSkills = userSkillDataAccess.findByUserId(currentUser.getId());
+        List<UserSkill> userSkills = userSkillDataAccess.findByUserId(requireCurrentUserId());
         for (UserSkill us : userSkills) {
             Skill skill = us.getSkill();
             result.add(CurrentUserSkillVo.fromSkillVo(skillMapper.toVo(skill)));
@@ -524,7 +534,7 @@ public class SkillService implements ISkillService {
         }
         
         // 2. 取得 PROJECT 專案的技能
-        List<UserProject> userProjects = userProjectDataAccess.findByUserId(currentUser.getId());
+        List<UserProject> userProjects = userProjectDataAccess.findByUserId(requireCurrentUserId());
         for (UserProject up : userProjects) {
             Project project = up.getProject();
             for (ProjectSkill ps : project.getProjectSkills()) {
@@ -748,8 +758,9 @@ public class SkillService implements ISkillService {
         
         // 自動綁定當前使用者
         UserSkill userSkill = new UserSkill();
-        UUID currentUserId = requireCurrentUserId();
-        userSkill.setUser(entityManager.getReference(User.class, currentUserId));
+        User userRef = new User();
+        userRef.setId(requireCurrentUserId());
+        userSkill.setUser(userRef);
         userSkill.setSkill(savedSkill);
 
         SkillLevel bindingLevel;
@@ -800,11 +811,11 @@ public class SkillService implements ISkillService {
                 .orElseThrow(() -> new IllegalArgumentException("Skill not found"));
         
         // 驗證是否為擁有者（檢查是否有綁定關係）
-        if (!userSkillDataAccess.existsByUserIdAndSkillId(currentUser.getId(), skillId)) {
+        if (!userSkillDataAccess.existsByUserIdAndSkillId(requireCurrentUserId(), skillId)) {
             throw new IllegalArgumentException("You are not the owner of this skill");
         }
 
-        if (!canEditContent(skill.getCreatedBy(), currentUser.getId())) {
+        if (!canEditContent(skill.getCreatedBy(), requireCurrentUserId())) {
             throw new IllegalArgumentException("Skill assigned by admin is read-only");
         }
         
@@ -825,7 +836,7 @@ public class SkillService implements ISkillService {
             }
             
             // 更新 UserSkill 的等級
-            List<UserSkill> userSkills = userSkillDataAccess.findByUserIdAndSkillId(currentUser.getId(), skillId);
+            List<UserSkill> userSkills = userSkillDataAccess.findByUserIdAndSkillId(requireCurrentUserId(), skillId);
             if (!userSkills.isEmpty()) {
                 UserSkill userSkill = userSkills.get(0);
                 userSkill.setSkillLevel(skillLevel);
@@ -848,7 +859,7 @@ public class SkillService implements ISkillService {
 
         Skill skill = skillDataAccess.findById(skillId)
                 .orElseThrow(() -> new IllegalArgumentException("Skill not found"));
-        if (!userSkillDataAccess.existsByUserIdAndSkillId(currentUser.getId(), skillId)) {
+        if (!userSkillDataAccess.existsByUserIdAndSkillId(requireCurrentUserId(), skillId)) {
             throw new IllegalArgumentException("Skill is not bind to current user");
         }
 
@@ -856,7 +867,7 @@ public class SkillService implements ISkillService {
                 .orElseThrow(() -> new IllegalArgumentException("Skill level not found"));
         validateSkillLevelBelongsToSkill(skillLevel, skill);
 
-        List<UserSkill> userSkills = userSkillDataAccess.findByUserIdAndSkillId(currentUser.getId(), skillId);
+        List<UserSkill> userSkills = userSkillDataAccess.findByUserIdAndSkillId(requireCurrentUserId(), skillId);
         if (userSkills.isEmpty()) {
             throw new IllegalArgumentException("Skill is not bind to current user");
         }
@@ -884,12 +895,12 @@ public class SkillService implements ISkillService {
                 .orElseThrow(() -> new IllegalArgumentException("Skill not found"));
         
         // 驗證是否為擁有者
-        if (!userSkillDataAccess.existsByUserIdAndSkillId(currentUser.getId(), skillId)) {
+        if (!userSkillDataAccess.existsByUserIdAndSkillId(requireCurrentUserId(), skillId)) {
             throw new IllegalArgumentException("You are not the owner of this skill");
         }
 
         // 刪除當前使用者與技能的綁定
-        userSkillDataAccess.deleteByUserIdAndSkillId(currentUser.getId(), skillId);
+        userSkillDataAccess.deleteByUserIdAndSkillId(requireCurrentUserId(), skillId);
     }
 
     private boolean canEditContent(String createdBy, UUID currentUserId) {
@@ -900,10 +911,19 @@ public class SkillService implements ISkillService {
     }
 
     private UUID requireCurrentUserId() {
-        if (currentUser == null || currentUser.getId() == null) {
-            throw new IllegalStateException("Current user not found");
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || auth.getPrincipal() == null) {
+            throw new IllegalStateException("Current user not found - no authentication");
         }
-        return currentUser.getId();
+        String email = auth.getName();
+        if (email == null || email.isBlank()) {
+            throw new IllegalStateException("Current user not found - no email in authentication");
+        }
+        UserVo userVo = userServiceFeignClient.getUserByEmail(email);
+        if (userVo == null || userVo.getId() == null) {
+            throw new IllegalStateException("Current user not found - user lookup failed");
+        }
+        return UUID.fromString(userVo.getId());
     }
 
     private boolean hasManualSkillLevelInput(PersonalSkillRequest request) {

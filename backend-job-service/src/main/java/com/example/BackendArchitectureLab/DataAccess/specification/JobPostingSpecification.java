@@ -11,6 +11,7 @@ import java.util.List;
 public class JobPostingSpecification {
 
     public static Specification<JobPosting> buildSpecification(JobPostingSearchQuery query) {
+        if (query == null) return null;
         return (root, criteriaQuery, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
             if (query.getTitle() != null && !query.getTitle().trim().isEmpty())

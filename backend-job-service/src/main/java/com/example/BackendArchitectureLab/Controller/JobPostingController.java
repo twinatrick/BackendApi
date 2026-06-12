@@ -10,6 +10,7 @@ import com.example.BackendArchitectureLab.Dto.Vo.JobPostingVo;
 import com.example.BackendArchitectureLab.Dto.Vo.ResponseType;
 import com.example.BackendArchitectureLab.Dto.Vo.Search.JobPostingSearchQuery;
 import com.example.BackendArchitectureLab.Service.IJobPostingService;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,11 +28,8 @@ import java.util.List;
 @ApiControllerTag(name = "Job Posting", description = "Backend API endpoints - Job posting management")
 public class JobPostingController {
 
-    private final IJobPostingService jobPostingService;
-
-    public JobPostingController(IJobPostingService jobPostingService) {
-        this.jobPostingService = jobPostingService;
-    }
+    @Autowired
+    private IJobPostingService jobPostingService;
 
     @PostMapping("/add")
     @RequirePermission({"System", "JobPosting", "Edit"})

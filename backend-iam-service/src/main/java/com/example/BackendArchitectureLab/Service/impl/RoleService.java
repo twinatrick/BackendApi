@@ -16,7 +16,7 @@ import com.example.BackendArchitectureLab.Entity.Role;
 import com.example.BackendArchitectureLab.Entity.RoleFunction;
 import com.example.BackendArchitectureLab.Entity.User;
 import com.example.BackendArchitectureLab.Entity.UserRole;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
@@ -35,16 +35,23 @@ import java.util.Set;
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
 public class RoleService implements IRoleService {
-    private final IRoleDataAccess roleDataAccess;
-    private final IRoleFunctionDataAccess roleFunctionDataAccess;
-    private final IFunctionDataAccess functionDataAccess;
-    private final IUserDataAccess userDataAccess;
-    private final IUserRoleDataAccess userRoleDataAccess;
-    private final RoleMapper roleMapper;
-    private final FunctionMapper functionMapper;
-    private final UserMapper userMapper;
+    @Autowired
+    private IRoleDataAccess roleDataAccess;
+    @Autowired
+    private IRoleFunctionDataAccess roleFunctionDataAccess;
+    @Autowired
+    private IFunctionDataAccess functionDataAccess;
+    @Autowired
+    private IUserDataAccess userDataAccess;
+    @Autowired
+    private IUserRoleDataAccess userRoleDataAccess;
+    @Autowired
+    private RoleMapper roleMapper;
+    @Autowired
+    private FunctionMapper functionMapper;
+    @Autowired
+    private UserMapper userMapper;
 
     @Override
     @Caching(put = {

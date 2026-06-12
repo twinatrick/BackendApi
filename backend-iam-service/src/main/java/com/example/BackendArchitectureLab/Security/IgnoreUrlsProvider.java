@@ -2,6 +2,7 @@ package com.example.BackendArchitectureLab.Security;
 
 import com.example.BackendArchitectureLab.Annotation.Ingnore;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import org.springframework.web.method.HandlerMethod;
@@ -15,12 +16,9 @@ import java.util.Set;
 @Component
 public class IgnoreUrlsProvider implements InitializingBean {
 
-    private final ApplicationContext applicationContext;
+    @Autowired
+    private ApplicationContext applicationContext;
     private final Set<String> ignoredUrls = new HashSet<>();
-
-    public IgnoreUrlsProvider(ApplicationContext applicationContext) {
-        this.applicationContext = applicationContext;
-    }
 
     @Override
     public void afterPropertiesSet() {

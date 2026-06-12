@@ -6,6 +6,7 @@ import com.example.BackendArchitectureLab.Service.ILearnService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -15,11 +16,8 @@ import org.springframework.web.multipart.MultipartFile;
 @Tag(name = "Speech To Text", description = "音訊辨識與拼音轉換")
 public class LearnController {
 
-    private final ILearnService learnService;
-
-    public LearnController(ILearnService learnService) {
-        this.learnService = learnService;
-    }
+    @Autowired
+    private ILearnService learnService;
 
     @PostMapping(value = "/{lan}/{mode}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "語音辨識與拼音轉換", description = "上傳音訊進行 Whisper 辨識，並根據語言及模式轉換為拼音、注音或羅馬音。")

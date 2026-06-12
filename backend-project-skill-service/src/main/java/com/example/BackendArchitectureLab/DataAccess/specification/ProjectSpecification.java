@@ -18,6 +18,7 @@ public class ProjectSpecification {
      * 根據 ProjectSearchQuery 建立查詢規格
      */
     public static Specification<Project> buildSpecification(ProjectSearchQuery query) {
+        if (query == null) return null;
         return (root, criteriaQuery, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
             
@@ -50,6 +51,7 @@ public class ProjectSpecification {
      * 建立當前使用者專案查詢規格（需要透過 UserProject 關聯查詢）
      */
     public static Specification<Project> buildCurrentUserSpecification(UUID currentUserId, ProjectSearchQuery query) {
+        if (query == null) return null;
         return (root, criteriaQuery, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
             

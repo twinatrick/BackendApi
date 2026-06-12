@@ -11,17 +11,17 @@ import com.example.BackendArchitectureLab.Dto.Vo.AquarkUse.AquarkDataRaw;
 import com.example.BackendArchitectureLab.Dto.Vo.AquarkUse.AverageAquark;
 import com.example.BackendArchitectureLab.Dto.Vo.AquarkUse.CriteriaAPIFilter;
 import com.example.BackendArchitectureLab.Dto.Vo.AquarkUse.TimeRange;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@RequiredArgsConstructor
 @RestController
 @RequestMapping("/aquarkData")
 @ApiControllerTag(name = "AquarkData", description = "Backend API endpoints - Aquark data queries")
 public class AquarkDataController {
-    private final IAquarkDataService aquarkDataService;
+    @Autowired
+    private IAquarkDataService aquarkDataService;
 
     @PostMapping("/getData")
     @RequirePermission({"System", "AquarkData", "View"})

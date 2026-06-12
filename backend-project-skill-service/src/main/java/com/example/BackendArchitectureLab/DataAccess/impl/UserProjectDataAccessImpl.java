@@ -3,17 +3,17 @@ package com.example.BackendArchitectureLab.DataAccess.impl;
 import com.example.BackendArchitectureLab.Repository.UserProjectRepository;
 import com.example.BackendArchitectureLab.DataAccess.IUserProjectDataAccess;
 import com.example.BackendArchitectureLab.Entity.UserProject;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.UUID;
 
 @Component
-@RequiredArgsConstructor
 public class UserProjectDataAccessImpl implements IUserProjectDataAccess {
 
-    private final UserProjectRepository userProjectRepository;
+    @Autowired
+    private UserProjectRepository userProjectRepository;
 
     @Override
     public boolean existsByUserIdAndProjectId(UUID userId, UUID projectId) {

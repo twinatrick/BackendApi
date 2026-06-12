@@ -129,7 +129,7 @@ public interface IProjectService {
      */
     List<ProjectMemberSkillVo> getProjectMemberSkills(UUID projectId);
 
-    ProjectVo getProjectById(Long id);
+    ProjectVo getProjectById(UUID id);
 
     boolean existsProjectSkillByLevelId(UUID levelId);
 

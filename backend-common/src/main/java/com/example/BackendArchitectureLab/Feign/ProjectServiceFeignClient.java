@@ -16,7 +16,7 @@ import java.util.UUID;
 public interface ProjectServiceFeignClient {
 
     @GetMapping("/project/inner/{id}")
-    ProjectVo getProjectById(@PathVariable("id") Long id);
+    ProjectVo getProjectById(@PathVariable("id") UUID id);
 
     @PostMapping("/project/inner/rebind-skills")
     void rebindProjectSkills(@RequestParam("projectId") UUID projectId,

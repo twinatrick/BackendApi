@@ -1,44 +1,36 @@
 package com.example.BackendArchitectureLab.Service.impl;
 
+import com.example.BackendArchitectureLab.DataAccess.*;
 import com.example.BackendArchitectureLab.Dto.Vo.MemberSkillLevelVo;
 import com.example.BackendArchitectureLab.Dto.Vo.PersonalProjectRequest;
 import com.example.BackendArchitectureLab.Dto.Vo.ProjectMemberSkillVo;
 import com.example.BackendArchitectureLab.Dto.Vo.ProjectSkillVo;
-import com.example.BackendArchitectureLab.Dto.Vo.Search.ProjectSearchQuery;
-import com.example.BackendArchitectureLab.Dto.Vo.Common.PageResult;
-import com.example.BackendArchitectureLab.Entity.ProjectSkill;
-import com.example.BackendArchitectureLab.Entity.Skill;
-import com.example.BackendArchitectureLab.Entity.SkillLevel;
-import com.example.BackendArchitectureLab.Entity.User;
-import com.example.BackendArchitectureLab.Entity.UserProject;
-import com.example.BackendArchitectureLab.Entity.UserProjectSkill;
-import com.example.BackendArchitectureLab.DataAccess.ISkillDataAccess;
-import com.example.BackendArchitectureLab.Service.IProjectService;
-import com.example.BackendArchitectureLab.Util.SortFieldValidator;
-import com.example.BackendArchitectureLab.DataAccess.IProjectSkillDataAccess;
-import com.example.BackendArchitectureLab.DataAccess.IProjectDataAccess;
-import com.example.BackendArchitectureLab.DataAccess.ISkillLevelDataAccess;
-import com.example.BackendArchitectureLab.Feign.UserServiceFeignClient;
-import com.example.BackendArchitectureLab.DataAccess.IUserProjectDataAccess;
-import com.example.BackendArchitectureLab.DataAccess.IUserProjectSkillDataAccess;
-import com.example.BackendArchitectureLab.DataAccess.IUserSkillDataAccess;
-import com.example.BackendArchitectureLab.Mapper.ProjectMapper;
 import com.example.BackendArchitectureLab.Dto.Vo.ProjectVo;
-import com.example.BackendArchitectureLab.Entity.Project;
-import jakarta.persistence.EntityManager;
-import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.CacheEvict;
+import com.example.BackendArchitectureLab.Dto.Vo.UserVo;
+import com.example.BackendArchitectureLab.Dto.Vo.Common.PageResult;
+import com.example.BackendArchitectureLab.Dto.Vo.Search.ProjectSearchQuery;
+import com.example.BackendArchitectureLab.Entity.*;
+import com.example.BackendArchitectureLab.Feign.UserServiceFeignClient;
+import com.example.BackendArchitectureLab.Mapper.ProjectMapper;
+import com.example.BackendArchitectureLab.Service.IProjectService;
+import com.example.BackendArchitectureLab.Service.ISkillService;
+import com.example.BackendArchitectureLab.Util.SortFieldValidator;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
-import java.util.LinkedHashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -50,21 +42,26 @@ import java.util.stream.Collectors;
  * 重構後依賴 DataAccess 抽象層,而非直接依賴 Repository
  */
 @Service
-@RequiredArgsConstructor
 public class ProjectService implements IProjectService {
     
-    // 依賴注入:通過構造函數注入介面(由 Lombok @RequiredArgsConstructor 自動生成)
-    private final IProjectDataAccess projectDataAccess;
-    private final IProjectSkillDataAccess projectSkillDataAccess;
-    private final IUserProjectDataAccess userProjectDataAccess;
-    private final UserServiceFeignClient userServiceFeignClient;
-    private final IUserSkillDataAccess userSkillDataAccess;
-    private final ISkillLevelDataAccess skillLevelDataAccess;
-    private final ISkillDataAccess skillDataAccess;
-    private final IUserProjectSkillDataAccess userProjectSkillDataAccess;
-    private final ProjectMapper projectMapper;
-    private final User currentUser;
-    private final EntityManager entityManager;
+    @Autowired
+    private IProjectDataAccess projectDataAccess;
+    @Autowired
+    private IProjectSkillDataAccess projectSkillDataAccess;
+    @Autowired
+    private IUserProjectDataAccess userProjectDataAccess;
+    @Autowired
+    private UserServiceFeignClient userServiceFeignClient;
+    @Autowired
+    private IUserSkillDataAccess userSkillDataAccess;
+    @Autowired
+    private ISkillLevelDataAccess skillLevelDataAccess;
+    @Autowired
+    private ISkillDataAccess skillDataAccess;
+    @Autowired
+    private IUserProjectSkillDataAccess userProjectSkillDataAccess;
+    @Autowired
+    private ProjectMapper projectMapper;
     /**
      * 新增專案
      * @param project 要新增的專案實體
@@ -147,14 +144,14 @@ public class ProjectService implements IProjectService {
             String userIdStr = userId.toString();
             
             // 驗證使用者是否存在
-            if (entityManager.find(User.class, userId) == null) {
+            if (!userServiceFeignClient.existsUserById(userId)) {
                 throw new IllegalArgumentException("User not found: " + userIdStr);
             }
             
             // 檢查是否已存在綁定
             if (!userProjectDataAccess.existsByUserIdAndProjectId(userId, projectId)) {
-                // 使用 EntityManager.getReference 避免 CGLIB 代理問題
-                User user = entityManager.getReference(User.class, userId);
+                User user = new User();
+                user.setId(userId);
                 
                 UserProject userProject = new UserProject();
                 userProject.setUser(user);
@@ -193,9 +190,7 @@ public class ProjectService implements IProjectService {
             .orElseThrow(() -> new IllegalArgumentException("Project not found"));
         
         projectSkillDataAccess.deleteByProjectId(existingProject.getId());
-        entityManager.flush();
         userProjectDataAccess.deleteByProjectId(existingProject.getId());
-        entityManager.flush();
         projectDataAccess.deleteById(existingProject.getId());
     }
     
@@ -226,14 +221,12 @@ public class ProjectService implements IProjectService {
     }
     
     @Override
-    @Cacheable(value = "userProjects", key = "'current:' + @currentUser.id", sync = true)
+    @Cacheable(value = "userProjects", key = "'current:' + T(java.util.UUID).randomUUID()", sync = true)
     public List<ProjectVo> getCurrentUserProjects() {
-        if (currentUser == null || currentUser.getId() == null) {
-            throw new IllegalStateException("未找到當前登入的使用者");
-        }
+        UUID currentUserId = requireCurrentUserId();
         
         // 透過 UserProject 關聯取得當前使用者的專案
-        List<UserProject> userProjects = userProjectDataAccess.findByUserId(currentUser.getId());
+        List<UserProject> userProjects = userProjectDataAccess.findByUserId(currentUserId);
         return userProjects.stream()
                 .map(UserProject::getProject)
                 .map(projectMapper::toVo)
@@ -242,9 +235,7 @@ public class ProjectService implements IProjectService {
     
     @Override
     public PageResult<ProjectVo> searchCurrentUserProjects(ProjectSearchQuery query) {
-        if (currentUser == null || currentUser.getId() == null) {
-            throw new IllegalStateException("未找到當前登入的使用者");
-        }
+        UUID currentUserId = requireCurrentUserId();
         
         // 定義允許的排序欄位
         String[] allowedSortFields = {
@@ -260,7 +251,7 @@ public class ProjectService implements IProjectService {
         
         // 執行分頁查詢（只查詢當前使用者的專案）
         Page<Project> projectPage = projectDataAccess.searchCurrentUserProjects(
-            currentUser.getId().toString(), 
+            currentUserId.toString(), 
             query
         );
         
@@ -345,8 +336,9 @@ public class ProjectService implements IProjectService {
         
         // 自動綁定當前使用者
         UserProject userProject = new UserProject();
-        UUID currentUserId = requireCurrentUserId();
-        userProject.setUser(entityManager.getReference(User.class, currentUserId));
+        User userRef = new User();
+        userRef.setId(requireCurrentUserId());
+        userProject.setUser(userRef);
         userProject.setProject(savedProject);
         userProjectDataAccess.save(userProject);
         
@@ -373,11 +365,11 @@ public class ProjectService implements IProjectService {
                 .orElseThrow(() -> new IllegalArgumentException("Project not found"));
         
         // 驗證是否為擁有者
-        if (!userProjectDataAccess.existsByUserIdAndProjectId(currentUser.getId(), projectId)) {
+        if (!userProjectDataAccess.existsByUserIdAndProjectId(requireCurrentUserId(), projectId)) {
             throw new IllegalArgumentException("You are not the owner of this project");
         }
 
-        if (!canEditContent(project.getCreatedBy(), currentUser.getId())) {
+        if (!canEditContent(project.getCreatedBy(), requireCurrentUserId())) {
             throw new IllegalArgumentException("Project assigned by admin is read-only");
         }
         
@@ -404,16 +396,16 @@ public class ProjectService implements IProjectService {
                 .orElseThrow(() -> new IllegalArgumentException("Project not found"));
         
         // 驗證是否為擁有者
-        if (!userProjectDataAccess.existsByUserIdAndProjectId(currentUser.getId(), projectId)) {
+        if (!userProjectDataAccess.existsByUserIdAndProjectId(requireCurrentUserId(), projectId)) {
             throw new IllegalArgumentException("You are not the owner of this project");
         }
 
-        if (!canEditContent(project.getCreatedBy(), currentUser.getId())) {
+        if (!canEditContent(project.getCreatedBy(), requireCurrentUserId())) {
             throw new IllegalArgumentException("Project assigned by admin is read-only");
         }
         
         // 刪除當前使用者與專案的綁定
-        userProjectDataAccess.deleteByUserIdAndProjectId(currentUser.getId(), projectId);
+        userProjectDataAccess.deleteByUserIdAndProjectId(requireCurrentUserId(), projectId);
         
         // 檢查是否還有其他使用者綁定此專案
         boolean hasOtherBindings = userProjectDataAccess.existsByProjectId(projectId);
@@ -421,7 +413,6 @@ public class ProjectService implements IProjectService {
         // 如果沒有其他綁定，刪除專案本身及其技能綁定
         if (!hasOtherBindings) {
             projectSkillDataAccess.deleteByProjectId(projectId);
-            entityManager.flush();
             projectDataAccess.deleteById(projectId);
         }
     }
@@ -445,7 +436,7 @@ public class ProjectService implements IProjectService {
 
         ProjectSkill projectSkill = new ProjectSkill();
         projectSkill.setProject(project);
-        projectSkill.setSkill(entityManager.getReference(Skill.class, skillId));
+        projectSkill.setSkill(skillDataAccess.findById(skillId).orElseThrow());
         projectSkill.setSkillLevel(skillLevel);
         projectSkillDataAccess.save(projectSkill);
     }
@@ -516,7 +507,7 @@ public class ProjectService implements IProjectService {
             if (existing == null) {
                 ProjectSkill projectSkill = new ProjectSkill();
                 projectSkill.setProject(project);
-                projectSkill.setSkill(entityManager.getReference(Skill.class, skillId));
+                projectSkill.setSkill(skillDataAccess.findById(skillId).orElseThrow());
                 projectSkill.setSkillLevel(skillLevelDataAccess.findById(levelId)
                         .orElseThrow(() -> new IllegalArgumentException("Skill level not found")));
                 projectSkillDataAccess.save(projectSkill);
@@ -552,10 +543,19 @@ public class ProjectService implements IProjectService {
     }
 
     private UUID requireCurrentUserId() {
-        if (currentUser == null || currentUser.getId() == null) {
-            throw new IllegalStateException("Current user not found");
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || auth.getPrincipal() == null) {
+            throw new IllegalStateException("Current user not found - no authentication");
         }
-        return currentUser.getId();
+        String email = auth.getName();
+        if (email == null || email.isBlank()) {
+            throw new IllegalStateException("Current user not found - no email in authentication");
+        }
+        UserVo userVo = userServiceFeignClient.getUserByEmail(email);
+        if (userVo == null || userVo.getId() == null) {
+            throw new IllegalStateException("Current user not found - user lookup failed");
+        }
+        return UUID.fromString(userVo.getId());
     }
 
     private void validateBindingInput(UUID projectId, UUID skillId, UUID skillLevelId) {
@@ -696,8 +696,7 @@ public class ProjectService implements IProjectService {
 
         // 驗證所有使用者存在且已綁定到該專案
         for (UUID userId : memberSkillsMap.keySet()) {
-            User user = entityManager.find(User.class, userId);
-            if (user == null) {
+            if (!userServiceFeignClient.existsUserById(userId)) {
                 throw new IllegalArgumentException("User not found: " + userId);
             }
 
@@ -760,7 +759,8 @@ public class ProjectService implements IProjectService {
             UUID userId = memberEntry.getKey();
             Map<UUID, UUID> targetSkills = memberEntry.getValue();
 
-            User user = entityManager.find(User.class, userId);
+            User user = new User();
+            user.setId(userId);
 
             for (Map.Entry<UUID, UUID> skillEntry : targetSkills.entrySet()) {
                 UUID skillId = skillEntry.getKey();
@@ -792,8 +792,8 @@ public class ProjectService implements IProjectService {
     }
 
     @Override
-    public ProjectVo getProjectById(Long id) {
-        Project project = projectDataAccess.findById(UUID.fromString(String.valueOf(id)))
+    public ProjectVo getProjectById(UUID id) {
+        Project project = projectDataAccess.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Project not found"));
         return projectMapper.toVo(project);
     }
@@ -824,8 +824,10 @@ public class ProjectService implements IProjectService {
     public void saveUserProject(UUID userId, UUID projectId) {
         Project project = projectDataAccess.findById(projectId)
                 .orElseThrow(() -> new IllegalArgumentException("Project not found"));
+        User user = new User();
+        user.setId(userId);
         UserProject userProject = new UserProject();
-        userProject.setUser(entityManager.getReference(User.class, userId));
+        userProject.setUser(user);
         userProject.setProject(project);
         userProjectDataAccess.save(userProject);
     }

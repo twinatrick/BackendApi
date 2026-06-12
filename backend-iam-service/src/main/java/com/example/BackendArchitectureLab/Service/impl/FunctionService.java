@@ -9,7 +9,7 @@ import com.example.BackendArchitectureLab.DataAccess.IRoleFunctionDataAccess;
 import com.example.BackendArchitectureLab.Mapper.FunctionMapper;
 import com.example.BackendArchitectureLab.Dto.Vo.FunctionVo;
 import com.example.BackendArchitectureLab.Entity.Function;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
@@ -29,11 +29,13 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class FunctionService implements IFunctionService {
-    private final IFunctionDataAccess functionDataAccess;
-    private final IRoleFunctionDataAccess roleFunctionDataAccess;
-    private final FunctionMapper functionMapper;
+    @Autowired
+    private IFunctionDataAccess functionDataAccess;
+    @Autowired
+    private IRoleFunctionDataAccess roleFunctionDataAccess;
+    @Autowired
+    private FunctionMapper functionMapper;
 
     @Override
     @Caching(put = {

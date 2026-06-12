@@ -23,10 +23,14 @@ spring:
         server-addr: localhost:8848
 
 jwt:
-  secret: qBTBqz3r/8hW+a1/KPkqQMgWfQTW3vw7E5+HKx4Vru4=
+  secret:
+    use: qBTBqz3r/8hW+a1/KPkqQMgWfQTW3vw7E5+HKx4Vru4=
   issuer: BackendArchitectureLab
   audience: BackendArchitectureLab
   expiration-minutes: 1440
+
+superuser:
+  key: ${SUPERUSER_KEY:super_secret_key_change_in_production}
 
 springdoc:
   api-docs:

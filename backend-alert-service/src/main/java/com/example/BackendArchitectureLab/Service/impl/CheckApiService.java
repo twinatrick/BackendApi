@@ -10,8 +10,8 @@ import com.example.BackendArchitectureLab.Dto.Vo.AquarkUse.RowData;
 import com.example.BackendArchitectureLab.Dto.Vo.AquarkUse.aquarkApiReturnVo;
 import com.example.BackendArchitectureLab.Dto.Vo.AquarkUse.AquarkDataRaw;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -20,13 +20,17 @@ import java.util.List;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class CheckApiService implements ICheckApiService {
-    private final IApiFetcher apiFetcher;
-    private final ObjectMapper objectMapper;
-    private final IAlarmService alarmService;
-    private final IAquarkDataService aquarkDataService;
-    private final IAlertCheckLimitService alertCheckLimitService;
+    @Autowired
+    private IApiFetcher apiFetcher;
+    @Autowired
+    private ObjectMapper objectMapper;
+    @Autowired
+    private IAlarmService alarmService;
+    @Autowired
+    private IAquarkDataService aquarkDataService;
+    @Autowired
+    private IAlertCheckLimitService alertCheckLimitService;
 
     @Override
     public String getApiOnlyUrl(String url) throws IOException {

@@ -6,31 +6,28 @@ import com.example.BackendArchitectureLab.Service.IRoleService;
 import com.example.BackendArchitectureLab.Service.IUserService;
 import com.example.BackendArchitectureLab.Util.SortFieldValidator;
 import com.example.BackendArchitectureLab.DataAccess.IFunctionDataAccess;
-import com.example.BackendArchitectureLab.DataAccess.IProjectDataAccess;
 import com.example.BackendArchitectureLab.DataAccess.IUserDataAccess;
-import com.example.BackendArchitectureLab.DataAccess.IUserProjectDataAccess;
+import com.example.BackendArchitectureLab.Feign.ProjectServiceFeignClient;
 import com.example.BackendArchitectureLab.Mapper.FunctionMapper;
 import com.example.BackendArchitectureLab.Mapper.UserMapper;
 import com.example.BackendArchitectureLab.Entity.Function;
-import com.example.BackendArchitectureLab.Entity.Project;
 import com.example.BackendArchitectureLab.Entity.User;
-import com.example.BackendArchitectureLab.Entity.UserProject;
 import com.example.BackendArchitectureLab.Dto.Vo.FunctionVo;
 import com.example.BackendArchitectureLab.Dto.Vo.UserVo;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
@@ -39,18 +36,22 @@ import java.util.stream.Collectors;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Service
-@RequiredArgsConstructor
 public class UserService implements IUserService {
 
-    private final IUserDataAccess userDataAccess;
-    private final IRoleService roleService;
-    private final IFunctionDataAccess functionDataAccess;
-    private final IProjectDataAccess projectDataAccess;
-    private final IUserProjectDataAccess userProjectDataAccess;
-    private final UserMapper userMapper;
-    private final FunctionMapper functionMapper;
-    private final PasswordEncoder passwordEncoder;
-    private final User currentUser;
+    @Autowired
+    private IUserDataAccess userDataAccess;
+    @Autowired
+    private IRoleService roleService;
+    @Autowired
+    private IFunctionDataAccess functionDataAccess;
+    @Autowired
+    private ProjectServiceFeignClient projectServiceFeignClient;
+    @Autowired
+    private UserMapper userMapper;
+    @Autowired
+    private FunctionMapper functionMapper;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
     @Caching(put = {
         @CachePut(value = "users", key = "#result.id"),
         @CachePut(value = "users", key = "#result.email")
@@ -152,9 +153,18 @@ public class UserService implements IUserService {
         return parentParentFunctions.stream().map(functionMapper::toVo).toList();
     }
 
+    private String getCurrentUserEmail() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || auth.getPrincipal() == null) {
+            throw new IllegalArgumentException("User not authenticated");
+        }
+        return auth.getName();
+    }
+
     @Override
     public UserVo getCurrentUserInfo() {
-        User user = userDataAccess.findByEmail(currentUser.getEmail()).orElseThrow(
+        String email = getCurrentUserEmail();
+        User user = userDataAccess.findByEmail(email).orElseThrow(
                 () -> new IllegalArgumentException("User not found")
         );
         UserVo userVo = userMapper.toVo(user);
@@ -176,21 +186,12 @@ public class UserService implements IUserService {
         if (userUuid == null || projectUuid == null) {
             throw new IllegalArgumentException("Key must not be null");
         }
-        if (userProjectDataAccess.existsByUserIdAndProjectId(userUuid, projectUuid)) {
+
+        if (projectServiceFeignClient.existsUserProject(userUuid, projectUuid)) {
             throw new IllegalArgumentException("Project already bind to user");
         }
 
-        Set<UUID> targetProjectIds = new HashSet<>();
-        List<UserProject> existingUserProjects = userProjectDataAccess.findByUserId(userUuid);
-        if (existingUserProjects != null) {
-            existingUserProjects.stream()
-                    .map(UserProject::getProject)
-                    .map(Project::getId)
-                    .forEach(targetProjectIds::add);
-        }
-        targetProjectIds.add(projectUuid);
-
-        rebindUserProjects(userUuid, List.copyOf(targetProjectIds));
+        projectServiceFeignClient.saveUserProject(userUuid, projectUuid);
     }
 
     @Override
@@ -201,7 +202,7 @@ public class UserService implements IUserService {
             throw new IllegalArgumentException("Key must not be null");
         }
 
-        User user = userDataAccess.findById(userId)
+        userDataAccess.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         Set<UUID> targetProjectIds = projectIds == null
@@ -210,35 +211,19 @@ public class UserService implements IUserService {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
 
-        Map<UUID, Project> targetProjects = new HashMap<>();
-        for (UUID projectId : targetProjectIds) {
-            Project project = projectDataAccess.findById(projectId)
-                    .orElseThrow(() -> new IllegalArgumentException("Project not found"));
-            targetProjects.put(projectId, project);
-        }
-
-        List<UserProject> existingBindings = userProjectDataAccess.findByUserId(userId);
-        if (existingBindings == null) {
-            existingBindings = List.of();
-        }
-        Set<UUID> existingProjectIds = existingBindings.stream()
-                .map(UserProject::getProject)
-                .map(Project::getId)
-                .collect(Collectors.toSet());
+        List<UUID> existingIds = projectServiceFeignClient.getUserProjectIds(userId);
+        Set<UUID> existingProjectIds = new HashSet<>(
+                existingIds != null ? existingIds : List.of());
 
         for (UUID existingProjectId : existingProjectIds) {
             if (!targetProjectIds.contains(existingProjectId)) {
-                userProjectDataAccess.deleteByUserIdAndProjectId(userId, existingProjectId);
+                projectServiceFeignClient.deleteUserProject(userId, existingProjectId);
             }
         }
 
         for (UUID targetProjectId : targetProjectIds) {
             if (!existingProjectIds.contains(targetProjectId)) {
-                Project project = targetProjects.get(targetProjectId);
-                UserProject userProject = new UserProject();
-                userProject.setUser(user);
-                userProject.setProject(project);
-                userProjectDataAccess.save(userProject);
+                projectServiceFeignClient.saveUserProject(userId, targetProjectId);
             }
         }
     }

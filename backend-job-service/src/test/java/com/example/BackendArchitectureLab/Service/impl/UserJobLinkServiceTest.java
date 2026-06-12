@@ -1,14 +1,15 @@
 package com.example.BackendArchitectureLab.Service.impl;
 
 import com.example.BackendArchitectureLab.DataAccess.IJobPostingDataAccess;
-import com.example.BackendArchitectureLab.DataAccess.IUserDataAccess;
 import com.example.BackendArchitectureLab.DataAccess.IUserJobLinkDataAccess;
 import com.example.BackendArchitectureLab.Dto.Vo.UserJobLinkVo;
 import com.example.BackendArchitectureLab.Entity.Company;
 import com.example.BackendArchitectureLab.Entity.JobPosting;
 import com.example.BackendArchitectureLab.Entity.User;
 import com.example.BackendArchitectureLab.Entity.UserJobLink;
+import com.example.BackendArchitectureLab.Feign.UserServiceFeignClient;
 import com.example.BackendArchitectureLab.Mapper.UserJobLinkMapper;
+import com.example.BackendArchitectureLab.Service.IUserJobLinkService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -36,7 +37,7 @@ class UserJobLinkServiceTest {
     private IUserJobLinkDataAccess userJobLinkDataAccess;
 
     @Mock
-    private IUserDataAccess userDataAccess;
+    private UserServiceFeignClient userServiceFeignClient;
 
     @Mock
     private IJobPostingDataAccess jobPostingDataAccess;
@@ -116,7 +117,7 @@ class UserJobLinkServiceTest {
         inputVo.setJobPostingId(jobPostingId.toString());
         inputVo.setUserNotes("Interested");
 
-        when(userDataAccess.findById(userId)).thenReturn(Optional.of(testUser));
+        when(userServiceFeignClient.existsUserById(userId)).thenReturn(true);
         when(jobPostingDataAccess.findById(jobPostingId)).thenReturn(Optional.of(testJobPosting));
         when(userJobLinkDataAccess.save(any(UserJobLink.class))).thenAnswer(invocation -> {
             UserJobLink link = invocation.getArgument(0);
@@ -127,7 +128,7 @@ class UserJobLinkServiceTest {
         UserJobLinkVo result = userJobLinkService.createUserJobLink(inputVo);
 
         assertNotNull(result);
-        verify(userDataAccess).findById(userId);
+        verify(userServiceFeignClient).existsUserById(userId);
         verify(jobPostingDataAccess).findById(jobPostingId);
         verify(userJobLinkDataAccess).save(any(UserJobLink.class));
     }
@@ -139,7 +140,7 @@ class UserJobLinkServiceTest {
         inputVo.setUserId(UUID.randomUUID().toString());
         inputVo.setJobPostingId(jobPostingId.toString());
 
-        when(userDataAccess.findById(any(UUID.class))).thenReturn(Optional.empty());
+        when(userServiceFeignClient.existsUserById(any(UUID.class))).thenReturn(false);
 
         assertThrows(IllegalArgumentException.class, () -> userJobLinkService.createUserJobLink(inputVo));
     }
@@ -151,7 +152,7 @@ class UserJobLinkServiceTest {
         inputVo.setUserId(userId.toString());
         inputVo.setJobPostingId(UUID.randomUUID().toString());
 
-        when(userDataAccess.findById(userId)).thenReturn(Optional.of(testUser));
+        when(userServiceFeignClient.existsUserById(userId)).thenReturn(true);
         when(jobPostingDataAccess.findById(any(UUID.class))).thenReturn(Optional.empty());
 
         assertThrows(IllegalArgumentException.class, () -> userJobLinkService.createUserJobLink(inputVo));
@@ -279,7 +280,7 @@ class UserJobLinkServiceTest {
     @Test
     @DisplayName("Should add job to current user successfully")
     void testAddJobToCurrentUser() {
-        when(userDataAccess.findById(userId)).thenReturn(Optional.of(testUser));
+        when(userServiceFeignClient.existsUserById(userId)).thenReturn(true);
         when(jobPostingDataAccess.findById(jobPostingId)).thenReturn(Optional.of(testJobPosting));
         when(userJobLinkDataAccess.existsByUserIdAndJobPostingId(userId, jobPostingId)).thenReturn(false);
         when(userJobLinkDataAccess.save(any(UserJobLink.class))).thenAnswer(invocation -> {

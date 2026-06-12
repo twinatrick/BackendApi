@@ -17,6 +17,7 @@ public class AlertCheckLimitSpecification {
      * 根據 AlertCheckLimitSearchQuery 建立查詢規格
      */
     public static Specification<AlertCheckLimit> buildSpecification(AlertCheckLimitSearchQuery query) {
+        if (query == null) return null;
         return (root, criteriaQuery, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
             

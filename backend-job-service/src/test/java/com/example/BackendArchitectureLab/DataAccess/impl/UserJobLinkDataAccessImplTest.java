@@ -1,13 +1,21 @@
 package com.example.BackendArchitectureLab.DataAccess.impl;
 
 import com.example.BackendArchitectureLab.DataAccess.IUserJobLinkDataAccess;
-import com.example.BackendArchitectureLab.Entity.*;
-import com.example.BackendArchitectureLab.Repository.*;
+import com.example.BackendArchitectureLab.DataAccess.impl.UserJobLinkDataAccessImpl;
+import com.example.BackendArchitectureLab.Entity.Company;
+import com.example.BackendArchitectureLab.Entity.JobPosting;
+import com.example.BackendArchitectureLab.Entity.User;
+import com.example.BackendArchitectureLab.Entity.UserJobLink;
+import com.example.BackendArchitectureLab.Repository.CompanyRepository;
+import com.example.BackendArchitectureLab.Repository.JobPostingRepository;
+import com.example.BackendArchitectureLab.Repository.UserJobLinkRepository;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.List;
@@ -18,13 +26,11 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @DataJpaTest
 @ActiveProfiles("test")
+@Import(UserJobLinkDataAccessImpl.class)
 class UserJobLinkDataAccessImplTest {
 
     @Autowired
     private UserJobLinkRepository userJobLinkRepository;
-
-    @Autowired
-    private UserRepository userRepository;
 
     @Autowired
     private JobPostingRepository jobPostingRepository;
@@ -32,22 +38,24 @@ class UserJobLinkDataAccessImplTest {
     @Autowired
     private CompanyRepository companyRepository;
 
+    @Autowired
+    private EntityManager entityManager;
+
+    @Autowired
     private IUserJobLinkDataAccess userJobLinkDataAccess;
     private User testUser;
     private JobPosting testJobPosting;
 
     @BeforeEach
     void setUp() {
-        userJobLinkDataAccess = new UserJobLinkDataAccessImpl(userJobLinkRepository);
         userJobLinkRepository.deleteAll();
         jobPostingRepository.deleteAll();
-        userRepository.deleteAll();
         companyRepository.deleteAll();
-
         testUser = new User();
         testUser.setEmail("test@example.com");
         testUser.setPassword("password");
-        testUser = userRepository.save(testUser);
+        entityManager.persist(testUser);
+        entityManager.flush();
 
         Company company = new Company();
         company.setName("Test Company");

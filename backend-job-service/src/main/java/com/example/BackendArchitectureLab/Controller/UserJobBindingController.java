@@ -7,6 +7,7 @@ import com.example.BackendArchitectureLab.Dto.Vo.ResponseType;
 import com.example.BackendArchitectureLab.Dto.Vo.UserJobLinkVo;
 import com.example.BackendArchitectureLab.Entity.User;
 import com.example.BackendArchitectureLab.Service.IUserJobLinkService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -26,13 +27,10 @@ public class UserJobBindingController {
 
     private static final Logger log = LoggerFactory.getLogger(UserJobBindingController.class);
 
-    private final User currentUser;
-    private final IUserJobLinkService userJobLinkService;
-
-    public UserJobBindingController(User currentUser, IUserJobLinkService userJobLinkService) {
-        this.currentUser = currentUser;
-        this.userJobLinkService = userJobLinkService;
-    }
+    @Autowired
+    private User currentUser;
+    @Autowired
+    private IUserJobLinkService userJobLinkService;
 
     @PostMapping("/add/{jobPostingId}")
     @ApiOperationBadRequest(summary = "綁定職缺", description = "當前使用者綁定一筆職缺。")

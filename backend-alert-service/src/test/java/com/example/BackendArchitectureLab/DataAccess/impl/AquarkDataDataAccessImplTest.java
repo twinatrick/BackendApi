@@ -10,6 +10,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.Calendar;
@@ -23,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Uses in-memory H2 database for testing.
  */
 @DataJpaTest
+@Import(AquarkDataDataAccessImpl.class)
 @ActiveProfiles("test")
 class AquarkDataDataAccessImplTest {
 
@@ -32,13 +34,13 @@ class AquarkDataDataAccessImplTest {
     @Autowired
     private EntityManager entityManager;
 
+    @Autowired
     private IAquarkDataDataAccess aquarkDataDataAccess;
 
     private Date baseDate;
 
     @BeforeEach
     void setUp() {
-        aquarkDataDataAccess = new AquarkDataDataAccessImpl(aquarkDataRepository, entityManager);
         aquarkDataRepository.deleteAll();
         entityManager.flush();
         Calendar cal = Calendar.getInstance();

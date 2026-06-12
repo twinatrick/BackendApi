@@ -7,6 +7,7 @@ import com.example.BackendArchitectureLab.Annotation.OpenApi.ApiOperationOk;
 import com.example.BackendArchitectureLab.Dto.Vo.ResponseType;
 import com.example.BackendArchitectureLab.Dto.Vo.UserJobLinkVo;
 import com.example.BackendArchitectureLab.Service.IUserJobLinkService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,11 +23,8 @@ import java.util.List;
 @ApiControllerTag(name = "User Job Link", description = "Backend API endpoints - User job link management")
 public class UserJobLinkController {
 
-    private final IUserJobLinkService userJobLinkService;
-
-    public UserJobLinkController(IUserJobLinkService userJobLinkService) {
-        this.userJobLinkService = userJobLinkService;
-    }
+    @Autowired
+    private IUserJobLinkService userJobLinkService;
 
     @PostMapping("/add")
     @RequirePermission({"System", "UserJobLink", "Edit"})

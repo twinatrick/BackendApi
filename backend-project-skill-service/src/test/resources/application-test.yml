@@ -20,12 +20,12 @@ spring:
   jpa:
     hibernate:
       ddl-auto: create-drop  # 每次測試開始時創建表,結束時刪除
-    show-sql: true           # 顯示 SQL 語句
+    show-sql: false
     properties:
       hibernate:
-        format_sql: true     # 格式化 SQL 輸出
+        format_sql: false
         dialect: org.hibernate.dialect.H2Dialect
-  
+
   # H2 控制台配置(可選)
   h2:
     console:
@@ -36,6 +36,4 @@ spring:
 logging:
   level:
     com.example.BackendArchitectureLab: DEBUG
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
     org.springframework.test: INFO

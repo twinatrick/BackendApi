@@ -14,6 +14,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.List;
@@ -27,6 +28,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 @DataJpaTest
 @ActiveProfiles("test")
+@Import(UserSkillDataAccessImpl.class)
 class UserSkillDataAccessImplTest {
 
     @Autowired
@@ -41,11 +43,11 @@ class UserSkillDataAccessImplTest {
     @Autowired
     private SkillLevelRepository skillLevelRepository;
 
+    @Autowired
     private IUserSkillDataAccess userSkillDataAccess;
 
     @BeforeEach
     void setUp() {
-        userSkillDataAccess = new UserSkillDataAccessImpl(userSkillRepository);
         userSkillRepository.deleteAll();
         entityManager.createQuery("DELETE FROM User").executeUpdate();
         skillRepository.deleteAll();

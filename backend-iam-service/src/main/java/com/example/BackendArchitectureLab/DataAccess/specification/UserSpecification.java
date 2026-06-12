@@ -17,6 +17,7 @@ public class UserSpecification {
      * 根據 UserSearchQuery 建立查詢規格
      */
     public static Specification<User> buildSpecification(UserSearchQuery query) {
+        if (query == null) return null;
         return (root, criteriaQuery, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
             

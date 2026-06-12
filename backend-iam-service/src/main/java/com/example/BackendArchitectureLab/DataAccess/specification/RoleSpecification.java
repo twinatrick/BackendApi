@@ -17,6 +17,7 @@ public class RoleSpecification {
      * 根據 RoleSearchQuery 建立查詢規格
      */
     public static Specification<Role> buildSpecification(RoleSearchQuery query) {
+        if (query == null) return null;
         return (root, criteriaQuery, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
             

@@ -1,6 +1,7 @@
 package com.example.BackendArchitectureLab.DataAccess.impl;
 
 import com.example.BackendArchitectureLab.DataAccess.ICompanyDataAccess;
+import com.example.BackendArchitectureLab.DataAccess.impl.CompanyDataAccessImpl;
 import com.example.BackendArchitectureLab.Entity.Company;
 import com.example.BackendArchitectureLab.Repository.CompanyRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -8,6 +9,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.List;
@@ -18,16 +20,17 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @DataJpaTest
 @ActiveProfiles("test")
+@Import(CompanyDataAccessImpl.class)
 class CompanyDataAccessImplTest {
 
     @Autowired
     private CompanyRepository companyRepository;
 
+    @Autowired
     private ICompanyDataAccess companyDataAccess;
 
     @BeforeEach
     void setUp() {
-        companyDataAccess = new CompanyDataAccessImpl(companyRepository);
         companyRepository.deleteAll();
     }
 

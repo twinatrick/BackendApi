@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.HashMap;
@@ -34,17 +35,12 @@ public class ProjectAdminController {
 
     private static final Logger log = LoggerFactory.getLogger(ProjectAdminController.class);
 
-    private final UserServiceFeignClient userServiceFeignClient;
-    private final SkillServiceFeignClient skillServiceFeignClient;
-    private final IProjectService projectService;
-
-    public ProjectAdminController(UserServiceFeignClient userServiceFeignClient,
-                                  SkillServiceFeignClient skillServiceFeignClient,
-                                  IProjectService projectService) {
-        this.userServiceFeignClient = userServiceFeignClient;
-        this.skillServiceFeignClient = skillServiceFeignClient;
-        this.projectService = projectService;
-    }
+    @Autowired
+    private UserServiceFeignClient userServiceFeignClient;
+    @Autowired
+    private SkillServiceFeignClient skillServiceFeignClient;
+    @Autowired
+    private IProjectService projectService;
 
     @PostMapping("/user-project/rebind")
     @ApiOperationBadRequest(summary = "Rebind user projects", description = "Rebind all user-project relations with diff strategy")

@@ -8,7 +8,7 @@ import com.example.BackendArchitectureLab.DataAccess.IAlertCheckLimitDataAccess;
 import com.example.BackendArchitectureLab.Mapper.AlertCheckLimitMapper;
 import com.example.BackendArchitectureLab.Dto.Vo.AlertCheckLimitVo;
 import com.example.BackendArchitectureLab.Entity.AlertCheckLimit;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
@@ -20,10 +20,11 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class AlertCheckLimitService implements IAlertCheckLimitService {
-    private final IAlertCheckLimitDataAccess alertCheckLimitDataAccess;
-    private final AlertCheckLimitMapper alertCheckLimitMapper;
+    @Autowired
+    private IAlertCheckLimitDataAccess alertCheckLimitDataAccess;
+    @Autowired
+    private AlertCheckLimitMapper alertCheckLimitMapper;
 
     @Override
     @Cacheable(value = "alertCheckLimit", key = "#tableName + '.' + #column", sync = true)

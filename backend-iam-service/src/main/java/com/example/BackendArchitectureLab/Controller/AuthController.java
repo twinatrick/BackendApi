@@ -12,9 +12,9 @@ import com.example.BackendArchitectureLab.Dto.Vo.RoleOutVo;
 import com.example.BackendArchitectureLab.Dto.Vo.SignupRequest;
 import com.example.BackendArchitectureLab.Dto.Vo.SuperUserRequest;
 import com.example.BackendArchitectureLab.Dto.Vo.UserVo;
-import com.example.BackendArchitectureLab.Entity.User;
-import com.example.BackendArchitectureLab.Feign.PermissionServiceFeignClient;
-import com.example.BackendArchitectureLab.Repository.UserRepository;
+import com.example.BackendArchitectureLab.Feign.UserServiceFeignClient;
+import com.example.BackendArchitectureLab.Service.IUserService;
+import com.example.BackendArchitectureLab.Dto.Vo.UserVo;
 import jakarta.servlet.http.HttpServletResponse;
 import org.jose4j.lang.JoseException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,11 +29,9 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/auth")
@@ -41,10 +39,10 @@ import java.util.Optional;
 public class AuthController {
 
     @Autowired
-    private UserRepository userRepository;
+    private IUserService userService;
 
     @Autowired
-    private PermissionServiceFeignClient permissionService;
+    private UserServiceFeignClient userServiceFeignClient;
 
     @Autowired
     private HttpServletResponse httpResponse;
@@ -55,9 +53,6 @@ public class AuthController {
     @Autowired
     private AuthenticationManager authenticationManager;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
     @Value("${superuser.key}")
     private String superUserKey;
 
@@ -65,25 +60,25 @@ public class AuthController {
     @PostMapping("/signup")
     @ApiOperationBadRequest(summary = "Register a new user", description = "Creates a user account and returns a JWT access token.")
     public ResponseType<Token> signup(@RequestBody SignupRequest request) throws JoseException {
-        Optional<User> existingUser = userRepository.findByEmail(request.getEmail());
-        if (existingUser.isPresent()) {
+        List<UserVo> existingUsers = userService.getUserByEmail(request.getEmail());
+        if (!existingUsers.isEmpty()) {
             throw new AppException("VALIDATION_ERROR", "User already exists", 400);
         }
 
-        User user = new User();
-        user.setEmail(request.getEmail());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setName(request.getEmail());
-        User savedUser = userRepository.save(user);
+        UserVo userVo = new UserVo();
+        userVo.setEmail(request.getEmail());
+        userVo.setPassword(request.getPassword());
+        userVo.setName(request.getEmail());
+        UserVo savedUser = userService.createUser(userVo);
 
         String token = jwtUtils.generateJWT(request.getEmail());
 
-        List<RoleOutVo> roles = permissionService.getAllRoles();
+        List<RoleOutVo> roles = userServiceFeignClient.getAllRoles();
         RoleOutVo defaultRole = roles.stream()
                 .filter(role -> "user".equalsIgnoreCase(role.getName()))
                 .findFirst().orElse(null);
         if (defaultRole != null) {
-            permissionService.userBindRole(String.valueOf(savedUser.getId()), String.valueOf(defaultRole.getId()));
+            userServiceFeignClient.userBindRole(String.valueOf(savedUser.getId()), String.valueOf(defaultRole.getId()));
         }
 
         httpResponse.addHeader("Authorization", "Bearer " + token);
@@ -121,24 +116,24 @@ public class AuthController {
             throw new AppException("VALIDATION_ERROR", "Invalid key", 400);
         }
         String email = (request.getEmail() == null || request.getEmail().isBlank()) ? "admin" : request.getEmail();
-        Optional<User> existingUser = userRepository.findByEmail(email);
-        if (existingUser.isPresent()) {
+        List<UserVo> existingUsers = userService.getUserByEmail(email);
+        if (!existingUsers.isEmpty()) {
             throw new AppException("VALIDATION_ERROR", "User already exists", 400);
         }
 
-        User user = new User();
-        user.setEmail(email);
-        user.setPassword(passwordEncoder.encode("admin"));
-        user.setName(email);
-        User savedUser = userRepository.save(user);
+        UserVo userVo = new UserVo();
+        userVo.setEmail(email);
+        userVo.setPassword("admin");
+        userVo.setName(email);
+        UserVo savedUser = userService.createUser(userVo);
 
-        RoleOutVo adminRole = permissionService.getRoleByName("admin");
+        RoleOutVo adminRole = userServiceFeignClient.getRoleByName("admin");
         if (adminRole == null) {
             RoleOutVo role = new RoleOutVo();
             role.setName("admin");
-            adminRole = permissionService.addRole(role);
+            adminRole = userServiceFeignClient.addRole(role);
         }
-        permissionService.userBindRole(String.valueOf(savedUser.getId()), String.valueOf(adminRole.getId()));
+        userServiceFeignClient.userBindRole(String.valueOf(savedUser.getId()), String.valueOf(adminRole.getId()));
 
         HashMap<String, String> res = new HashMap<>();
         res.put("email", email);

@@ -12,6 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.List;
@@ -25,22 +26,23 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 @DataJpaTest
 @ActiveProfiles("test")
+@Import(UserProjectDataAccessImpl.class)
 class UserProjectDataAccessImplTest {
 
     @Autowired
     private UserProjectRepository userProjectRepository;
 
     @Autowired
+    private ProjectRepository projectRepository;
+
+    @Autowired
     private EntityManager entityManager;
 
     @Autowired
-    private ProjectRepository projectRepository;
-
     private IUserProjectDataAccess userProjectDataAccess;
 
     @BeforeEach
     void setUp() {
-        userProjectDataAccess = new UserProjectDataAccessImpl(userProjectRepository);
         userProjectRepository.deleteAll();
         entityManager.createQuery("DELETE FROM User").executeUpdate();
         projectRepository.deleteAll();

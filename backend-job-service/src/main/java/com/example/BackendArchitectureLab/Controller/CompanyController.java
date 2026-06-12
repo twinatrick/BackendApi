@@ -9,6 +9,7 @@ import com.example.BackendArchitectureLab.Dto.Vo.CreateCompanyRequest;
 import com.example.BackendArchitectureLab.Dto.Vo.ResponseType;
 import com.example.BackendArchitectureLab.Dto.Vo.UpdateCompanyRequest;
 import com.example.BackendArchitectureLab.Service.ICompanyService;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,11 +27,8 @@ import java.util.List;
 @ApiControllerTag(name = "Company", description = "Backend API endpoints - Company management")
 public class CompanyController {
 
-    private final ICompanyService companyService;
-
-    public CompanyController(ICompanyService companyService) {
-        this.companyService = companyService;
-    }
+    @Autowired
+    private ICompanyService companyService;
 
     @PostMapping("/add")
     @RequirePermission({"System", "Company", "Edit"})

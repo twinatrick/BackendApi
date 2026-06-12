@@ -2,16 +2,16 @@ package com.example.BackendArchitectureLab.Controller;
 
 import com.example.BackendArchitectureLab.Dto.Vo.RoleOutVo;
 import com.example.BackendArchitectureLab.Service.IRoleService;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/role/inner")
-@RequiredArgsConstructor
 public class PermissionInternalController {
-    private final IRoleService roleService;
+    @Autowired
+    private IRoleService roleService;
 
     @GetMapping("/all")
     public List<RoleOutVo> getAllRoles() {

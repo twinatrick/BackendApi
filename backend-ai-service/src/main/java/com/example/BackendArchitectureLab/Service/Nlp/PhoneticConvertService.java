@@ -17,13 +17,8 @@ import java.util.Map;
 @Service
 public class PhoneticConvertService {
 
-    private final Tokenizer kuromojiTokenizer;
-    private final Map<String, String> katakanaToRomajiMap;
-
-    public PhoneticConvertService() {
-        this.kuromojiTokenizer = new Tokenizer();
-        this.katakanaToRomajiMap = buildKatakanaMap();
-    }
+    private final Tokenizer kuromojiTokenizer = new Tokenizer();
+    private final Map<String, String> katakanaToRomajiMap = buildKatakanaMap();
 
     public String convert(String text, String mode, String lang) {
         if (text == null || text.isBlank() || "none".equalsIgnoreCase(mode)) {
@@ -118,7 +113,7 @@ public class PhoneticConvertService {
         return romaji.toString();
     }
 
-    private Map<String, String> buildKatakanaMap() {
+    private static Map<String, String> buildKatakanaMap() {
         Map<String, String> map = new HashMap<>();
         map.put("ア", "a"); map.put("イ", "i"); map.put("ウ", "u"); map.put("エ", "e"); map.put("オ", "o");
         map.put("カ", "ka"); map.put("キ", "ki"); map.put("ク", "ku"); map.put("ケ", "ke"); map.put("コ", "ko");

@@ -17,6 +17,7 @@ public class FunctionSpecification {
      * 根據 FunctionSearchQuery 建立查詢規格
      */
     public static Specification<Function> buildSpecification(FunctionSearchQuery query) {
+        if (query == null) return null;
         return (root, criteriaQuery, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
             

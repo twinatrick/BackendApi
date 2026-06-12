@@ -17,6 +17,7 @@ import com.example.BackendArchitectureLab.Dto.Vo.ProjectSkillVo;
 import com.example.BackendArchitectureLab.Dto.Vo.ProjectVo;
 import com.example.BackendArchitectureLab.Dto.Vo.ResponseType;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -26,13 +27,10 @@ import java.util.UUID;
 @RequestMapping("/project")
 @ApiControllerTag(name = "Projects", description = "Backend API endpoints - Project management")
 public class ProjectController {
-    private final IProjectService projectService;
-    private final SkillServiceFeignClient skillServiceFeignClient;
-
-    public ProjectController(IProjectService projectService, SkillServiceFeignClient skillServiceFeignClient) {
-        this.projectService = projectService;
-        this.skillServiceFeignClient = skillServiceFeignClient;
-    }
+    @Autowired
+    private IProjectService projectService;
+    @Autowired
+    private SkillServiceFeignClient skillServiceFeignClient;
 
     @PostMapping("/add")
     @RequirePermission({"System", "Project", "Edit"})

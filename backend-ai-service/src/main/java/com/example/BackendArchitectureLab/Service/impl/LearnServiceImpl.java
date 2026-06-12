@@ -5,23 +5,19 @@ import com.example.BackendArchitectureLab.Service.ILearnService;
 import com.example.BackendArchitectureLab.Service.Nlp.PhoneticConvertService;
 import com.example.BackendArchitectureLab.Service.Onnx.WhisperOnnxService;
 import com.example.BackendArchitectureLab.Util.AudioProcessUtil;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class LearnServiceImpl implements ILearnService {
 
-    private final AudioProcessUtil audioProcessUtil;
-    private final WhisperOnnxService whisperOnnxService;
-    private final PhoneticConvertService phoneticConvertService;
-
-    public LearnServiceImpl(AudioProcessUtil audioProcessUtil,
-                            WhisperOnnxService whisperOnnxService,
-                            PhoneticConvertService phoneticConvertService) {
-        this.audioProcessUtil = audioProcessUtil;
-        this.whisperOnnxService = whisperOnnxService;
-        this.phoneticConvertService = phoneticConvertService;
-    }
+    @Autowired
+    private AudioProcessUtil audioProcessUtil;
+    @Autowired
+    private WhisperOnnxService whisperOnnxService;
+    @Autowired
+    private PhoneticConvertService phoneticConvertService;
 
     @Override
     public AudioRecognizeVo processAudio(MultipartFile file, String lang, String mode) {

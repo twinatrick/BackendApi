@@ -10,16 +10,16 @@ import com.example.BackendArchitectureLab.Annotation.OpenApi.ApiOperationOk;
 import com.example.BackendArchitectureLab.Dto.Vo.AlertCheckLimitVo;
 import com.example.BackendArchitectureLab.Dto.Vo.ResponseType;
 import io.swagger.v3.oas.annotations.Operation;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-@RequiredArgsConstructor
 @RestController
 @RequestMapping("/alertCheckLimit")
 @ApiControllerTag(name = "Alert Limits", description = "Backend API endpoints - Alert threshold management")
 public class AlertCheckLimitController {
-    private final IAlertCheckLimitService alertCheckLimitService;
+    @Autowired
+    private IAlertCheckLimitService alertCheckLimitService;
     @PostMapping("/add")
     @RequirePermission({"System", "AlertLimit", "Edit"})
     @ApiOperationBadRequest(summary = "Add alert limit", description = "Creates or updates an alert limit for a table column.")
