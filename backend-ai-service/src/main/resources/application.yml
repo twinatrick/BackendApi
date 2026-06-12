@@ -1,0 +1,39 @@
+server:
+  port: 8007
+spring:
+  application:
+    name: ai-service
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+gemini:
+  api:
+    key: ${GEMINI_API_KEY:}
+    url: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent
+    model: gemini-2.0-flash
+deepseek:
+  api:
+    key: ${DEEPSEEK_API_KEY:}
+    url: https://api.deepseek.com/chat/completions
+    model: deepseek-v4-flash
+groq:
+  api:
+    key: ${GROQ_API_KEY:}
+    url: https://api.groq.com/openai/v1/chat/completions
+    model: llama-3.3-70b-versatile
+github:
+  models:
+    api:
+      key: ${GITHUB_MODELS_API_KEY:}
+      url: https://models.inference.ai.azure.com/chat/completions
+      model: gpt-4o-mini
+ai:
+  whisper:
+    model-path: ${WHISPER_MODEL_PATH:models/ggml-large-v3-turbo.bin}
+jwt:
+  secret:
+    use: ${JWT_SECRET_USE:secretsecretsecretsecretsecretll}
+  issuer: ${JWT_ISSUER:backedApi}
+  audience: ${JWT_AUDIENCE:backedApi}
+  expiration-minutes: ${JWT_EXPIRATION_MINUTES:60}

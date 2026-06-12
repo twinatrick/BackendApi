@@ -1,0 +1,55 @@
+server:
+  port: 8080
+spring:
+  application:
+    name: gateway
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+    gateway:
+      routes:
+        - id: iam-service
+          uri: lb://iam-service
+          predicates:
+            - Path=/api/auth/**,/api/users/**,/api/user/**,/api/roles/**,/api/functions/**
+          filters:
+            - StripPrefix=1
+
+        - id: skill-service
+          uri: lb://skill-service
+          predicates:
+            - Path=/api/skills/**
+          filters:
+            - StripPrefix=1
+
+        - id: project-service
+          uri: lb://project-service
+          predicates:
+            - Path=/api/projects/**,/api/admin/**
+          filters:
+            - StripPrefix=1
+
+        - id: job-service
+          uri: lb://job-service
+          predicates:
+            - Path=/api/jobs/**,/api/companies/**
+          filters:
+            - StripPrefix=1
+
+        - id: ai-service
+          uri: lb://ai-service
+          predicates:
+            - Path=/api/stt/**,/api/ai/**
+          filters:
+            - StripPrefix=1
+
+        - id: alert-service
+          uri: lb://alert-service
+          predicates:
+            - Path=/api/alerts/**,/api/aquark/**
+          filters:
+            - StripPrefix=1
+
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Origin

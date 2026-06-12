@@ -1,0 +1,38 @@
+server:
+  port: 8008
+spring:
+  application:
+    name: alert-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgres
+    username: postgres
+    password: verYs3cret
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  kafka:
+    bootstrap-servers: localhost:9092
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+kafka:
+  consumer:
+    group-id: myGroup
+jwt:
+  secret:
+    use: ${JWT_SECRET_USE:secretsecretsecretsecretsecretll}
+  issuer: ${JWT_ISSUER:backedApi}
+  audience: ${JWT_AUDIENCE:backedApi}
+  expiration-minutes: ${JWT_EXPIRATION_MINUTES:60}
